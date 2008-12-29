@@ -1,0 +1,10 @@
+#include "videoint.h"
+
+int video_set_mono(struct VIDEO_STATE*vs, int a, int x)
+{
+	puts("toggle_mono");
+	if (vs->video_mode!=VIDEO_MODE_APPLE) return 1;
+	vs->cur_mono = (vs->cur_mono & a) ^ x;
+	video_repaint_screen(vs);
+	return 0;
+}               
