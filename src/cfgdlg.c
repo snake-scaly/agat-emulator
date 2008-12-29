@@ -159,6 +159,8 @@ int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 	if (!(load?GetOpenFileName(&ofn):GetSaveFileName(&ofn))) return FALSE;
 	{
 		TCHAR buf[MAX_PATH];
+		GetModuleFileName(NULL, path, MAX_PATH);
+		PathRemoveFileSpec(path);
 		if (PathRelativePathTo(buf, path, FILE_ATTRIBUTE_DIRECTORY, fname, 0))
 			lstrcpy(fname, buf);
 	}
