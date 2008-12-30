@@ -158,6 +158,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 
 static int remove_fdd1(struct SLOT_RUN_STATE*sr)
 {
+	struct FDD_DATA*data = sr->data;
 	open_fdd1(data->drives+0, NULL, 0, 0);
 	open_fdd1(data->drives+1, NULL, 0, 1);
 	return 0;
