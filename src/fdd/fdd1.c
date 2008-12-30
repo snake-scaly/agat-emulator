@@ -150,7 +150,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 	if (strstr(name,"nib")) {
 		puts("using nibble format");
 		drv->rawfmt = 1;
-	}
+	} else drv->rawfmt = 0;
 	drv->error = 0;
 	return 0;
 }
