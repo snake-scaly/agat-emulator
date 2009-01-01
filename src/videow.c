@@ -280,8 +280,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				InvalidateRect(w,NULL,FALSE);
 #endif
 			}
-			if (d==-1)
+			if (d==-1) {
+				sr->cur_key = 0;
 				system_command(sr, SYS_COMMAND_RESET, 0, 0);
+			}
 		}
 		break;
 	case WM_LBUTTONDOWN:
