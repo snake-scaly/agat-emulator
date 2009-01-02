@@ -12,7 +12,11 @@ const TCHAR*memsizes_s[NMEMSIZES] = {
 	TEXT("32  байта"), // 16
 	TEXT("48  байт"), // 32
 	TEXT("64  байта"), // 64
-	TEXT("128  байт") // 128
+	TEXT("128  байт"), // 128
+	TEXT("12  байт"),  //256
+	TEXT("20  байт"),  //512
+	TEXT("24  байта"), //1024
+	TEXT("36  байт"),  //2048
 };
 
 const unsigned memsizes_b[NMEMSIZES] = {
@@ -23,7 +27,11 @@ const unsigned memsizes_b[NMEMSIZES] = {
 	32 * 1024,
 	48 * 1024,
 	64 * 1024,
-	128 * 1024
+	128 * 1024,
+	12 * 1024,
+	20 * 1024,
+	24 * 1024,
+	36 * 1024
 };
 
 
@@ -217,7 +225,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			case SYSTEM_A:
 				c->cfgint[CFG_INT_MEM_SIZE] = 5;
-				c->cfgint[CFG_INT_MEM_MASK] = 32;
+				c->cfgint[CFG_INT_MEM_MASK] = 2 | 4 | 8 | 16 | 32 | 256 | 512 | 1024 | 2048;
 				return 0;
 			}
 			break;
@@ -294,7 +302,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_RES] = 2;
 				return 0;
 			case SYSTEM_A:
-				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\APPLE.FNT"));
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\APPLESM.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 3;
 				return 0;
 			}

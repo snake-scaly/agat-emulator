@@ -6,6 +6,7 @@ void update_video_ap(struct VIDEO_STATE*vs)
 		set_video_active_range(vs, (vs->page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 7);
 	} else if (vs->hgr) {
+		if (basemem_n_blocks(vs->sr) < (vs->page+2) * 4) return;
 		set_video_active_range(vs, (vs->page+1)*0x2000, 0x2000, 1);
 		set_video_type(vs, 9);
 	} else {

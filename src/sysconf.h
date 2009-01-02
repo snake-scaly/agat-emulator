@@ -22,6 +22,7 @@ enum {
 	NSYSTYPES
 };
 
+
 enum {
 	DEV_NULL,
 	DEV_MEMORY_PSROM7,
@@ -101,7 +102,7 @@ struct SYSCONFIG
 };
 
 
-#define NMEMSIZES 8
+#define NMEMSIZES 12
 extern const TCHAR*memsizes_s[];
 const unsigned memsizes_b[];
 
