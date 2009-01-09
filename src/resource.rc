@@ -59,7 +59,7 @@ END
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
 STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
-CAPTION "Эмулятор «Агат» v1.0"
+CAPTION "Эмулятор «Агат» v1.0.1"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
@@ -75,19 +75,20 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,137,50,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 123
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 132
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Закрыть",IDOK,68,102,50,14
-    CTEXT           "Эмулятор «Агат» v1.0",11,7,7,173,8,SS_NOTIFY
+    DEFPUSHBUTTON   "Закрыть",IDOK,68,111,50,14
+    CTEXT           "Эмулятор «Агат» v1.0.1",11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
-    CTEXT           "nnop@newmail.ru",13,7,27,173,8,SS_NOTIFY
-    CTEXT           "Эмуляция систем Агат-7, Агат-9, Apple ][",14,7,41,173,8,
+    CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
+                    13,7,29,173,19,SS_NOTIFY
+    CTEXT           "Эмуляция систем Агат-7, Агат-9, Apple ][",14,7,53,173,8,
                     SS_NOTIFY
     CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky",
-                    15,7,52,173,43,SS_NOTIFY
+                    15,7,64,173,43,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161
@@ -334,7 +335,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 180
         TOPMARGIN, 7
-        BOTTOMMARGIN, 116
+        BOTTOMMARGIN, 125
     END
 
     IDD_CONFIG, DIALOG
@@ -439,6 +440,53 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,1,1
+ PRODUCTVERSION 1,0,1,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904b0"
+        BEGIN
+            VALUE "Comments", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
+            VALUE "CompanyName", "Nop\0"
+            VALUE "FileDescription", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
+            VALUE "FileVersion", "1, 0, 1, 1\0"
+            VALUE "InternalName", "emulator.exe\0"
+            VALUE "LegalCopyright", "Copyright c 2008 Nop\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "interface.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
+            VALUE "ProductVersion", "1, 0, 1, 1\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x419, 1200
+    END
+END
+
+#endif    // !_MAC
+
 
 
 /////////////////////////////////////////////////////////////////////////////

@@ -9,7 +9,7 @@
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
-	{{187,130},{0,0}},
+	{{187,150},{0,0}},
 	6,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
