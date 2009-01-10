@@ -1236,6 +1236,41 @@ static int load_6502(struct CPU_STATE*cs, ISTREAM *in)
 	return 0;
 }
 
+
+static const char*get_flags(byte b)
+{
+	static const char flags[]="NV1BDIZC";
+	static char buf[9]="--------";
+	const char *p=flags;
+	char *t=buf;
+	int i;
+	for (i=8;i;i--,p++,t++,b<<=1) if (b&0x80) *t=*p; else *t='-';
+	return buf;
+
+}
+
+
+static void dumpregs(struct CPU_STATE*cs)
+{
+	struct STATE_6502*st = cs->state;
+	logprint(0,TEXT("%04X-   A=%02X X=%02X Y=%02X P=%02X [%s] S=%02X"),
+		st->pc,
+		st->a, 	st->x, 	st->y,
+		st->f,	get_flags(st->f),
+		st->s);
+}
+
+int cmd_6502(struct CPU_STATE*cs, int cmd, int data, long param)
+{
+	struct STATE_6502*st = cs->state;
+	switch (cmd) {
+	case SYS_COMMAND_DUMPCPUREGS:
+		dumpregs(cs);
+		return 1;
+	}
+	return 0;
+}
+
 int init_cpu_6502(struct CPU_STATE*cs)
 {
 	struct STATE_6502*st;
@@ -1247,6 +1282,7 @@ int init_cpu_6502(struct CPU_STATE*cs)
 	cs->free = free_6502;
 	cs->save = save_6502;
 	cs->load = load_6502;
+	cs->cmd = cmd_6502;
 	cs->state = st;
 	return 0;
 }

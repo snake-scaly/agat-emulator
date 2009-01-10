@@ -27,6 +27,8 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_STOP:
 		cpu_pause(cs, 1);
 		return 0;
+	default:
+		return cpu_cmd(cs, cmd, data, param);
 	}
 	return 0;
 }
@@ -68,6 +70,12 @@ int  cpu_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	READ_FIELD(in, cs->min_msleep);
 	READ_FIELD(in, cs->lim_fetches);
 	if (cs->load) return cs->load(cs, in);
+	return 0;
+}
+
+int cpu_cmd(struct CPU_STATE*cs, int cmd, int data, long param)
+{
+	if (cs->cmd) return cs->cmd(cs, cmd, data, param);
 	return 0;
 }
 

@@ -25,6 +25,7 @@ enum {
 	SYS_COMMAND_INITMENU, // used to init menus, param = menu handle
 	SYS_COMMAND_UPDMENU, // used to update menus, param = menu handle
 	SYS_COMMAND_FREEMENU, // used to free menus, param = menu handle
+	SYS_COMMAND_DUMPCPUREGS, // dump cpu registers on standard log
 
 	SYS_N_COMMANDS
 };

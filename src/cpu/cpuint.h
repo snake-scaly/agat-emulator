@@ -34,6 +34,7 @@ struct CPU_STATE
 	void (*free)(struct CPU_STATE*st);
 	int  (*save)(struct CPU_STATE*st, OSTREAM*out);
 	int  (*load)(struct CPU_STATE*st, ISTREAM*in);
+	int  (*cmd)(struct CPU_STATE*st, int cmd, int data, long param);
 };
 
 
@@ -50,5 +51,6 @@ int cpu_hreset(struct CPU_STATE*st);
 int cpu_intr(struct CPU_STATE*st, int t);
 int cpu_pause(struct CPU_STATE*st, int p);
 int cpu_step(struct CPU_STATE*st, int ncmd);
+int cpu_cmd(struct CPU_STATE*cs, int cmd, int data, long param);
 
 #endif //CPUINT_H

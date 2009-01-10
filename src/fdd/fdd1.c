@@ -147,7 +147,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 		if (drv->disk_header[48]) drv->readonly=1;
 		drv->start_ofs=256;
 	} else drv->start_ofs=0;
-	if (strstr(name,"nib")) {
+	if (strstr(name,"nib") || strstr(name,"NIB")) {
 		puts("using nibble format");
 		drv->rawfmt = 1;
 	} else drv->rawfmt = 0;
