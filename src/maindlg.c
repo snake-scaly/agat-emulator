@@ -537,6 +537,7 @@ int maindlg_run_config(HWND hpar, LPCTSTR name)
 	register_video_window();
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
+	update_save_state(name);
 	r = run_config(hpar, name);
 	if (r < 0) return r;
 	while (GetMessage(&msg, NULL, 0, 0)) {
