@@ -59,7 +59,7 @@ END
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
 STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
-CAPTION "Эмулятор «Агат» v1.1"
+CAPTION "Эмулятор «Агат» v1.1.1"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
@@ -81,7 +81,7 @@ CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
     DEFPUSHBUTTON   "Закрыть",IDOK,68,118,50,14
-    CTEXT           "Эмулятор «Агат» v1.1",11,7,7,173,8,SS_NOTIFY
+    CTEXT           "Эмулятор «Агат» v1.1.1",11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
@@ -449,8 +449,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,1,0,1
- PRODUCTVERSION 1,1,0,1
+ FILEVERSION 1,1,0,2
+ PRODUCTVERSION 1,1,0,2
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -468,14 +468,14 @@ BEGIN
             VALUE "Comments", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
             VALUE "CompanyName", "Nop\0"
             VALUE "FileDescription", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
-            VALUE "FileVersion", "1, 1, 0, 1\0"
+            VALUE "FileVersion", "1, 1, 0, 2\0"
             VALUE "InternalName", "emulator.exe\0"
             VALUE "LegalCopyright", "Copyright c 2008 Nop\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "interface.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
-            VALUE "ProductVersion", "1, 1, 0, 1\0"
+            VALUE "ProductVersion", "1, 1, 0, 2\0"
             VALUE "SpecialBuild", "\0"
         END
     END
