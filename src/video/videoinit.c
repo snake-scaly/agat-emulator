@@ -79,7 +79,7 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 		return 0;
 	case SYS_COMMAND_HRESET:
 		disable_ints(vs->sr);
-		video_set_pal(vs, 0, 2);
+		video_set_pal(vs, 0);
 //		videosel(0);
 		return 0;
 	case SYS_COMMAND_FLASH:
@@ -217,7 +217,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	st->load = video_load;
 	st->save = video_save;
 
-	video_set_pal(vs, 0, 2);
+	video_set_pal(vs, 0);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
 		video_set_mode(vs, VIDEO_MODE_AGAT);

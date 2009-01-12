@@ -51,6 +51,7 @@ struct VIDEO_STATE
 	int page;// = 0;
 	int hgr;// = 1;
 	byte hgr_flags[40][192]; // first and last color of byte
+	int pal_regs[2];
 	int prev_pal;
 };
 
@@ -69,7 +70,7 @@ __inline struct VIDEO_STATE*get_video_state(struct SYS_RUN_STATE*sr)
 void video_set_mode(struct VIDEO_STATE*vs, int md);
 void video_update_mode(struct VIDEO_STATE*vs);
 void video_set_palette(struct VIDEO_STATE*vs, int mode);
-int video_set_pal(struct VIDEO_STATE*vs, int d1,int d2); // explicit variant for internal use
+int video_set_pal(struct VIDEO_STATE*vs, int mode); // explicit variant for internal use
 int video_set_mono(struct VIDEO_STATE*vs, int a, int x); // and with a then xor with x
 
 void videosel_7(struct VIDEO_STATE*vs, int mode);

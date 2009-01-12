@@ -122,7 +122,7 @@ int reset_config(struct SYSCONFIG*c, int systype)
 		break;
 	case SYSTEM_9:
 		reset_slot_config(c->slots+CONF_SLOT2, DEV_MEMORY_XRAM9, systype);
-		reset_slot_config(c->slots+CONF_SLOT3, DEV_FDD_TEAC, systype);
+		reset_slot_config(c->slots+CONF_SLOT5, DEV_FDD_TEAC, systype);
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
 	case SYSTEM_A:
