@@ -9,6 +9,7 @@
 #include <dsound.h>
 #include <assert.h>
 
+//#define DEBUG_SOUND
 
 #pragma comment(lib,"dxguid")
 #pragma comment(lib,"dsound")
@@ -18,9 +19,15 @@
 //#define SDELAY (BUF_NSMP*1000/SFREQ)
 #define INIT_STR(s) { memset(&(s),0,sizeof(s)); (s).dwSize=sizeof(s); }
 
-//#define SOUND_BUFFER_SIZE BUF_NSMP
+#define SOUND_BUFFER_SIZE BUF_NSMP
 
 typedef short sample_t;
+
+#ifdef DEBUG_SOUND
+#define Sprintf(x) printf x
+#else
+#define Sprintf(x)
+#endif
 
 struct DS_DATA
 {
@@ -56,12 +63,15 @@ static void fill_buffer(struct DS_DATA*p, int ofs, int nb, sample_t val)
 {
 	LPVOID pt[2];
 	DWORD sz[2];
+	if (!nb) return;
 	if (IDirectSoundBuffer_Lock(p->buffer,ofs,nb,pt,sz,pt+1,sz+1,0)!=DS_OK) {
+		Sprintf(("fill: ds lock failed!\n"));
 		return;
 	}
 	if (pt[0]) memset(pt[0], val, sz[0]);
 	if (pt[1]) memset(pt[1], val, sz[1]);
 	if (DS_FAILED(IDirectSoundBuffer_Unlock(p->buffer,pt[0],sz[0],pt[1],sz[1]),TEXT("unlocking buffer"))) {
+		Sprintf(("fill: ds unlock failed!\n"));
 		return;
 	}
 }
@@ -71,11 +81,13 @@ static void clear_buffer(struct DS_DATA*p)
 	static LPVOID pt[2];
 	static DWORD sz[2];
 	if (DS_FAILED(IDirectSoundBuffer_Lock(p->buffer,0,0,pt,sz,pt+1,sz+1,DSBLOCK_ENTIREBUFFER),TEXT("locking buffer"))) {
+		Sprintf(("clear: ds lock failed!\n"));
 		return;
 	}
 	if (pt[0]) memset(pt[0],p->lastval,sz[0]);
 	if (pt[1]) memset(pt[1],p->lastval,sz[1]);
 	if (DS_FAILED(IDirectSoundBuffer_Unlock(p->buffer,pt[0],sz[0],pt[1],sz[1]),TEXT("unlocking buffer"))) {
+		Sprintf(("clear: ds unlock failed!\n"));
 		return;
 	}
 }
@@ -90,55 +102,77 @@ static DWORD CALLBACK sound_proc(struct DS_DATA*p)
 		DWORD nb;
 		int r;
 		if ((timeremains != INFINITE) && timeremains < 10) timeremains = 10;
+		Sprintf(("snd: waiting for packet for %i msecs\n", timeremains));
 		r = WaitForSingleObject(p->hsem, timeremains);
 		if (p->term) break;
-//		puts("after wait");
+		Sprintf(("snd: wait result: %s\n", (r == WAIT_TIMEOUT)?"timeout":"done"));
 		if (r == WAIT_TIMEOUT) {
+			if (!p->playing && cur_ofs <= p->buflen / 4) {
+				if (timeremains < 300) {
+					timeremains *= 2;
+					continue;
+				}
+			}
 			if (!p->playing && cur_ofs) {
 				timeremains = cur_ofs * 1000 / p->freq / sizeof(sample_t);
 				IDirectSoundBuffer_SetCurrentPosition(p->buffer, 0);
-//				puts("starting sound buffer");
+				Sprintf(("snd: playing remaining buffer for %i msecs after timeout\n", timeremains));
 				IDirectSoundBuffer_Play(p->buffer, 0, 0, DSBPLAY_LOOPING);
 				p->playing = 1;
 				continue;
 			}
-//			puts("stopping sound buffer");
+			Sprintf(("snd: stopping playing\n"));
 			IDirectSoundBuffer_Stop(p->buffer);
+			clear_buffer(p);
 			timeremains = INFINITE;
 			cur_ofs = 0;
 			p->playing = 0;
+			p->prevsmp = -1;
 		} else {
 			int ofs;
 			int nb;
 			DWORD pl_cur, wr_cur;
 			ReadFile(p->pipe[0], &pack, sizeof(pack), &nb, NULL);
 			nb = pack.count * sizeof(sample_t);
-//			printf("pack: count = %i, sample = %x\n", pack.count, pack.val);
+			Sprintf(("snd: pack: count = %i, sample = %x\n", pack.count, pack.val));
 			ofs = cur_ofs;
 			if (!p->playing) {
 				pl_cur = 0;
-				if (!cur_ofs) clear_buffer(p);
+				if (!cur_ofs) {
+					clear_buffer(p);
+					Sprintf(("snd: clearing whole stopped buffer with value %x\n", p->lastval));
+				}	
 			} else {
 				IDirectSoundBuffer_GetCurrentPosition(p->buffer, &pl_cur, &wr_cur);
+				Sprintf(("snd: current buffer position: pl %x, wr %x\n", pl_cur, wr_cur));
 				pl_cur = wr_cur;
-				if (pl_cur < p->buflen/2 && (ofs < p->buflen / 2 || ofs + nb > p->buflen)) {
+				if (pl_cur < p->buflen/2 && (ofs < pl_cur || ofs + nb > p->buflen)) {
+//					fill_buffer(p, pl_cur, p->buflen/2 - pl_cur, pack.val);
+					ResetEvent(p->positions[1].hEventNotify);
+					Sprintf(("snd: waiting second event\n"));
 			                WaitForSingleObject(p->positions[1].hEventNotify, INFINITE);
+					Sprintf(("snd: after waiting second event\n"));
 					ResetEvent(p->positions[0].hEventNotify);
 					ResetEvent(p->positions[1].hEventNotify);
 				}
 				if (p->term) break;
 				if (pl_cur > p->buflen/2 && (ofs > p->buflen/2 || ofs + nb > p->buflen/2)) {
+//					fill_buffer(p, pl_cur, p->buflen - pl_cur, pack.val);
+					ResetEvent(p->positions[0].hEventNotify);
+					Sprintf(("snd: waiting first event\n"));
 			                WaitForSingleObject(p->positions[0].hEventNotify, INFINITE);
+					Sprintf(("snd: after waiting first event\n"));
 					ResetEvent(p->positions[0].hEventNotify);
 					ResetEvent(p->positions[1].hEventNotify);
 				}
 				if (p->term) break;
 				timeremains = 1000;
 			}
-//			printf("pl_cur = %i\n", pl_cur);
+			Sprintf(("snd: filling buffer: ofs = %x, nb = %i, val = %x\n", ofs, nb, pack.val));
 			fill_buffer(p, ofs, nb, pack.val);
 			cur_ofs = ofs + nb;
 			if (cur_ofs > p->buflen) cur_ofs -= p->buflen;
+			Sprintf(("snd: increased curofs = %x\n", cur_ofs));
 			{
 				int n = (cur_ofs - pl_cur);
 				if (n < 0) n += p->buflen;
@@ -146,7 +180,7 @@ static DWORD CALLBACK sound_proc(struct DS_DATA*p)
 			}
 			if (!p->playing && cur_ofs > p->buflen / 4) {
 				IDirectSoundBuffer_SetCurrentPosition(p->buffer, 0);
-//				puts("starting sound buffer");
+				Sprintf(("snd: starting play from start of buffer\n"));
 				IDirectSoundBuffer_Play(p->buffer, 0, 0, DSBPLAY_LOOPING);
 				p->playing = 1;
 			}
@@ -167,6 +201,7 @@ static struct DS_DATA* sound_init(struct SOUNDPARAMS*par)
 	p = calloc(1, sizeof(*p));
 	if (!p) return NULL;
 
+	p->prevsmp = -1;
 	p->cursmp = 0;
 	p->lastval = 0x7F7F;
 	p->buflen = par->buflen;
@@ -227,11 +262,13 @@ static void sound_term(struct DS_DATA*p)
 {
 	if (!p) return;
 	p->term = 1;
+	ReleaseSemaphore(p->hsem, 1, NULL);
 	CloseHandle(p->pipe+0);
 	CloseHandle(p->pipe+1);
 	WaitForSingleObject(p->hthread, 1000);
 	TerminateThread(p->hthread, 0);
 	CloseHandle(p->hthread);
+	CloseHandle(p->hsem);
 	CloseHandle(p->positions[0].hEventNotify);
 	CloseHandle(p->positions[1].hEventNotify);
 	if (p->notify) IDirectSoundNotify_Release(p->notify);
@@ -242,16 +279,17 @@ static void sound_term(struct DS_DATA*p)
 static int sound_data(struct DS_DATA*p, int val, long t, long f)
 {
 	struct SNDPACK pack;
-	int maxnsmp=1000;
+	int maxnsmp=p->bufsmp;
 	int nsmp;
 	DWORD nb;
-	int cursmp=t*(double)p->freq/1000.0/(double)f;
+	int cursmp=t*(double)p->freq/1000.0/(double)f * 1.1;
 	if (val == SOUND_TOGGLE) val = p->lastval ^ 0xFFFF;
 	else val = val?0x7FFF:0x8000;
-	if (p->playing) {
+//	Sprintf(("sound_data: val = %x; t = %i; f = %i; cursmp = %i\n", val, t, f, cursmp));
+	if (p->prevsmp != -1) {
 		if (cursmp<p->prevsmp) { p->prevsmp=cursmp-1; }
 		nsmp=cursmp-p->prevsmp;
-		if (nsmp>maxnsmp) nsmp=maxnsmp;
+		if (nsmp>maxnsmp) nsmp=1;
 	} else {
 		nsmp = 1;
 	}

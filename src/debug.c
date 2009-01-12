@@ -149,6 +149,14 @@ static const char_t* dd_errmsg(int res)
 
 static const char_t* acm_errmsg(int res)
 {
+	switch (res) {
+	case MMSYSERR_INVALHANDLE: return TEXT("Invalid handle");
+	case MMSYSERR_NODRIVER: return TEXT("No driver");
+	case MMSYSERR_NOMEM: return TEXT("No memory");
+	case WAVERR_UNPREPARED: return TEXT("Unprepared header");
+	case WAVERR_STILLPLAYING: return TEXT("Still playing");
+	case WAVERR_BADFORMAT: return TEXT("Bad format");
+	}
 	return TEXT("Unknown error");
 }
 

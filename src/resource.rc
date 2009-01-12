@@ -59,7 +59,7 @@ END
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
 STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
-CAPTION "Эмулятор «Агат» v1.0.1"
+CAPTION "Эмулятор «Агат» v1.1"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
@@ -75,20 +75,20 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,137,50,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 132
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 139
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Закрыть",IDOK,68,111,50,14
-    CTEXT           "Эмулятор «Агат» v1.0.1",11,7,7,173,8,SS_NOTIFY
+    DEFPUSHBUTTON   "Закрыть",IDOK,68,118,50,14
+    CTEXT           "Эмулятор «Агат» v1.1",11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
     CTEXT           "Эмуляция систем Агат-7, Агат-9, Apple ][",14,7,53,173,8,
                     SS_NOTIFY
-    CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky",
-                    15,7,64,173,43,SS_NOTIFY
+    CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky.\nИспользуется драйвер giveio (c) Dale Roberts.",
+                    15,7,64,173,51,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161
@@ -167,28 +167,28 @@ BEGIN
                     48,50,10
 END
 
-IDD_SNDCFG DIALOG DISCARDABLE  0, 0, 192, 129
+IDD_SNDCFG DIALOG DISCARDABLE  0, 0, 192, 137
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка звука"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "Отсутствует",IDC_NONE,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,21,21,61,10
-    CONTROL         "MMSYSTEM",IDC_MMSYSTEM,"Button",BS_AUTORADIOBUTTON,21,
-                    34,56,10
+                    BS_NOTIFY | WS_GROUP,21,21,61,10
+    CONTROL         "Динамик",IDC_BEEPER,"Button",BS_AUTORADIOBUTTON | 
+                    BS_NOTIFY,21,34,46,10
+    CONTROL         "MMSYSTEM",IDC_MMSYSTEM,"Button",BS_AUTORADIOBUTTON | 
+                    BS_NOTIFY,21,47,56,10
     CONTROL         "DirectSound",IDC_DIRECTSOUND,"Button",
-                    BS_AUTORADIOBUTTON,21,48,55,10
-    COMBOBOX        IDC_FREQ,103,66,63,71,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_BUFSIZE,103,83,63,71,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,35,108,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,102,108,50,14
+                    BS_AUTORADIOBUTTON | BS_NOTIFY,21,60,55,10
+    COMBOBOX        IDC_FREQ,103,76,82,71,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    COMBOBOX        IDC_BUFSIZE,103,95,82,71,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,35,116,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,102,116,50,14
     LTEXT           "Способ эмуляции звука:",10,7,7,85,8
-    LTEXT           "Частота дискретизации:",13,7,68,86,8
-    LTEXT           "Гц",11,170,68,10,8
-    LTEXT           "Размер буфера:",14,7,85,57,8
-    LTEXT           "Байт",12,170,85,18,8
+    LTEXT           "Частота дискретизации:",13,7,80,86,8
+    LTEXT           "Размер буфера:",14,7,97,57,8
 END
 
 IDD_MONCFG DIALOG DISCARDABLE  0, 0, 187, 83
@@ -335,7 +335,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 180
         TOPMARGIN, 7
-        BOTTOMMARGIN, 125
+        BOTTOMMARGIN, 132
     END
 
     IDD_CONFIG, DIALOG
@@ -385,7 +385,7 @@ BEGIN
         RIGHTMARGIN, 185
         VERTGUIDE, 21
         TOPMARGIN, 7
-        BOTTOMMARGIN, 122
+        BOTTOMMARGIN, 130
         HORZGUIDE, 76
     END
 
@@ -449,8 +449,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,1,1
- PRODUCTVERSION 1,0,1,1
+ FILEVERSION 1,1,0,1
+ PRODUCTVERSION 1,1,0,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -468,14 +468,14 @@ BEGIN
             VALUE "Comments", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
             VALUE "CompanyName", "Nop\0"
             VALUE "FileDescription", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
-            VALUE "FileVersion", "1, 0, 1, 1\0"
+            VALUE "FileVersion", "1, 1, 0, 1\0"
             VALUE "InternalName", "emulator.exe\0"
             VALUE "LegalCopyright", "Copyright c 2008 Nop\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "interface.exe\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Эмулятор компьютеров Агат-7,9, Apple ][\0"
-            VALUE "ProductVersion", "1, 0, 1, 1\0"
+            VALUE "ProductVersion", "1, 1, 0, 1\0"
             VALUE "SpecialBuild", "\0"
         END
     END
@@ -486,7 +486,6 @@ BEGIN
 END
 
 #endif    // !_MAC
-
 
 
 /////////////////////////////////////////////////////////////////////////////

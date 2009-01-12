@@ -87,7 +87,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	if (!cs) return -1;
 	cs->sr = sr;
 	cs->min_msleep = 10;
-	cs->lim_fetches = 1000;
+	cs->lim_fetches = 100;
 	cs->freq_6502 = cf->cfgint[CFG_INT_CPU_SPEED]*10;
 	cs->undoc = cf->cfgint[CFG_INT_CPU_EXT];
 

@@ -57,6 +57,7 @@ const TCHAR*devnames[] = {
 	TEXT("ЦП M6502"),
 	TEXT("Отсутствует"),
 	TEXT("Внешний файл"),
+	TEXT("Без звука")
 };
 
 const TCHAR*confnames[] = {
@@ -246,7 +247,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			c->cfgint[CFG_INT_CPU_EXT] = 1;
 			return 0;
 		case CONF_SOUND:
-			c->dev_type = DEV_DSOUND;
+			c->dev_type = DEV_MMSYSTEM;
+			c->cfgint[CFG_INT_SOUND_FREQ] = 22050;
+			c->cfgint[CFG_INT_SOUND_BUFSIZE] = 8192;
 			return 0;
 		case CONF_TAPE:
 			switch (systype) {
@@ -315,6 +318,15 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 {
 	buf[0] = 0;
+
+	switch (c->slot_no) {
+	case CONF_SOUND:
+		if (c->dev_type == DEV_MMSYSTEM || c->dev_type == DEV_DSOUND) {
+			wsprintf(buf, TEXT("%i Гц; %i сэмплов"), c->cfgint[CFG_INT_SOUND_FREQ], c->cfgint[CFG_INT_SOUND_BUFSIZE]);
+		}
+		return 0;
+	}
+
 	switch (c->dev_type) {
 	case DEV_MEMORY_PSROM7:
 	case DEV_MEMORY_XRAM7:

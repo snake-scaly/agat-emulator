@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <commctrl.h>
 #include "resize.h"
+#include "dialog.h"
+#include "sysconf.h"
 #include "resource.h"
 
 #define DLG_ID IDD_SNDCFG
@@ -10,14 +12,15 @@ extern HINSTANCE intface_inst;
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
-	{{192,129},{0,0}},
-	12,
+	{{192,145},{0,0}},
+	13,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDC_NONE,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 		{IDC_MMSYSTEM,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 		{IDC_DIRECTSOUND,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
+		{IDC_BEEPER,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 		{IDC_FREQ,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 		{IDC_BUFSIZE,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 		{10,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
@@ -28,78 +31,132 @@ static struct RESIZE_DIALOG resize=
 	}
 };
 
-static int dialog_init(HWND hwnd)
+static const TCHAR*freqnames[]={
+	TEXT("8000 Гц"),
+	TEXT("11025 Гц"),
+	TEXT("22050 Гц"),
+	TEXT("44100 Гц"),
+	TEXT("48000 Гц")
+};
+
+static int freqvals[]={8000, 11025, 22050, 44100, 48000};
+
+static const TCHAR*bufsizes[]={
+	TEXT("Малый"),
+	TEXT("Средний"),
+	TEXT("Большой"),
+};
+
+static int bufszvals[]={2048, 8192, 16384};
+
+
+static void upd_controls(HWND hwnd)
 {
+	BOOL b = FALSE;
+	if (IsDlgButtonChecked(hwnd, IDC_MMSYSTEM) == BST_CHECKED) b = TRUE;
+	else if (IsDlgButtonChecked(hwnd, IDC_DIRECTSOUND) == BST_CHECKED) b = TRUE;
+	EnableDlgItem(hwnd, IDC_FREQ, b);
+	EnableDlgItem(hwnd, IDC_BUFSIZE, b);
+	EnableDlgItem(hwnd, 13, b);
+	EnableDlgItem(hwnd, 11, b);
+	EnableDlgItem(hwnd, 14, b);
+}
+
+static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
+{
+	int i;
+	HWND hlist = GetDlgItem(hwnd, IDC_FREQ);
+	HWND hblist = GetDlgItem(hwnd, IDC_BUFSIZE);
+	switch (conf->dev_type) {
+	case DEV_NOSOUND:
+		CheckDlgButton(hwnd, IDC_NONE, BST_CHECKED);
+		break;
+	case DEV_BEEPER:
+		CheckDlgButton(hwnd, IDC_BEEPER, BST_CHECKED);
+		break;
+	case DEV_MMSYSTEM:
+		CheckDlgButton(hwnd, IDC_MMSYSTEM, BST_CHECKED);
+		break;
+	case DEV_DSOUND:
+		CheckDlgButton(hwnd, IDC_DIRECTSOUND, BST_CHECKED);
+		break;
+	}
+	for (i = 0; i < sizeof(freqvals)/sizeof(freqvals[0]); ++i) {
+		int ind;
+		ind = ComboBox_AddStringData(hlist, (LPARAM)freqnames[i], freqvals[i]);
+		if (freqvals[i] == conf->cfgint[CFG_INT_SOUND_FREQ]) 
+			ComboBox_SetCurSel(hlist, ind);
+	}
+	for (i = 0; i < sizeof(bufszvals)/sizeof(bufszvals[0]); ++i) {
+		int ind;
+		ind = ComboBox_AddStringData(hblist, (LPARAM)bufsizes[i], bufszvals[i]);
+		if (bufszvals[i] == conf->cfgint[CFG_INT_SOUND_BUFSIZE]) 
+			ComboBox_SetCurSel(hblist, ind);
+	}
+	upd_controls(hwnd);
 	return 0;
 }
 
-static void dialog_destroy(HWND hwnd)
+static void dialog_destroy(HWND hwnd, void*p)
 {
 }
 
-static int dialog_command(HWND hwnd, int notify, int id, HWND ctl)
+
+static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 {
 	switch (id) {
-	case IDOK:
-		EndDialog(hwnd, 0);
-		return 0;
-	case IDCANCEL:
-		EndDialog(hwnd, 1);
-		return 0;
-	}
-	return 1;
-}
-
-static int dialog_notify(HWND hwnd, int id, LPNMHDR hdr)
-{
-	return 1;
-}
-
-static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-	int r;
-	switch (msg) {
-	case WM_INITDIALOG:
-		r = dialog_init(hwnd);
-		if (r < 0) {
-			EndDialog(hwnd, -1);
-			return FALSE;
-		}
-		resize_init(&resize);
-		resize_attach(&resize,hwnd);
-		resize_init_placement(hwnd, MAKEINTRESOURCE(DLG_ID));
-		SetWindowLong(hwnd, DWL_USER, lp);
-		return FALSE;
-	case WM_DESTROY:
-		resize_detach(&resize,hwnd);
-		resize_free(&resize);
-		resize_save_placement(hwnd, MAKEINTRESOURCE(DLG_ID));
-		dialog_destroy(hwnd);
-		return TRUE;
-	case WM_CLOSE:
-		EndDialog(hwnd, 1);
+	case IDC_NONE:
+	case IDC_BEEPER:
+	case IDC_MMSYSTEM:
+	case IDC_DIRECTSOUND:
+		upd_controls(hwnd);
 		break;
-	case WM_SIZE:
-		resize_realign(&resize,hwnd,LOWORD(lp),HIWORD(lp));
-		return 0;
-	case WM_SIZING:
-		resize_sizing(&resize,hwnd,wp,(LPRECT)lp);
-		return TRUE;
-	case WM_COMMAND:
-		r = dialog_command(hwnd, HIWORD(wp), LOWORD(wp), (HWND)lp);
-		if (!r) break;
-		return FALSE;
-	case WM_NOTIFY:
-		r = dialog_notify(hwnd, (int)wp, (LPNMHDR)lp);
-		if (!r) break;
-		return FALSE;
-	default:
-		return FALSE;
 	}
-	return TRUE;
+	return 1;
 }
 
-int snddlg_run(HWND hpar)
+static int dialog_ok(HWND hwnd, struct SLOTCONFIG*conf)
 {
-	return DialogBox(intface_inst, MAKEINTRESOURCE(DLG_ID), hpar, dialog_proc);
+	HWND hlist = GetDlgItem(hwnd, IDC_FREQ);
+	HWND hblist = GetDlgItem(hwnd, IDC_BUFSIZE);
+	if (IsDlgButtonChecked(hwnd, IDC_NONE) == BST_CHECKED) conf->dev_type = DEV_NOSOUND;
+	else if (IsDlgButtonChecked(hwnd, IDC_BEEPER) == BST_CHECKED) conf->dev_type = DEV_BEEPER;
+	else if (IsDlgButtonChecked(hwnd, IDC_MMSYSTEM) == BST_CHECKED) conf->dev_type = DEV_MMSYSTEM;
+	else if (IsDlgButtonChecked(hwnd, IDC_DIRECTSOUND) == BST_CHECKED) conf->dev_type = DEV_DSOUND;
+	conf->cfgint[CFG_INT_SOUND_FREQ] = ComboBox_GetItemData(hlist, ComboBox_GetCurSel(hlist));
+	conf->cfgint[CFG_INT_SOUND_BUFSIZE] = ComboBox_GetItemData(hblist, ComboBox_GetCurSel(hblist));
+	EndDialog(hwnd, TRUE);
+	return 0;
 }
+
+static int dialog_close(HWND hwnd, void*p)
+{
+	EndDialog(hwnd, FALSE);
+	return 0;
+}
+
+
+static int dialog_notify(HWND hwnd, void*p, int id, LPNMHDR hdr)
+{
+	return 1;
+}
+
+
+static struct DIALOG_DATA dialog =
+{
+	&resize,
+
+	dialog_init, 
+	dialog_destroy,
+	dialog_command,
+	dialog_notify,
+
+	dialog_close,
+	dialog_ok
+};
+
+int snddlg_run(HWND hpar, struct SLOTCONFIG *conf)
+{
+	return dialog_run(&dialog, MAKEINTRESOURCE(DLG_ID), hpar, conf);
+}
+

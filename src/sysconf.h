@@ -49,6 +49,8 @@ enum {
 	DEV_TAPE_NONE,
 	DEV_TAPE_FILE,
 
+	DEV_NOSOUND,
+
 	NDEVTYPES
 };
 
@@ -176,6 +178,12 @@ enum {
 enum {
 	CFG_INT_TAPE_FREQ,
 	CFG_INT_TAPE_FAST,
+};
+
+
+enum {
+	CFG_INT_SOUND_FREQ,
+	CFG_INT_SOUND_BUFSIZE,
 };
 
 enum {

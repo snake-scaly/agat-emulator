@@ -43,6 +43,7 @@
 #define IDC_MMSYSTEM                    1013
 #define IDC_DIRECTSOUND                 1014
 #define IDC_MONO                        1015
+#define IDC_BEEPER                      1015
 #define IDC_COLOR                       1016
 #define IDC_DRV1                        1018
 #define IDC_DRV2                        1019
