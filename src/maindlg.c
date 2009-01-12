@@ -172,22 +172,15 @@ static void dialog_destroy(HWND hwnd, void*p)
 }
 
 
-static int run_config(HWND hwnd)
+static int run_config(HWND hwnd, LPCTSTR fname)
 {
 	struct SYSCONFIG *cfg;
-	TCHAR fname[_MAX_PATH];
 	TCHAR pathname[_MAX_PATH];
-	HWND  hlist;
 	ISTREAM*in;
 	struct SYS_RUN_STATE*sr;
-	int r, n;
+	int r;
 	int use_save = 0;
 
-	hlist = GetDlgItem(hwnd, IDC_CFGLIST);
-
-	n = ListView_GetNextItem(hlist, -1, LVNI_SELECTED);
-	if (n == -1) return -1;
-	ListView_GetItemText(hlist, n, 0, fname, _MAX_PATH);
 
 	{
 		unsigned fl = get_run_state_flags(fname);
@@ -234,7 +227,10 @@ static int run_config(HWND hwnd)
 	if (r) return -3;
 
 	sr = init_system_state(cfg, hwnd, fname);
-	if (!sr) return -4;
+	if (!sr) {
+		MessageBox(hwnd, TEXT("При инициализации системы возникла ошибка"), TEXT("Инициализация системы"), MB_ICONEXCLAMATION);
+		return -4;
+	}
 	if (use_save) {
 		if (load_system_state_file(sr) < 0) {
 			MessageBox(hwnd, TEXT("При загрузке состояния возникла ошибка"), TEXT("Сохранённые состояния"), MB_ICONEXCLAMATION);
@@ -245,6 +241,21 @@ static int run_config(HWND hwnd)
 	system_command(sr, SYS_COMMAND_START, 0, 0);
 	return 0;
 }
+
+static int run_cur_config(HWND hwnd)
+{
+	HWND  hlist;
+	int n;
+	TCHAR fname[_MAX_PATH];
+
+	hlist = GetDlgItem(hwnd, IDC_CFGLIST);
+
+	n = ListView_GetNextItem(hlist, -1, LVNI_SELECTED);
+	if (n == -1) return -1;
+	ListView_GetItemText(hlist, n, 0, fname, _MAX_PATH);
+	return run_config(hwnd, fname);
+}
+
 
 static int stop_config(HWND hwnd)
 {
@@ -454,7 +465,7 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 {
 	switch (id) {
 	case IDOK:
-		run_config(hwnd);
+		run_cur_config(hwnd);
 		return 0;
 	case IDC_STOP:
 		stop_config(hwnd);
@@ -491,7 +502,7 @@ static int dialog_notify(HWND hwnd, void*p, int id, LPNMHDR hdr)
 			update_controls(hwnd);
 			return 0;
 		case NM_DBLCLK:
-			run_config(hwnd);
+			run_cur_config(hwnd);
 			return 0;
 		}
 		break;
@@ -516,4 +527,21 @@ int maindlg_run(HWND hpar)
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
 	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_MAIN), hpar, NULL);
+}
+
+
+int maindlg_run_config(HWND hpar, LPCTSTR name)
+{
+	int r;
+	MSG msg;
+	register_video_window();
+	_mkdir(SYSTEMS_DIR);
+	_mkdir(SAVES_DIR);
+	r = run_config(hpar, name);
+	if (r < 0) return r;
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	return 0;
 }

@@ -307,8 +307,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		sr->mousebtn&=~2;
 		break;
 	case WM_DESTROY:
-		ShowWindow(sr->base_w, SW_SHOWNORMAL);
-		SetActiveWindow(sr->base_w);
+		if (sr->base_w) {
+			ShowWindow(sr->base_w, SW_SHOWNORMAL);
+			SetActiveWindow(sr->base_w);
+		} else PostQuitMessage(0);
 		break;
 	case WM_ENTERMENULOOP:
 		{

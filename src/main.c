@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
 	debug_init();
 	InitCommonControls();
 	intface_inst = GetModuleHandle(NULL);
-	maindlg_run(NULL);
+	(argc>1)?maindlg_run_config(NULL, argv[1]):maindlg_run(NULL);
 	debug_term();
 	return 0;
 }
