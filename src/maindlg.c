@@ -9,7 +9,8 @@
 #include "runstate.h"
 #include "systemstate.h"
 
-extern HINSTANCE intface_inst;
+#include "localize.h"
+
 
 static struct RESIZE_DIALOG resize =
 {
@@ -102,6 +103,7 @@ static int scan_configs(HWND hwnd)
 		it.iImage = img;
 		ListView_InsertItem(hlist, &it);
 	} while (FindNextFile(ff, &fd));
+	FindClose(ff);
 	LockWindowUpdate(NULL);
 	return 0;
 }
@@ -161,7 +163,8 @@ static int dialog_init(HWND hwnd, void*p)
 	ListView_SetExtendedListViewStyle(hlist, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	scan_configs(hwnd);
 	update_controls(hwnd);
-	SetClassLong(hwnd, GCL_HICON, (LONG)LoadIcon(intface_inst, MAKEINTRESOURCE(IDI_MAIN)));
+	SetClassLong(hwnd, GCL_HICON, 
+		(LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAIN)));
 	return 0;
 }
 
@@ -180,13 +183,17 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 	struct SYS_RUN_STATE*sr;
 	int r;
 	int use_save = 0;
+	TCHAR buf[2][256];
 
 
 	{
 		unsigned fl = get_run_state_flags(fname);
 		if (fl & RUNSTATE_RUNNING && (sr = get_run_state_ptr(fname))) {
 			int r;
-			r = MessageBox(hwnd, TEXT("Система уже запущена. Переключиться на неё?\n(Нет - запустить заново)"), TEXT("Запущенная система"), MB_ICONQUESTION|MB_YESNOCANCEL);
+			r = MessageBox(hwnd, 
+				localize_str(LOC_MAIN, 0, buf[0], sizeof(buf[0])), //TEXT("Система уже запущена. Переключиться на неё?\n(Нет - запустить заново)"), 
+				localize_str(LOC_MAIN, 1, buf[1], sizeof(buf[1])), //TEXT("Запущенная система"),
+				MB_ICONQUESTION|MB_YESNOCANCEL);
 			switch (r) {
 			case IDYES:
 				system_command(sr, SYS_COMMAND_ACTIVATE, 0, 0);
@@ -200,7 +207,10 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 		}
 		if (fl & RUNSTATE_SAVED) {
 			int r;
-			r = MessageBox(hwnd, TEXT("Имеется сохранённое состояние системы. Загрузить его?"), TEXT("Сохранённые состояния"), MB_ICONQUESTION|MB_YESNOCANCEL);
+			r = MessageBox(hwnd,
+				localize_str(LOC_MAIN, 2, buf[0], sizeof(buf[0])), //TEXT("Имеется сохранённое состояние системы. Загрузить его?"),
+				localize_str(LOC_MAIN, 3, buf[1], sizeof(buf[1])), //TEXT("Сохранённые состояния"), 
+				MB_ICONQUESTION|MB_YESNOCANCEL);
 			switch (r) {
 			case IDYES:
 				use_save = 1;
@@ -228,12 +238,18 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 
 	sr = init_system_state(cfg, hwnd, fname);
 	if (!sr) {
-		MessageBox(hwnd, TEXT("При инициализации системы возникла ошибка"), TEXT("Инициализация системы"), MB_ICONEXCLAMATION);
+		MessageBox(hwnd, 
+			localize_str(LOC_MAIN, 10, buf[0], sizeof(buf[0])), //TEXT("При инициализации системы возникла ошибка"),
+			localize_str(LOC_MAIN, 11, buf[1], sizeof(buf[1])), //TEXT("Инициализация системы"), 
+			MB_ICONEXCLAMATION);
 		return -4;
 	}
 	if (use_save) {
 		if (load_system_state_file(sr) < 0) {
-			MessageBox(hwnd, TEXT("При загрузке состояния возникла ошибка"), TEXT("Сохранённые состояния"), MB_ICONEXCLAMATION);
+			MessageBox(hwnd,
+				localize_str(LOC_MAIN, 12, buf[0], sizeof(buf[0])), //TEXT("При загрузке состояния возникла ошибка"),
+				localize_str(LOC_MAIN, 13, buf[1], sizeof(buf[1])), //TEXT("Сохранённые состояния"),
+				MB_ICONEXCLAMATION);
 			free_system_state(sr);
 			return -1;
 		}
@@ -274,9 +290,13 @@ static int stop_config(HWND hwnd)
 		unsigned fl = get_run_state_flags(fname);
 		if (fl & RUNSTATE_RUNNING && (sr = get_run_state_ptr(fname))) {
 			int r;
-			TCHAR buf[1024];
-			wsprintf(buf, TEXT("Остановить выполнение системы «%s»?"), fname);
-			r = MessageBox(hwnd, buf, TEXT("Запрос"), MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2);
+			TCHAR buf[1024], buf1[256];
+			wsprintf(buf, 
+				localize_str(LOC_MAIN, 20, buf1, sizeof(buf1)), //TEXT("Остановить выполнение системы «%s»?"), 
+				fname);
+			r = MessageBox(hwnd, buf, 
+				localize_str(LOC_MAIN, 21, buf1, sizeof(buf1)), //TEXT("Запрос"), 
+				MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2);
 			switch (r) {
 			case IDYES:
 				free_system_state(sr);
@@ -319,8 +339,11 @@ static int new_config(HWND hwnd)
 	free_config(&cfg);
 	osclose(out);
 	if (r) {
+		TCHAR buf1[256];
 		DeleteFile(fname);
-		MessageBox(hwnd, TEXT("Ошибка создания системы"), NULL, MB_ICONEXCLAMATION | MB_OK);
+		MessageBox(hwnd,
+			localize_str(LOC_MAIN, 30, buf1, sizeof(buf1)), //TEXT("Ошибка создания системы"),
+			NULL, MB_ICONEXCLAMATION | MB_OK);
 		return -1;
 	}
 	p = _tcsrchr(fname, TEXT('.'));
@@ -354,7 +377,11 @@ static int change_config(HWND hwnd)
 		unsigned fl = get_run_state_flags(fname);
 		if (fl & RUNSTATE_RUNNING && get_run_state_ptr(fname)) {
 			int r;
-			r = MessageBox(hwnd, TEXT("Модифицируемая система сейчас запущена. Вносимые изменения вступят в действие только после её повторного запуска."), TEXT("Напоминание"), MB_ICONINFORMATION|MB_OKCANCEL);
+			TCHAR buf[2][256];
+			r = MessageBox(hwnd,
+				localize_str(LOC_MAIN, 40, buf[0], sizeof(buf[0])), //TEXT("Модифицируемая система сейчас запущена. Вносимые изменения вступят в действие только после её повторного запуска."),
+				localize_str(LOC_MAIN, 41, buf[1], sizeof(buf[1])), //TEXT("Напоминание"), 
+				MB_ICONINFORMATION|MB_OKCANCEL);
 			switch (r) {
 			case IDOK:
 				break;
@@ -365,7 +392,11 @@ static int change_config(HWND hwnd)
 		}
 		if (fl & RUNSTATE_SAVED) {
 			int r;
-			r = MessageBox(hwnd, TEXT("Модифицируемая система имеет сохранённое состояние. После изменения конфигурации системы это состояние будет потеряно. Продолжить?"), TEXT("Изменение сохраненной системы"), MB_ICONQUESTION|MB_YESNO);
+			TCHAR buf[2][256];
+			r = MessageBox(hwnd,
+				localize_str(LOC_MAIN, 50, buf[0], sizeof(buf[0])), //TEXT("Модифицируемая система имеет сохранённое состояние. После изменения конфигурации системы это состояние будет потеряно. Продолжить?"), 
+				localize_str(LOC_MAIN, 51, buf[1], sizeof(buf[1])), //TEXT("Изменение сохраненной системы"),
+				MB_ICONQUESTION|MB_YESNO);
 			switch (r) {
 			case IDYES:
 				break;
@@ -415,15 +446,22 @@ static int delete_config(HWND hwnd)
 	hlist = GetDlgItem(hwnd, IDC_CFGLIST);
 	do {
 		int r;
+		TCHAR buf[256];
 		n = ListView_GetNextItem(hlist, n, LVNI_SELECTED);
 		if (n == -1) break;
 		ListView_GetItemText(hlist, n, 0, fname, _MAX_PATH);
-		wsprintf(msg, TEXT("Удалить систему \xAB%s\xBB?"), fname);
-		r = MessageBox(hwnd, msg, TEXT("Подтверждение"), MB_ICONQUESTION | MB_YESNOCANCEL);
+		wsprintf(msg, 
+			localize_str(LOC_MAIN, 60, buf, sizeof(buf)), //TEXT("Удалить систему \xAB%s\xBB?"), 
+			fname);
+		r = MessageBox(hwnd, msg, 
+			localize_str(LOC_MAIN, 61, buf, sizeof(buf)), //TEXT("Подтверждение"), 
+			MB_ICONQUESTION | MB_YESNOCANCEL);
 		if (r == IDYES) {
 			wsprintf(msg, TEXT(SYSTEMS_DIR"\\%s.cfg"), fname);
 			if (!DeleteFile(msg)) {
-				MessageBox(hwnd, TEXT("Ошибка удаления системы"), NULL, MB_ICONEXCLAMATION | MB_OK);
+				MessageBox(hwnd, 
+					localize_str(LOC_MAIN, 62, buf, sizeof(buf)), //TEXT("Ошибка удаления системы"), 
+					NULL, MB_ICONEXCLAMATION | MB_OK);
 			} else {
 				delete_save(fname);
 				++nd;
@@ -442,7 +480,11 @@ static void on_quit(HWND hwnd)
 	n = get_n_running_systems();
 	if (n) {
 		int r;
-		r = MessageBox(hwnd, TEXT("Имеются запущенные системы. Завершить работу?"), TEXT("Завершение работы"), MB_ICONQUESTION | MB_YESNO);
+		TCHAR buf[2][256];
+		r = MessageBox(hwnd,
+			localize_str(LOC_MAIN, 70, buf[0], sizeof(buf[0])), //TEXT("Имеются запущенные системы. Завершить работу?"),
+			localize_str(LOC_MAIN, 71, buf[1], sizeof(buf[1])), //TEXT("Завершение работы"), 
+			MB_ICONQUESTION | MB_YESNO);
 		switch (r) {
 		case IDYES:
 			free_all_running_systems();

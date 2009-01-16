@@ -6,8 +6,9 @@
 #include <assert.h>
 #include "resize.h"
 #include "debug.h"
+#include "localize.h"
 
-HINSTANCE intface_inst;
+#define INI_NAME ".\\emulator.ini"
 
 
 void usleep(int microsec)
@@ -46,11 +47,17 @@ int load_buf_res(int no, void*buf, int len)
 
 int main(int argc, const char* argv[])
 {
-	resize_set_cfgname(".\\emulator.ini");
+	resize_set_cfgname(TEXT(INI_NAME));
+	localize_init();
+	{
+		TCHAR lang[256];
+		GetPrivateProfileString(TEXT("Environment"), TEXT("Lang"), TEXT(""), lang, 256, TEXT(INI_NAME));
+		localize_set_lang(lang);
+	}
 	debug_init();
 	InitCommonControls();
-	intface_inst = GetModuleHandle(NULL);
 	(argc>1)?maindlg_run_config(NULL, argv[1]):maindlg_run(NULL);
 	debug_term();
+	localize_term();
 	return 0;
 }

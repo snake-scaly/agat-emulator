@@ -8,6 +8,8 @@
 #include "resource.h"
 #include "sysconf.h"
 
+#include "localize.h"
+
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
@@ -25,14 +27,14 @@ static struct RESIZE_DIALOG resize=
 int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH];
+	TCHAR path[MAX_PATH], buf[2][256];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = TEXT("Файлы ПЗУ (*.rom)\0*.rom\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 0, buf[0], sizeof(buf[0])); //TEXT("Файлы ПЗУ (*.rom)\0*.rom\0Все файлы\0*.*\0");
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	ofn.lpstrTitle = TEXT("Выбор файла ПЗУ");
+	ofn.lpstrTitle = localize_str(LOC_CFG, 1, buf[1], sizeof(buf[1])); //TEXT("Выбор файла ПЗУ");
 	GetModuleFileName(NULL, path, MAX_PATH);
 	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
@@ -49,14 +51,14 @@ int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 int select_save_config(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH];
+	TCHAR path[MAX_PATH], buf[2][256];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = TEXT("Файлы конфигурации (*.cfg)\0*.cfg\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 2, buf[0], sizeof(buf[0]));  //TEXT("Файлы конфигурации (*.cfg)\0*.cfg\0Все файлы\0*.*\0");
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	ofn.lpstrTitle = TEXT("Выбор файла ");
+	ofn.lpstrTitle = localize_str(LOC_CFG, 3, buf[1], sizeof(buf[1])); //TEXT("Выбор файла конфигурации");
 	GetModuleFileName(NULL, path, MAX_PATH);
 	PathRemoveFileSpec(path);
 	_tcscat(path, TEXT("\\"SYSTEMS_DIR));
@@ -76,14 +78,14 @@ int select_save_config(HWND hpar, TCHAR fname[CFGSTRLEN])
 int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH];
+	TCHAR path[MAX_PATH], buf[2][256];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = TEXT("Файлы шрифтов (*.fnt)\0*.fnt\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 4, buf[0], sizeof(buf[0])); //TEXT("Файлы шрифтов (*.fnt)\0*.fnt\0Все файлы\0*.*\0");
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	ofn.lpstrTitle = TEXT("Выбор файла знакогенератора");
+	ofn.lpstrTitle = localize_str(LOC_CFG, 5, buf[1], sizeof(buf[1])); //TEXT("Выбор файла знакогенератора");
 	GetModuleFileName(NULL, path, MAX_PATH);
 	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
@@ -101,14 +103,14 @@ int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 int select_disk(HWND hpar, TCHAR fname[CFGSTRLEN], int*readonly)
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH];
+	TCHAR path[MAX_PATH], buf[2][256];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = TEXT("Файлы образов (*.dsk)\0*.dsk\0Файлы \"сырых\" данных (*.nib)\0*.nib\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 6, buf[0], sizeof(buf[0])); //TEXT("Файлы образов (*.dsk)\0*.dsk\0Файлы \"сырых\" данных (*.nib)\0*.nib\0Все файлы\0*.*\0");
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	ofn.lpstrTitle = TEXT("Выбор файла образа диска");
+	ofn.lpstrTitle = localize_str(LOC_CFG, 7, buf[1], sizeof(buf[1])); //TEXT("Выбор файла образа диска");
 	GetModuleFileName(NULL, path, MAX_PATH);
 	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
@@ -130,11 +132,11 @@ int select_disk(HWND hpar, TCHAR fname[CFGSTRLEN], int*readonly)
 int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH];
+	TCHAR path[MAX_PATH], buf[2][256];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = TEXT("Файлы ленты (*.wav)\0*.wav\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 8, buf[0], sizeof(buf[0])); //TEXT("Файлы ленты (*.wav)\0*.wav\0Все файлы\0*.*\0");
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	GetModuleFileName(NULL, path, MAX_PATH);
@@ -145,15 +147,15 @@ int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 	switch (load) {
 	case 1:
-		ofn.lpstrTitle = TEXT("Выбор файла ленты для чтения");
+		ofn.lpstrTitle = localize_str(LOC_CFG, 9, buf[1], sizeof(buf[1])); //TEXT("Выбор файла ленты для чтения");
 		ofn.Flags |= OFN_FILEMUSTEXIST;
 		break;
 	case 0:
-		ofn.lpstrTitle = TEXT("Выбор файла ленты для записи");
+		ofn.lpstrTitle = localize_str(LOC_CFG, 10, buf[1], sizeof(buf[1])); //TEXT("Выбор файла ленты для записи");
 		ofn.Flags |= OFN_OVERWRITEPROMPT;
 		break;
 	case -1:
-		ofn.lpstrTitle = TEXT("Выбор файла ленты");
+		ofn.lpstrTitle = localize_str(LOC_CFG, 11, buf[1], sizeof(buf[1])); //TEXT("Выбор файла ленты");
 		break;
 	}
 	if (!(load?GetOpenFileName(&ofn):GetSaveFileName(&ofn))) return FALSE;
@@ -176,7 +178,7 @@ static int set_per_cfg(HWND hlist, int id, int type, LPTSTR comment)
 	ZeroMemory(&item,sizeof(item));
 	ind = ListView_FindItemByData(hlist, -1, id);
 	item.mask = LVIF_PARAM | LVIF_TEXT;
-	item.pszText = (LPTSTR)confnames[id];
+	item.pszText = (LPTSTR)get_confnames(id);
 	item.iSubItem = 0;
 	item.lParam = (LPARAM)id;
 	if (ind == -1) {
@@ -189,7 +191,7 @@ static int set_per_cfg(HWND hlist, int id, int type, LPTSTR comment)
 	if (ind == -1) return ind;
 
 	item.mask=LVIF_TEXT;
-	item.pszText = (LPTSTR)devnames[type];
+	item.pszText = (LPTSTR)get_devnames(type);
 	item.iSubItem = 1;
 	ListView_SetItem(hlist, &item);
 
@@ -226,7 +228,7 @@ static int update_list(HWND hwnd, struct SYSCONFIG*conf)
 
 	for (i = 0; i < NCONFTYPES; i++) {
 		TCHAR buf[1024];
-		if (!confnames[i]) continue;
+		if (!get_confnames(i)) continue;
 		if (i >= CONF_EXT && conf->slots[i].dev_type == DEV_NULL) {
 			continue;
 		}
@@ -326,22 +328,23 @@ static int dialog_init(HWND hwnd, struct SYSCONFIG*conf)
 
 	hlist = GetDlgItem(hwnd, IDC_SYSTYPE);
 	for (i = 0; i < NSYSTYPES; i++) {
-		ComboBox_AddString(hlist, sysnames[i]);
+		ComboBox_AddString(hlist, get_sysnames(i));
 	}
 	ComboBox_SetCurSel(hlist, conf->systype);
 
 	hlist = GetDlgItem(hwnd, IDC_PERIPHERAL);
 	{
 		LVCOLUMN col;
+		TCHAR buf[256];
 		memset(&col,0,sizeof(col));
 		col.mask=LVCF_TEXT|LVCF_WIDTH;
-		col.pszText=TEXT("Ресурс");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 20, buf, sizeof(buf)); //TEXT("Ресурс");
 		col.cx=100;
 		ListView_InsertColumn(hlist,0,&col);
-		col.pszText=TEXT("Устройство");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 21, buf, sizeof(buf)); //TEXT("Устройство");
 		col.cx=300;
 		ListView_InsertColumn(hlist,1,&col);
-		col.pszText=TEXT("Информация");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 22, buf, sizeof(buf)); //TEXT("Информация");
 		col.cx=300;
 		ListView_InsertColumn(hlist,2,&col);
 	}

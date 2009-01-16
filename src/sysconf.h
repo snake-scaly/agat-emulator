@@ -105,16 +105,13 @@ struct SYSCONFIG
 
 
 #define NMEMSIZES 12
-extern const TCHAR*memsizes_s[];
+LPCTSTR get_memsizes_s(int n);
 const unsigned memsizes_b[];
 
-extern const TCHAR*devnames[];
-
-
-extern const TCHAR*confnames[];
-extern const TCHAR*sysnames[];
-extern const TCHAR*drvtypenames[];
-
+LPCTSTR get_devnames(int n);
+LPCTSTR get_confnames(int n);
+LPCTSTR get_sysnames(int n);
+LPCTSTR get_drvtypenames(int n);
 
 int clear_config(struct SYSCONFIG*c);
 int reset_config(struct SYSCONFIG*c, int systype);
@@ -142,7 +139,9 @@ enum {
 	DRV_TYPE_1S1D,
 	DRV_TYPE_1S2D,
 	DRV_TYPE_2S1D,
-	DRV_TYPE_2S2D
+	DRV_TYPE_2S2D,
+
+	DRV_N_TYPES
 };
 
 enum {

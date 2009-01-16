@@ -176,20 +176,20 @@ int resize_attach_control(struct RESIZE_DIALOG*r,HWND wnd,int id)
 	return 0;
 }
 
-static char*cfg = NULL;
+static LPTSTR cfg = NULL;
 
-int resize_set_cfgname(const char*name)
+int resize_set_cfgname(LPCTSTR name)
 {
 	if (cfg) free(cfg);
-	cfg = name?_strdup(name):NULL;
+	cfg = name?_tcsdup(name):NULL;
 	return 0;
 }
 
-int resize_init_placement(HWND wnd, const char*id)
+int resize_init_placement(HWND wnd, LPCTSTR id)
 {
 	WINDOWPLACEMENT place, *pl = &place;
 	static TCHAR sid[10];
-	if (!id) id = (const char*)GetWindowLong(wnd, GWL_ID);
+	if (!id) id = (LPCTSTR)GetWindowLong(wnd, GWL_ID);
 	if (IS_INTRESOURCE(id)) {
 		wsprintf(sid, TEXT("#%i"), id);
 		id = sid;
@@ -201,11 +201,11 @@ int resize_init_placement(HWND wnd, const char*id)
 	return 0;
 }
 
-int resize_save_placement(HWND wnd, const char*id)
+int resize_save_placement(HWND wnd, LPCTSTR id)
 {
 	WINDOWPLACEMENT place, *pl = &place;
 	static TCHAR sid[10];
-	if (!id) id = (const char*)GetWindowLong(wnd, GWL_ID);
+	if (!id) id = (LPCTSTR)GetWindowLong(wnd, GWL_ID);
 	if (IS_INTRESOURCE(id)) {
 		wsprintf(sid, TEXT("#%i"), id);
 		id = sid;

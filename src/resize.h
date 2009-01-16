@@ -43,9 +43,9 @@ int resize_sizing(struct RESIZE_DIALOG*r,HWND wnd,int side,RECT*rw);
 int resize_realign(struct RESIZE_DIALOG*r,HWND wnd,int neww,int newh);
 int resize_attach_control(struct RESIZE_DIALOG*r,HWND wnd,int id);
 
-int resize_set_cfgname(const char*name);
-int resize_init_placement(HWND wnd, const char*id);
-int resize_save_placement(HWND wnd, const char*id);
+int resize_set_cfgname(LPCTSTR name);
+int resize_init_placement(HWND wnd, LPCTSTR id);
+int resize_save_placement(HWND wnd, LPCTSTR id);
 
 void resize_savelistviewcolumns(HWND hlist, LPCTSTR param);
 void resize_loadlistviewcolumns(HWND hlist, LPCTSTR param);

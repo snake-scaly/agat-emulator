@@ -6,7 +6,7 @@
 #include "resource.h"
 
 
-extern HINSTANCE intface_inst;
+#include "localize.h"
 
 static struct RESIZE_DIALOG resize=
 {
@@ -35,7 +35,7 @@ static void update_controls(HWND hwnd)
 
 static int CpuList_AddItem(HWND hlist, int id, int sel)
 {
-	int n = ComboBox_AddStringData(hlist, devnames[id], id);
+	int n = ComboBox_AddStringData(hlist, get_devnames(id), id);
 	if (id == sel)
 		ComboBox_SetCurSel(hlist, n);
 	return n;
@@ -67,7 +67,7 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 	switch (id) {
 	case IDC_RESET:
 		SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETPOS, TRUE, 100);
-		CheckDlgButton(hwnd, IDC_UNDOC, BST_UNCHECKED);
+		CheckDlgButton(hwnd, IDC_UNDOC, BST_CHECKED);
 		update_controls(hwnd);
 		return 0;
 	case IDC_CPU_TYPE:

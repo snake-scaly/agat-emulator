@@ -2,6 +2,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include "dialog.h"
+#include "localize.h"
 
 HINSTANCE res_instance;
 
@@ -94,7 +95,7 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 int dialog_run(struct DIALOG_DATA*data, LPCTSTR res_id, HWND hpar, void* param)
 {
-	if (!res_instance) res_instance = GetModuleHandle(NULL);
+	if (!res_instance) res_instance = localize_get_lib();
 	data->param = param;
 	data->res_id = res_id;
 	return DialogBoxParam(res_instance, res_id, hpar, dialog_proc, (LPARAM)data);

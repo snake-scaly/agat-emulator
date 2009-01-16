@@ -31,3 +31,13 @@ struct DIALOG_DATA
 extern HINSTANCE res_instance;
 
 int dialog_run(struct DIALOG_DATA*data, LPCTSTR res_id, HWND hpar, void* param);
+
+
+// WinAPI extension
+BOOL EnableDlgItem(HWND hpar, int id, BOOL enable);
+int ListBox_AddStringData(HWND hlist, LPCTSTR str, LPARAM data);
+int ComboBox_AddStringData(HWND hlist, LPCTSTR str, LPARAM data);
+int ListView_FindItemByData(HWND hlist, int ind, LPARAM data);
+LPARAM ListView_GetItemLParam(HWND hlist, int id);
+int ListView_GetCurSel(HWND hlist);
+void ListView_SetCurSel(HWND hlist, int no);

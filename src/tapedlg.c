@@ -3,6 +3,7 @@
 #include "resize.h"
 #include "dialog.h"
 #include "sysconf.h"
+#include "localize.h"
 #include "resource.h"
 
 static struct RESIZE_DIALOG resize=
@@ -24,7 +25,7 @@ static struct RESIZE_DIALOG resize=
 		{IDC_FAST,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_CENTER}},
 	}
 };
-
+/*
 static const TCHAR*freqnames[]={
 	"8000 關",
 	"11025 關",
@@ -32,7 +33,7 @@ static const TCHAR*freqnames[]={
 	"44100 關",
 	"48000 關"
 };
-
+*/
 static int freqvals[]={8000, 11025, 22050, 44100, 48000};
 
 static void update_controls(HWND hwnd)
@@ -51,6 +52,7 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 {
 	int i;
 	HWND hlist = GetDlgItem(hwnd, IDC_FREQ);
+	TCHAR buf[256];
 	switch (conf->dev_type) {
 	case DEV_TAPE_NONE:
 		CheckDlgButton(hwnd, IDC_NONE, BST_CHECKED);
@@ -61,7 +63,9 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	}
 	for (i = 0; i < sizeof(freqvals)/sizeof(freqvals[0]); ++i) {
 		int ind;
-		ind = ComboBox_AddStringData(hlist, (LPARAM)freqnames[i], freqvals[i]);
+		ind = ComboBox_AddStringData(hlist, 
+			localize_str(LOC_TAPE, i, buf, sizeof(buf)), 
+			freqvals[i]);
 		if (freqvals[i] == conf->cfgint[CFG_INT_TAPE_FREQ]) 
 			ComboBox_SetCurSel(hlist, ind);
 	}

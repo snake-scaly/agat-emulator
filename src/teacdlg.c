@@ -37,7 +37,7 @@ static struct RESIZE_DIALOG resize=
 static void DrvList_AddItem(HWND hlist, int id, int selid)
 {
 	int no;
-	no = ComboBox_AddStringData(hlist, drvtypenames[id], id);
+	no = ComboBox_AddStringData(hlist, get_drvtypenames(id), id);
 	if (id == selid) {
 		ComboBox_SetCurSel(hlist, no);
 	}

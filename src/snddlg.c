@@ -5,9 +5,9 @@
 #include "sysconf.h"
 #include "resource.h"
 
-#define DLG_ID IDD_SNDCFG
+#include "localize.h"
 
-extern HINSTANCE intface_inst;
+#define DLG_ID IDD_SNDCFG
 
 static struct RESIZE_DIALOG resize=
 {
@@ -30,7 +30,7 @@ static struct RESIZE_DIALOG resize=
 		{14,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 	}
 };
-
+/*
 static const TCHAR*freqnames[]={
 	TEXT("8000 Гц"),
 	TEXT("11025 Гц"),
@@ -38,14 +38,17 @@ static const TCHAR*freqnames[]={
 	TEXT("44100 Гц"),
 	TEXT("48000 Гц")
 };
+*/
 
 static int freqvals[]={8000, 11025, 22050, 44100, 48000};
 
+/*
 static const TCHAR*bufsizes[]={
 	TEXT("Малый"),
 	TEXT("Средний"),
 	TEXT("Большой"),
 };
+*/
 
 static int bufszvals[]={2048, 8192, 16384};
 
@@ -67,6 +70,8 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	int i;
 	HWND hlist = GetDlgItem(hwnd, IDC_FREQ);
 	HWND hblist = GetDlgItem(hwnd, IDC_BUFSIZE);
+	TCHAR buf[256];
+
 	switch (conf->dev_type) {
 	case DEV_NOSOUND:
 		CheckDlgButton(hwnd, IDC_NONE, BST_CHECKED);
@@ -83,13 +88,17 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	}
 	for (i = 0; i < sizeof(freqvals)/sizeof(freqvals[0]); ++i) {
 		int ind;
-		ind = ComboBox_AddStringData(hlist, (LPARAM)freqnames[i], freqvals[i]);
+		ind = ComboBox_AddStringData(hlist, 
+			localize_str(LOC_SOUND, i, buf, sizeof(buf)), //freqnames[i], 
+			freqvals[i]);
 		if (freqvals[i] == conf->cfgint[CFG_INT_SOUND_FREQ]) 
 			ComboBox_SetCurSel(hlist, ind);
 	}
 	for (i = 0; i < sizeof(bufszvals)/sizeof(bufszvals[0]); ++i) {
 		int ind;
-		ind = ComboBox_AddStringData(hblist, (LPARAM)bufsizes[i], bufszvals[i]);
+		ind = ComboBox_AddStringData(hblist, 
+			localize_str(LOC_SOUND, i + 10, buf, sizeof(buf)), //bufsizes[i], 
+			bufszvals[i]);
 		if (bufszvals[i] == conf->cfgint[CFG_INT_SOUND_BUFSIZE]) 
 			ComboBox_SetCurSel(hblist, ind);
 	}

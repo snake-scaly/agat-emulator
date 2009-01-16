@@ -1,5 +1,7 @@
 #include "cpuint.h"
 
+#include "localize.h"
+
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs);
 
@@ -164,6 +166,7 @@ int cpu_step(struct CPU_STATE*st, int ncmd)
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 {
+	TCHAR bufs[2][256];
 	unsigned t0=get_n_msec();
 	int n_ticks = 0;
 	while (!cs->term_req) {
@@ -182,11 +185,15 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 		}
 		if (r < 0) {
 			if (MessageBox(cs->sr->video_w, 
-				TEXT("Ошибка исполнения команды процессора. Продолжить?"),
-				TEXT("Процессор"), MB_ICONEXCLAMATION | MB_YESNO) == IDNO) {
+				localize_str(LOC_CPU, 1, bufs[0], sizeof(bufs[0])),
+//				TEXT("Ошибка исполнения команды процессора. Продолжить?"),
+				localize_str(LOC_CPU, 0, bufs[1], sizeof(bufs[1])),
+//				TEXT("Процессор"), 
+				MB_ICONEXCLAMATION | MB_YESNO) == IDNO) {
 					TCHAR title[1024];
 					GetWindowText(cs->sr->video_w, title, 1024);
-					lstrcat(title, TEXT(" (неактивен)"));
+					lstrcat(title, localize_str(LOC_CPU, 2, bufs[0], sizeof(bufs[0])));
+//					lstrcat(title, TEXT(" (неактивен)"));
 					SetWindowText(cs->sr->video_w, title);
 					cs->term_req = 1;
 					break;

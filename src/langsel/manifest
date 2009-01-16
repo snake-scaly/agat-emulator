@@ -3,10 +3,10 @@
 <assemblyIdentity
     version="1.2.0.0"
     processorArchitecture="X86"
-    name="Agathe Emulator"
+    name="Agathe Emulator Language Selector"
     type="win32"
 />
-<description>Agathe emulator app.</description>
+<description>Agathe Emulator Language Selector</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity

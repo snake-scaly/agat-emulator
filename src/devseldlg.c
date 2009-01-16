@@ -21,7 +21,7 @@ static struct RESIZE_DIALOG resize=
 
 static int DevList_AddItem(HWND hlist, int id)
 {
-	return ListBox_AddStringData(hlist, devnames[id], id);
+	return ListBox_AddStringData(hlist, get_devnames(id), id);
 }
 
 static int dialog_init(HWND hwnd, void*p)

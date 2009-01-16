@@ -31,7 +31,7 @@ static int dialog_init(HWND hwnd, void*p)
 	for (i = 0; i < NMEMSIZES; i++, mask <<= 1) {
 		if (mp & mask) {
 			int ind;
-			ind = ComboBox_AddStringData(hlist, (LPARAM)memsizes_s[i], i);
+			ind = ComboBox_AddStringData(hlist, get_memsizes_s(i), i);
 			if (i == def) ComboBox_SetCurSel(hlist, ind);
 		}
 	}

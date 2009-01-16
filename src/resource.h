@@ -84,3 +84,10 @@
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+
+
+#define VERSION_NAME_STR	"Agat v1.2"
+#define VERSION_STR	"1.2"
+#define VERSION_VER	1, 2, 0, 1
+#define VERSION_VER_STR	"1, 2, 0, 1"
+

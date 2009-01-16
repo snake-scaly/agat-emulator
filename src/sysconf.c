@@ -4,6 +4,9 @@
 #include "resource.h"
 #include "sysconf.h"
 
+#include "localize.h"
+
+/*
 const TCHAR*memsizes_s[NMEMSIZES] = {
 	TEXT("ЧЧЧ"), // 1
 	TEXT("4  байта"), // 2
@@ -18,6 +21,7 @@ const TCHAR*memsizes_s[NMEMSIZES] = {
 	TEXT("24  байта"), //1024
 	TEXT("36  байт"),  //2048
 };
+*/
 
 const unsigned memsizes_b[NMEMSIZES] = {
 	0,
@@ -34,7 +38,7 @@ const unsigned memsizes_b[NMEMSIZES] = {
 	36 * 1024
 };
 
-
+/*
 const TCHAR*devnames[] = {
 	TEXT("ЧЧЧ"),
 	TEXT("ѕсевдо-ѕ«”"),
@@ -95,6 +99,8 @@ const TCHAR*drvtypenames[] = {
 	TEXT("2S1D"),
 	TEXT("2S2D"),
 };
+*/
+
 
 int clear_config(struct SYSCONFIG*c)
 {
@@ -317,12 +323,15 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 
 int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 {
+	TCHAR lbuf[256];
 	buf[0] = 0;
 
 	switch (c->slot_no) {
 	case CONF_SOUND:
 		if (c->dev_type == DEV_MMSYSTEM || c->dev_type == DEV_DSOUND) {
-			wsprintf(buf, TEXT("%i √ц; %i сэмплов"), c->cfgint[CFG_INT_SOUND_FREQ], c->cfgint[CFG_INT_SOUND_BUFSIZE]);
+			wsprintf(buf, 
+				localize_str(LOC_SYSCONF, 500, lbuf, sizeof(lbuf)), //TEXT("%i √ц; %i сэмплов"), 
+				c->cfgint[CFG_INT_SOUND_FREQ], c->cfgint[CFG_INT_SOUND_BUFSIZE]);
 		}
 		return 0;
 	}
@@ -332,23 +341,27 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_MEMORY_XRAM7:
 	case DEV_MEMORY_XRAM9:
 	case DEV_MEMORY_XRAMA:
-		_tcscpy(buf, memsizes_s[c->cfgint[CFG_INT_MEM_SIZE]]);
+		_tcscpy(buf, get_memsizes_s(c->cfgint[CFG_INT_MEM_SIZE]));
 		return 0;
 	case DEV_6502:
 	case DEV_M6502:
-		wsprintf(buf, TEXT("„астота %i%%"), c->cfgint[CFG_INT_CPU_SPEED]);
+		wsprintf(buf, 
+			localize_str(LOC_SYSCONF, 501, lbuf, sizeof(lbuf)), //TEXT("„астота %i%%"), 
+			c->cfgint[CFG_INT_CPU_SPEED]);
 		return 0;
 	case DEV_TAPE_FILE:
 		if (c->cfgstr[CFG_STR_TAPE][0])
 			_tcscpy(buf, c->cfgstr[CFG_STR_TAPE]);
 		else
-			_tcscpy(buf, TEXT("«апрос при обращении"));
-		wsprintf(buf + _tcslen(buf), TEXT(", %i √ц"), c->cfgint[CFG_INT_TAPE_FREQ]);
+			localize_str(LOC_SYSCONF, 502, buf, sizeof(buf));
+		wsprintf(buf + _tcslen(buf), 
+			localize_str(LOC_SYSCONF, 503, lbuf, sizeof(lbuf)), //TEXT(", %i √ц"), 
+			c->cfgint[CFG_INT_TAPE_FREQ]);
 		return 0;
 	case DEV_SYSTEM:
 		switch (c->slot_no) {
 		case CONF_MEMORY:
-			_tcscpy(buf, memsizes_s[c->cfgint[CFG_INT_MEM_SIZE]]);
+			_tcscpy(buf, get_memsizes_s(c->cfgint[CFG_INT_MEM_SIZE]));
 			return 0;
 		case CONF_ROM:
 			_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
@@ -362,23 +375,27 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_FDD_SHUGART:
 		switch (c->cfgint[CFG_INT_DRV_COUNT]) {
 		case 0:
-			_tcscpy(buf, TEXT("”стройства отсутствуют"));
+			localize_str(LOC_SYSCONF, 510, buf, sizeof(buf));
+//			_tcscpy(buf, TEXT("”стройства отсутствуют"));
 			break;
 		case 1:
 			if (c->cfgint[CFG_INT_DRV_TYPE1]!=DRV_TYPE_NONE) 
-				wsprintf(buf, TEXT("%s: %s"), 
-					drvtypenames[c->cfgint[CFG_INT_DRV_TYPE1]],
+				wsprintf(buf, 
+					localize_str(LOC_SYSCONF, 511, lbuf, sizeof(lbuf)), //TEXT("%s: %s"), 
+					get_drvtypenames(c->cfgint[CFG_INT_DRV_TYPE1]),
 					c->cfgstr[CFG_STR_DRV_IMAGE1]);
 			else
-				wsprintf(buf, TEXT("нет; %s: %s"), 
-					drvtypenames[c->cfgint[CFG_INT_DRV_TYPE2]],
+				wsprintf(buf,
+					localize_str(LOC_SYSCONF, 512, lbuf, sizeof(lbuf)), //TEXT("нет; %s: %s"), 
+					get_drvtypenames(c->cfgint[CFG_INT_DRV_TYPE2]),
 					c->cfgstr[CFG_STR_DRV_IMAGE2]);
 			break;
 		case 2:
-			wsprintf(buf, TEXT("%s: %s; %s: %s"),
-				drvtypenames[c->cfgint[CFG_INT_DRV_TYPE1]],
+			wsprintf(buf,
+				localize_str(LOC_SYSCONF, 513, lbuf, sizeof(lbuf)), //TEXT("%s: %s; %s: %s"),
+				get_drvtypenames(c->cfgint[CFG_INT_DRV_TYPE1]),
 				c->cfgstr[CFG_STR_DRV_IMAGE1],
-				drvtypenames[c->cfgint[CFG_INT_DRV_TYPE2]],
+				get_drvtypenames(c->cfgint[CFG_INT_DRV_TYPE2]),
 				c->cfgstr[CFG_STR_DRV_IMAGE2]);
 			break;
 		}
@@ -482,3 +499,45 @@ int free_sysicon(struct SYSICON*icon)
 	}
 	return 0;
 }
+
+LPCTSTR get_memsizes_s(int n)
+{
+	static TCHAR bufs[NMEMSIZES][256];
+	if (n < 0 || n >= NMEMSIZES) return NULL;
+	return localize_str(LOC_SYSCONF, n, bufs[n], sizeof(bufs[n]));
+}
+
+
+LPCTSTR get_devnames(int n)
+{
+	static TCHAR bufs[NDEVTYPES][256];
+	if (n < 0 || n >= NDEVTYPES) return NULL;
+	return localize_str(LOC_SYSCONF, n + 100, bufs[n], sizeof(bufs[n]));
+}
+
+
+
+LPCTSTR get_confnames(int n)
+{
+	static TCHAR bufs[NCONFTYPES][256];
+	if (n < 0 || n >= NCONFTYPES) return NULL;
+	return localize_str(LOC_SYSCONF, n + 200, bufs[n], sizeof(bufs[n]));
+}
+
+
+
+LPCTSTR get_sysnames(int n)
+{
+	static TCHAR bufs[NSYSTYPES][256];
+	if (n < 0 || n >= NSYSTYPES) return NULL;
+	return localize_str(LOC_SYSCONF, n + 300, bufs[n], sizeof(bufs[n]));
+}
+
+
+LPCTSTR get_drvtypenames(int n)
+{
+	static TCHAR bufs[DRV_N_TYPES][256];
+	if (n < 0 || n >= DRV_N_TYPES) return NULL;
+	return localize_str(LOC_SYSCONF, n + 400, bufs[n], sizeof(bufs[n]));
+}
+

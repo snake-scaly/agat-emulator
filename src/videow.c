@@ -8,6 +8,8 @@
 #include "keyb.h"
 #include "runstate.h"
 
+#include "localize.h"
+
 #define VIDEO_CLASS TEXT("agat_video")
 
 #define MAX_VIDEO_W (40*CHAR_W)
@@ -76,7 +78,7 @@ int free_video_buffer(struct SYS_RUN_STATE*sr)
 
 LPCTSTR get_system_name(struct SYS_RUN_STATE *sr)
 {
-	return sysnames[sr->config->systype];
+	return get_sysnames(sr->config->systype);
 }
 
 
@@ -158,14 +160,21 @@ static void on_save_state(HWND w, struct SYS_RUN_STATE*sr)
 	BOOL b = get_run_state_flags_by_ptr(sr) & RUNSTATE_SAVED;
 	int r = 1;
 	if (b) {
-		TCHAR buf[1024];
-		wsprintf(buf, TEXT("Перезаписать сохранённое состояние системы «%s»?"), sr->name);
-		if (MessageBox(w, buf, TEXT("Перезапись состояния"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2) != IDYES) return;
+		TCHAR buf[1024], lbuf[256];
+		wsprintf(buf, 
+			localize_str(LOC_VIDEO, 0, lbuf, sizeof(lbuf)), //TEXT("Перезаписать сохранённое состояние системы «%s»?"), 
+			sr->name);
+		if (MessageBox(w, buf, 
+			localize_str(LOC_VIDEO, 1, lbuf, sizeof(lbuf)), //TEXT("Перезапись состояния"),
+			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2) != IDYES) return;
 	}
 	r = save_system_state_file(sr);
 	if (r) {
-		MessageBox(w, TEXT("При сохранении состояния системы возникла ошибка"), 
-			TEXT("Сохранение состояния"), MB_ICONERROR);
+		TCHAR buf[2][256];
+		MessageBox(w, 
+			localize_str(LOC_VIDEO, 2, buf[0], sizeof(buf[0])), //TEXT("При сохранении состояния системы возникла ошибка"), 
+			localize_str(LOC_VIDEO, 3, buf[1], sizeof(buf[1])), //TEXT("Сохранение состояния"), 
+			MB_ICONERROR);
 	}
 }
 
@@ -173,27 +182,41 @@ static void on_load_state(HWND w, struct SYS_RUN_STATE*sr)
 {
 	int r = 1;
 	{
-		TCHAR buf[1024];
-		wsprintf(buf, TEXT("Загрузить сохранённое состояние системы <%s>?"), sr->name);
-		if (MessageBox(w, buf, TEXT("Загрузка состояния"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) != IDYES) return;
+		TCHAR buf[1024], lbuf[256];
+		wsprintf(buf, 
+			localize_str(LOC_VIDEO, 10, lbuf, sizeof(lbuf)), //TEXT("Загрузить сохранённое состояние системы <%s>?"), 
+			sr->name);
+		if (MessageBox(w, buf, 
+			localize_str(LOC_VIDEO, 11, lbuf, sizeof(lbuf)), //TEXT("Загрузка состояния"), 
+			MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON1) != IDYES) return;
 	}
 	r = load_system_state_file(sr);
 	if (r) {
-		MessageBox(w, TEXT("При загрузке состояния системы возникла ошибка"),
-			TEXT("Загрузка состояния"), MB_ICONERROR);
+		TCHAR buf[2][256];
+		MessageBox(w,
+			localize_str(LOC_VIDEO, 12, buf[0], sizeof(buf[0])), //TEXT("При загрузке состояния системы возникла ошибка"),
+			localize_str(LOC_VIDEO, 13, buf[1], sizeof(buf[1])), //TEXT("Загрузка состояния"), 
+			MB_ICONERROR);
 	}
 }
 
 static void on_clear_state(HWND w, struct SYS_RUN_STATE*sr)
 {
-	TCHAR buf[1024];
+	TCHAR buf[1024], lbuf[256];
 	int r;
-	sprintf(buf, TEXT("Сбросить сохранённое состояние системы <%s>?"), sr->name);
-	if (MessageBox(w, buf, TEXT("Сброс состояния"), MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2) != IDYES) return;
+	sprintf(buf, 
+		localize_str(LOC_VIDEO, 20, lbuf, sizeof(lbuf)), //TEXT("Сбросить сохранённое состояние системы <%s>?"), 
+		sr->name);
+	if (MessageBox(w, buf, 
+		localize_str(LOC_VIDEO, 21, lbuf, sizeof(lbuf)), //TEXT("Сброс состояния"), 
+		MB_ICONQUESTION | MB_YESNO | MB_DEFBUTTON2) != IDYES) return;
 	r = clear_system_state_file(sr);
 	if (r) {
-		MessageBox(w, TEXT("При сбросе состояния системы возникла ошибка"), 
-			TEXT("Сброс состояния"), MB_ICONERROR);
+		TCHAR buf[2][256];
+		MessageBox(w, 
+			localize_str(LOC_VIDEO, 22, buf[0], sizeof(buf[0])), //TEXT("При сбросе состояния системы возникла ошибка"), 
+			localize_str(LOC_VIDEO, 23, buf[1], sizeof(buf[1])), //TEXT("Сброс состояния"), 
+			MB_ICONERROR);
 	}
 }
 
@@ -206,6 +229,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		{
 			LPCREATESTRUCT cs = (LPCREATESTRUCT)lp;
 			HMENU m;
+			TCHAR lbuf[256];
 			sr = (struct SYS_RUN_STATE*)cs->lpCreateParams;
 			SetWindowLongPtr(w, GWL_USERDATA, (LONG)sr);
 			puts("wnd_proc createwindow");
@@ -215,18 +239,26 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			m=sr->popup_menu=GetSystemMenu(w,FALSE);
 			AppendMenu(m,MF_SEPARATOR,0,0);
 #endif
-			AppendMenu(m,MF_STRING,IDC_RESET,TEXT("&Сброс\tCtrl+Break"));
-			AppendMenu(m,MF_STRING,IDC_HRESET,TEXT("&Полный сброс"));
-//			AppendMenu(m,MF_STRING,IDC_IRQ,TEXT("IRQ"));
-//			AppendMenu(m,MF_STRING,IDC_NMI,TEXT("NMI"));
+			AppendMenu(m,MF_STRING,IDC_RESET,
+				localize_str(LOC_VIDEO, 100, lbuf, sizeof(lbuf))); //TEXT("&Сброс\tCtrl+Break"));
+			AppendMenu(m,MF_STRING,IDC_HRESET,
+				localize_str(LOC_VIDEO, 101, lbuf, sizeof(lbuf))); //TEXT("&Полный сброс"));
+//			AppendMenu(m,MF_STRING,IDC_IRQ,
+//				localize_str(LOC_VIDEO, 102, lbuf, sizeof(lbuf))); //TEXT("IRQ"));
+//			AppendMenu(m,MF_STRING,IDC_NMI,
+//				localize_str(LOC_VIDEO, 103, lbuf, sizeof(lbuf))); //TEXT("NMI"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
-			AppendMenu(m,MF_STRING,IDC_SAVESTATE,TEXT("Сохранить состояние..."));
-			AppendMenu(m,MF_STRING,IDC_LOADSTATE,TEXT("Загрузить состояние..."));
-			AppendMenu(m,MF_STRING,IDC_CLEARSTATE,TEXT("Сбросить состояние..."));
+			AppendMenu(m,MF_STRING,IDC_SAVESTATE,
+				localize_str(LOC_VIDEO, 110, lbuf, sizeof(lbuf))); //TEXT("Сохранить состояние..."));
+			AppendMenu(m,MF_STRING,IDC_LOADSTATE,
+				localize_str(LOC_VIDEO, 111, lbuf, sizeof(lbuf))); //TEXT("Загрузить состояние..."));
+			AppendMenu(m,MF_STRING,IDC_CLEARSTATE,
+				localize_str(LOC_VIDEO, 112, lbuf, sizeof(lbuf))); //TEXT("Сбросить состояние..."));
 			AppendMenu(m,MF_SEPARATOR,0,0);
 #ifdef UNDER_CE
 			AppendMenu(m,MF_SEPARATOR,0,0);
-			AppendMenu(m,MF_STRING,IDCLOSE,TEXT("&Закрыть"));
+			AppendMenu(m,MF_STRING,IDCLOSE,
+				localize_str(LOC_VIDEO, 120, lbuf, sizeof(lbuf))); //TEXT("&Закрыть"));
 #endif
 			SetTimer(w,TID_FLASH,FLASH_INTERVAL,NULL);
 		}

@@ -20,6 +20,8 @@
 #include "syslib.h"
 #include "debug.h"
 
+#include "localize.h"
+
 #ifndef W_OK
 #define W_OK 02
 #endif
@@ -186,14 +188,19 @@ static int remove_fdd(struct SLOT_RUN_STATE*sr)
 
 static int init_menu(struct FDD_DRIVE_DATA*drv, int s, int d, HMENU menu)
 {
-	TCHAR buf[1024];
+	TCHAR buf[1024], buf1[1024];
 	if (drv->submenu) DeleteMenu(menu, (UINT)drv->submenu, MF_BYCOMMAND);
 	if (drv->present) {
 		drv->submenu = CreatePopupMenu();
-		AppendMenu(drv->submenu, MF_STRING, FDD_BASE_CMD + (s*4 + d*2 + 0), TEXT("Вставить диск..."));
-		AppendMenu(drv->submenu, MF_STRING, FDD_BASE_CMD + (s*4 + d*2 + 1), TEXT("Извлечь диск"));
+		AppendMenu(drv->submenu, MF_STRING, FDD_BASE_CMD + (s*4 + d*2 + 0), 
+			localize_str(LOC_FDD, 2, buf1, sizeof(buf1)));
+//			TEXT("Вставить диск..."));
+		AppendMenu(drv->submenu, MF_STRING, FDD_BASE_CMD + (s*4 + d*2 + 1), 
+			localize_str(LOC_FDD, 3, buf1, sizeof(buf1)));
+//			TEXT("Извлечь диск"));
 
-		wsprintf(buf, TEXT("Дисковод 800Кб (S%i,D%i)"), s, d + 1);
+		// TEXT("Дисковод 800Кб (S%i,D%i)")
+		wsprintf(buf, localize_str(LOC_FDD, 0, buf1, sizeof(buf1)), s, d + 1); 
 		AppendMenu(menu, MF_POPUP, (UINT_PTR)drv->submenu, buf);
 	} else drv->submenu = NULL;
 	return 0;
