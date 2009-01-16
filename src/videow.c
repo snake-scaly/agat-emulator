@@ -114,9 +114,17 @@ int init_video_window(struct SYS_RUN_STATE*sr)
 {
 	int r;
 	r = create_video_buffer(sr);
-	sr->v_size.cx = 32 * CHAR_W;
-	sr->v_size.cy = 32 * CHAR_H;
-
+	switch (sr->cursystype) {
+	case SYSTEM_7:
+	case SYSTEM_9:
+		sr->v_size.cx = 32 * CHAR_W;
+		sr->v_size.cy = 32 * CHAR_H;
+		break;
+	case SYSTEM_A:
+		sr->v_size.cx = 35 * CHAR_W;
+		sr->v_size.cy = 24 * CHAR_H;
+		break;
+	}
 /*	sr->h=CreateThread(NULL,0,cr_proc,sr,0,&sr->th);
 	while (!sr->video_w) {
 		if (WaitForSingleObject(sr->h, 100) != WAIT_TIMEOUT) {

@@ -175,7 +175,7 @@ static int init_menu(struct FDD_DRIVE_DATA*drv, int s, int d, HMENU menu)
 			localize_str(LOC_FDD, 2, buf1, sizeof(buf1)));
 //			TEXT("Вставить диск..."));
 		AppendMenu(drv->submenu, MF_STRING, FDD1_BASE_CMD + (s*4 + d*2 + 1), 
-			localize_str(LOC_FDD, 2, buf1, sizeof(buf1)));
+			localize_str(LOC_FDD, 3, buf1, sizeof(buf1)));
 //			TEXT("Извлечь диск"));
 
 		//TEXT("Дисковод 140Кб (S%i,D%i)"),
