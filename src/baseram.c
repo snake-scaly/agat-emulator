@@ -102,6 +102,28 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 			system9_cancel_apple_mode(0, 0, st);
 		}
 	}
+	switch (ss->sr->config->systype) {
+	case SYSTEM_9:
+		if (!st->apple_emu) break;
+	case SYSTEM_A:
+		{
+			switch (st->apple_rom_mode&3) {
+			case 0:
+				apple_set_ext_rom_mode(1, 0, st);
+				break;
+			case 1:
+				apple_set_ext_rom_mode(0, 1, st);
+				break;
+			case 2:
+				apple_set_ext_rom_mode(0, 0, st);
+				break;
+			case 3:
+				apple_set_ext_rom_mode(1, 1, st);
+				break;
+			}
+		}
+		break;
+	}
 	return 0;
 }
 
@@ -523,8 +545,6 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	} else st->last_addr = adr;
 	switch (mde) {
 	case 0:
-		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
-		else st->psrom9_ofs=0;
 		st->apple_rom_mode = 0xC2 | hi;
 		apple_set_ext_rom_mode(1, 0, st);
 //		xram_apple_enable(1, 0);

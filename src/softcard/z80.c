@@ -311,7 +311,10 @@ int  softcard_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 {
 	struct STATE_Z80*data;
 
-	if (!z80_initialized) init_z80();
+	if (!z80_initialized) {
+		init_z80();
+		z80_initialized = 1;
+	}
 
 	data = calloc(1, sizeof(*data));
 	if (!data) return -1;
