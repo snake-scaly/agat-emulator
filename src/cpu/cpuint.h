@@ -29,6 +29,10 @@ struct CPU_STATE
 	int sleep_req;
 	HANDLE wakeup;
 
+
+	int  (*hook_proc)(void*p);
+	void *hook_data;
+
 	int  (*exec_op)(struct CPU_STATE*st);
 	void (*intr)(struct CPU_STATE*st, int t);
 	void (*free)(struct CPU_STATE*st);

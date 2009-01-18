@@ -31,20 +31,20 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,137,50,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 139
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "About"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Close",IDOK,68,118,50,14
+    DEFPUSHBUTTON   "Close",IDOK,68,128,50,14
     CTEXT           VERSION_NAME_STR,11,7,7,173,8,SS_NOTIFY
     CTEXT           "Odintsov O.A. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
     CTEXT           "Agat-7, Agat-9, Apple ][ system emulation",14,7,53,173,8,
                     SS_NOTIFY
-    CTEXT           "For information read group agat9@yahoogroups.com\n\nUses code M6502 by\nMarat Fayzullin è Alex Krasivsky.\nUses giveio driver (c) Dale Roberts.",
-                    15,7,64,173,51,SS_NOTIFY
+    CTEXT           "For information read group agat9@yahoogroups.com\n\nUses code M6502 by\nMarat Fayzullin è Alex Krasivsky.\nUses giveio driver (c) Dale Roberts.\nZ80 simulation by fuse project.",
+                    15,7,64,173,61,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161
@@ -131,7 +131,7 @@ BEGIN
     CONTROL         "None",IDC_NONE,"Button",BS_AUTORADIOBUTTON | 
                     BS_NOTIFY | WS_GROUP,21,21,61,10
     CONTROL         "PC Speaker",IDC_BEEPER,"Button",BS_AUTORADIOBUTTON | 
-                    BS_NOTIFY,21,34,46,10
+                    BS_NOTIFY,21,34,56,10
     CONTROL         "MMSYSTEM",IDC_MMSYSTEM,"Button",BS_AUTORADIOBUTTON | 
                     BS_NOTIFY,21,47,56,10
     CONTROL         "DirectSound",IDC_DIRECTSOUND,"Button",
@@ -402,6 +402,7 @@ BEGIN
 	12118	"None"
 	12119	"External file"
 	12120	"No sound"
+	12121	"Softcard"
 
 //	12200	NULL
 //	12201	NULL

@@ -44,6 +44,7 @@ static int dialog_init(HWND hwnd, void*p)
 	case 2: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
+		DevList_AddItem(hlist, DEV_SOFTCARD);
 		return 0;
 	}
 	return -1;

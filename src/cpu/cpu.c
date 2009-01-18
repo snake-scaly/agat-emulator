@@ -29,6 +29,10 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_STOP:
 		cpu_pause(cs, 1);
 		return 0;
+	case SYS_COMMAND_SET_CPU_HOOK:
+		cs->hook_proc = (void*)data;
+		cs->hook_data = (void*)param;
+		return 1;
 	default:
 		return cpu_cmd(cs, cmd, data, param);
 	}
@@ -178,7 +182,10 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			if (cs->term_req) return 0;
 		}
 //		puts("exec_op");
-		r = cs->exec_op(cs);
+		if  (cs->hook_proc) {
+			r = cs->hook_proc(cs->hook_data);
+		} else r = 0;
+		if (!r) r = cs->exec_op(cs);
 		if (r > 0) {
 			cs->tsc_6502 += r;
 			n_ticks += r;

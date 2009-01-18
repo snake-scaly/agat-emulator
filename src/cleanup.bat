@@ -16,6 +16,7 @@ rmdir /s /q joystick\.obj
 rmdir /s /q sound\.obj
 rmdir /s /q tape\.obj
 rmdir /s /q video\.obj
+rmdir /s /q softcard\.obj
 del /q installio\*.obj
 rmdir /s /q langsel\.obj
 

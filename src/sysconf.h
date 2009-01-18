@@ -51,6 +51,8 @@ enum {
 
 	DEV_NOSOUND,
 
+	DEV_SOFTCARD,
+
 	NDEVTYPES
 };
 

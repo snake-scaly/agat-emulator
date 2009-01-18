@@ -31,20 +31,20 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,137,50,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 139
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Закрыть",IDOK,68,118,50,14
+    DEFPUSHBUTTON   "Закрыть",IDOK,68,128,50,14
     CTEXT           VERSION_NAME_STR,11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
     CTEXT           "Эмуляция систем Агат-7, Агат-9, Apple ][",14,7,53,173,8,
                     SS_NOTIFY
-    CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky.\nИспользуется драйвер giveio (c) Dale Roberts.",
-                    15,7,64,173,51,SS_NOTIFY
+    CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky.\nИспользуется драйвер giveio (c) Dale Roberts.\nИмуляция кода Z80 взята из проекта fuse.",
+                    15,7,64,173,61,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161
@@ -386,7 +386,7 @@ BEGIN
 	12101	"Псевдо-ПЗУ"
 	12102	"Доп. ОЗУ"
 	12103	"Доп. ОЗУ"
-	12104	"Language card"
+	12104	"Плата Language card"
 	12105	"Контроллер Teac"
 	12106	"Контроллер Shugart"
 
@@ -404,6 +404,7 @@ BEGIN
 	12118	"Отсутствует"
 	12119	"Внешний файл"
 	12120	"Без звука"
+	12121	"Плата Softcard"
 
 //	12200	NULL
 //	12201	NULL
