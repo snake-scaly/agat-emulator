@@ -566,11 +566,12 @@ void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H/2+x*PIX_W*7/2));
 	byte d = mem[addr], c1, c2, c;
 	int xn, yn;
+	static const byte gr_pal[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
 	if (vs->combined&&y>=40) {
 		return;
 	}
-	c1=d>>4;
-	c2=d&0x0F;
+	c1=gr_pal[d>>4];
+	c2=gr_pal[d&0x0F];
 	c1=c1|(c1<<4);
 	c2=c2|(c2<<4);
 	r->left=x*PIX_W*7;
