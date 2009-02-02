@@ -43,7 +43,7 @@ BEGIN
                     13,7,29,173,19,SS_NOTIFY
     CTEXT           "Ёмул€ци€ систем јгат-7, јгат-9, Apple ][",14,7,53,173,8,
                     SS_NOTIFY
-    CTEXT           "«а информацией обращайтесь в группу agat9@yahoogroups.com\n\nјвторами модул€ M6502 €вл€ютс€\nMarat Fayzullin и Alex Krasivsky.\n»спользуетс€ драйвер giveio (c) Dale Roberts.\n»мул€ци€ кода Z80 вз€та из проекта fuse.",
+    CTEXT           "«а информацией обращайтесь в группу agat9@yahoogroups.com\n\nјвторами модул€ M6502 €вл€ютс€\nMarat Fayzullin и Alex Krasivsky.\n»спользуетс€ драйвер giveio (c) Dale Roberts.\nЁмул€ци€ кода Z80 вз€та из проекта fuse.",
                     15,7,64,173,61,SS_NOTIFY
 END
 
