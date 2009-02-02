@@ -57,6 +57,7 @@ LPCTSTR localize_str(int modid, int strid, LPTSTR buf, int bufsize)
 {
 	int r;
 	if (!lang) return NULL;
+	memset(buf, 0, bufsize);
 	r = LoadString(lang, strid + modid * N_MODULE_LANG_STR_ID + BASE_LANG_STR_ID, buf, bufsize / sizeof(buf[0]));
 	return r?buf:NULL;
 }

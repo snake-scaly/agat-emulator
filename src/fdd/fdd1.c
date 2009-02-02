@@ -50,7 +50,7 @@ struct FDD_DRIVE_DATA
 {
 	int	Phase;
 	int	Track;
-	byte	TrackData[6671];
+	byte	TrackData[6656];
 	int	TrackIndex, TrackLen;
 	char_t	disk_name[1024];
 	IOSTREAM *disk;
@@ -77,6 +77,7 @@ struct FDD_DATA
 	byte	fdd_rom[FDD_ROM_SIZE];
 	struct SYS_RUN_STATE	*sr;
 	struct SLOT_RUN_STATE	*st;
+	int	last_tsc;
 };
 
 
@@ -294,6 +295,9 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	data = calloc(1, sizeof(*data));
 	if (!data) return -1;
 
+	data->sr = sr;
+	data->st = st;
+
 	rom=isfopen(cf->cfgstr[CFG_STR_DRV_ROM]);
 	if (!rom) {
 		load_buf_res(cf->cfgint[CFG_INT_DRV_ROM_RES], data->fdd_rom, FDD_ROM_SIZE);
@@ -328,6 +332,13 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	return 0;
 }
 
+static void fdd_rot(struct FDD_DRIVE_DATA *d)
+{
+	d->TrackIndex++;
+	if (d->TrackIndex>=d->TrackLen)
+		d->TrackIndex = 0;
+}
+
 
 static byte fdd_read_data(struct FDD_DATA*data)
 {
@@ -339,9 +350,7 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	if (!(data->time&3)) r = 0;
 	else {
 		r = d->TrackData[d->TrackIndex];
-		d->TrackIndex++;
-		if (d->TrackIndex>=d->TrackLen)
-			d->TrackIndex = 0;
+		fdd_rot(d);
 	}
 	data->time++;
 	return r;
@@ -350,10 +359,15 @@ static byte fdd_read_data(struct FDD_DATA*data)
 static void fdd_write_data(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	int tsc;
+	tsc = cpu_get_tsc(data->sr);
+
+//	printf("Writeing: tsc = %i\n", tsc-data->last_tsc);
+	data->last_tsc = tsc;
+
+//	printf("Writing[%i]: %02X (%02X)\n", d->TrackIndex, data->state.WriteData, d->TrackData[d->TrackIndex]);
 	d->TrackData[d->TrackIndex] = data->state.WriteData;
-	d->TrackIndex++;
-	if (d->TrackIndex>=d->TrackLen)
-		d->TrackIndex = 0;
+	fdd_rot(d);
 }
 
 static void fdd_nowrite(struct FDD_DATA*data,byte d)
@@ -380,9 +394,15 @@ void fdd_io_write(unsigned short a,unsigned char d,struct FDD_DATA*data)
 }
 
 
-static void fdd_save_track(struct FDD_DATA*data)
+static void fdd_code_fm(byte b, byte*r)
 {
-	puts("save_track");
+	r[0] = (b >> 1) | 0xAA;
+	r[1] = b | 0xAA;
+}
+
+static void fdd_decode_fm(const byte*r, byte*b)
+{
+	*b = (r[1] & 0x55) | ((r[0] &0x55) << 1);
 }
 
 static byte fdd_check_sum(const byte*b, int n)
@@ -392,29 +412,100 @@ static byte fdd_check_sum(const byte*b, int n)
 	return r;
 }
 
-static void fdd_code_fm(byte b, byte*r)
+static int next_sector(struct FDD_DATA*data, int ofs, int *nrot)
 {
-	r[0] = (b >> 1) | 0xAA;
-	r[1] = b | 0xAA;
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	static const byte hdr[] = {0xD5, 0xAA, 0x96};
+	int n = 0, i, off0 = -1, i0;
+	for (i = 0; i < d->TrackLen; ++i, ++ofs) {
+		if (ofs == d->TrackLen) { ofs = 0; ++*nrot; }
+		if (d->TrackData[ofs] != hdr[n]) {
+			if (n) { ofs = off0; i = i0; }
+			n = 0;
+		} else {
+			if (!n) { off0 = ofs; i0 = i; }
+			++n;
+			if (n == sizeof(hdr)) return off0;
+		}
+	}
+	return -1;
 }
 
-static void fdd_decode_fm(const byte*r, byte*b)
+static int next_data(struct FDD_DATA*data, int maxl, int ofs, int *nrot)
 {
-	*b = (r[0] & 0x55) | ((r[1] &0x55) << 1);
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	static const byte hdr[] = {0xD5, 0xAA, 0xAD};
+	int n = 0, i, off0 = -1, i0;
+	for (i = 0; i < d->TrackLen; ++i, ++ofs) {
+		if (ofs == d->TrackLen) { ofs = 0; ++*nrot; }
+		if (d->TrackData[ofs] != hdr[n]) {
+			if (n) { ofs = off0; i = i0; }
+			n = 0;
+		} else {
+			if (!n) { off0 = ofs; i0 = i; }
+			++n;
+			if (n == sizeof(hdr)) return off0;
+		}
+	}
+	return -1;
 }
+
+
+static int decode_ts(const byte*data, byte vtscs[4])
+{
+	int i;
+	for (i = 0; i < 4; ++i, data += 2) {
+		fdd_decode_fm(data, vtscs + i);
+	}
+	if (fdd_check_sum(vtscs, 3) != vtscs[3]) return -1;
+	return 0;
+}
+
+static int fdd_save_track_nibble(struct FDD_DATA*data)
+{
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	osseek(d->disk, d->start_ofs + d->Track*NIBBLE_TRACK_LEN, SSEEK_SET);
+	if (oswrite(d->disk, d->TrackData, NIBBLE_TRACK_LEN) != NIBBLE_TRACK_LEN) {
+		errprint(TEXT("can't write track"));
+		d->error=1;
+		return -1;
+	}
+	return 0;
+}
+
+static const byte CodeTabl[0x40]={
+	0x96,0x97,0x9A,0x9B,0x9D,0x9E,0x9F,0xA6,0xA7,0xAB,0xAC,0xAD,0xAE,0xAF,0xB2,0xB3,
+	0xB4,0xB5,0xB6,0xB7,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,0xCB,0xCD,0xCE,0xCF,0xD3,
+	0xD6,0xD7,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,0xE5,0xE6,0xE7,0xE9,0xEA,0xEB,0xEC,
+	0xED,0xEE,0xEF,0xF2,0xF3,0xF4,0xF5,0xF6,0xF7,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
+};
+
+static const byte DecodeTabl[0x80]={
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x00,0x00,0x02,0x03,0x00,0x04,0x05,0x06,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x07,0x08,0x00,0x00,0x00,0x09,0x0A,0x0B,0x0C,0x0D,
+	0x00,0x00,0x0E,0x0F,0x10,0x11,0x12,0x13,0x00,0x14,0x15,0x16,0x17,0x18,0x19,0x1A,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1B,0x00,0x1C,0x1D,0x1E,
+	0x00,0x00,0x00,0x1F,0x00,0x00,0x20,0x21,0x00,0x22,0x23,0x24,0x25,0x26,0x27,0x28,
+	0x00,0x00,0x00,0x00,0x00,0x29,0x2A,0x2B,0x00,0x2C,0x2D,0x2E,0x2F,0x30,0x31,0x32,
+	0x00,0x00,0x33,0x34,0x35,0x36,0x37,0x38,0x00,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F
+};
+
+static const byte ren[]={
+	0x00,0x07,0x0E,0x06,0x0D,0x05,0x0C,0x04,
+	0x0B,0x03,0x0A,0x02,0x09,0x01,0x08,0x0F
+};
+
+static const byte ren1[]={
+	0x00,0x0D,0x0B,0x09,0x07,0x05,0x03,0x01,
+	0x0E,0x0C,0x0A,0x08,0x06,0x04,0x02,0x0F
+};
+
 
 static void fdd_code_mfm(const byte*b, byte*d)
 {
-	static const byte CodeTabl[0x40]={
-		0x96,0x97,0x9A,0x9B,0x9D,0x9E,0x9F,0xA6,0xA7,0xAB,0xAC,0xAD,0xAE,0xAF,0xB2,
-		  0xB3,0xB4,0xB5,0xB6,0xB7,0xB9,0xBA,0xBB,0xBC,0xBD,0xBE,0xBF,0xCB,
-		  0xCD,0xCE,0xCF,0xD3,0xD6,0xD7,0xD9,0xDA,0xDB,0xDC,0xDD,0xDE,0xDF,
-		  0xE5,0xE6,0xE7,0xE9,0xEA,0xEB,0xEC,0xED,0xEE,0xEF,0xF2,0xF3,0xF4,
-		  0xF5,0xF6,0xF7,0xF9,0xFA,0xFB,0xFC,0xFD,0xFE,0xFF
-	};
 
 	memset(d, 0, 0x157);
-
 
 	__asm {
 		pushad
@@ -433,11 +524,6 @@ static void fdd_code_mfm(const byte*b, byte*d)
 		jns	l1
 		or	ebx, ebx
 		jne	l2
-
-		mov	ecx, 55h
-	l3:	and	byte ptr [edi+ecx], 3fh
-		dec	ecx
-		jns	l3
 
 
 		xor	al, al
@@ -460,10 +546,134 @@ static void fdd_code_mfm(const byte*b, byte*d)
 }
 
 
+static int fdd_decode_mfm(byte*s, byte*d)
+{
+	int res = 0;
+	memset(d, 0, 0x100);
+	__asm {
+		pushad
+		mov	esi, s
+		mov	edi, d
+		xor	eax, eax
+		xor	ebx, ebx
+		xor	ecx, ecx
+l1:		mov	bl, [esi + ecx]
+		and	bl, 7Fh
+		mov	bl, DecodeTabl[ebx]
+		mov	ah, bl
+		xor	ah, al
+		mov	[esi + ecx], ah
+		mov	al, ah
+		inc	ecx
+		cmp	ecx, 156h
+		jne	l1
+		mov	bl, al
+		mov	bl, CodeTabl[ebx]
+		cmp	[esi + ecx], bl
+		je	cs_ok
+		mov	res, -1
+		jmp	fin
+
+cs_ok:		xor	ebx, ebx
+l2:		xor	ecx, ecx
+l3:		mov	al, [esi + 56h + ebx]
+		shr	byte ptr [esi + ecx], 1
+		rcl	al, 1
+		shr	byte ptr [esi + ecx], 1
+		rcl	al, 1
+		mov	[edi + ebx], al
+		inc	bl
+		inc	cl
+		cmp	cl, 56h
+		jne	l3
+		cmp	bl, 02h
+		jne	l2
+fin:
+		popad
+	}
+	return res;
+}
+
+
+static int copy_sect(struct FDD_DRIVE_DATA *d, byte*buf, int ofs, int len, int *nrot)
+{
+	for (;len; --len, ++ofs, ++buf) {
+		if (ofs == d->TrackLen) { ofs = 0; ++*nrot; }
+		*buf = d->TrackData[ofs];
+	}
+	return ofs;
+}
+
+
+static void fdd_save_track(struct FDD_DATA*data)
+{
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	int ofs, nrot = 0;
+//	puts("save_track");
+	if (d->rawfmt) {
+		fdd_save_track_nibble(data);
+		return;
+	}
+/*	{
+		char buf[128];
+		FILE*out;
+		sprintf(buf,"track%02i.bin", d->Track);
+		out = fopen(buf, "wb");
+		fwrite(d->TrackData, 1, sizeof(d->TrackData), out);
+		fclose(out);
+	}*/
+	for (ofs = next_sector(data, 0, &nrot); ofs != -1 && nrot < 2; ofs = next_sector(data, ofs + 1, &nrot)) {
+		byte vtscs[4];
+		byte shdr[14];
+		byte sbuf[343+6], buf[FDD_SECTOR_DATA_SIZE];
+		int ofs1, r;
+//		printf("ofs = %i\n", ofs);
+		ofs = copy_sect(d, shdr, ofs, 14, &nrot);
+		if (decode_ts(shdr + 3, vtscs)) {
+			printf("invalid VTS checksum!\n");
+			continue;
+		}
+		if (shdr[11] != 0xDE || shdr[12] != 0xAA) {
+			printf("invalid VTS tail!\n");
+			continue;
+		}
+//		printf("vts: %i %i %i\n", vtscs[0], vtscs[1], vtscs[2]);
+		ofs1 = next_data(data, 20, ofs, &nrot);
+		if (ofs1 == -1) {
+			printf("no sector data prefix!\n");
+			continue;
+		}
+		ofs = ofs1;
+		ofs = copy_sect(d, sbuf, ofs, 343+6, &nrot);
+		if (sbuf[0] != 0xD5 || sbuf[1] != 0xAA || sbuf[2] != 0xAD) {
+			printf("invalid sector data prefix!\n");
+			continue;
+		}
+		if (sbuf[343+3] != 0xDE || sbuf[343+4] != 0xAA) {
+			printf("invalid sector data tail!\n");
+			continue;
+		}
+		r = fdd_decode_mfm(sbuf + 3, buf);
+		if (r) {
+			printf("decode_mfm = %i\n", r);
+			continue;
+		}
+//		printf("%i: %x %x %x %x %x\n", ofs1, buf[0], buf[1], buf[2], buf[3], buf[4]);
+		osseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + ren[vtscs[2]]) *
+			FDD_SECTOR_DATA_SIZE, SSEEK_SET);
+		if (oswrite(d->disk, buf, FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+			errprint(TEXT("can't write sector"));
+			d->error=1;
+		}
+	}
+	osseek(d->disk, 0, SSEEK_CUR);
+}
+
+
+
 static void sound_phase()
 {
 	PlaySound("shugart.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOWAIT);
-//	puts("shugart sound");
 }
 
 
@@ -473,14 +683,6 @@ static void fdd_load_track(struct FDD_DATA*data)
 	int i, j, d, dl;
 	byte a2[2];
 	byte buf[257];
-	static const byte ren[]={
-		0x00,0x07,0x0E,0x06,0x0D,0x05,0x0C,0x04,
-		0x0B,0x03,0x0A,0x02,0x09,0x01,0x08,0x0F
-	};
-	static const byte ren1[]={
-		0x00,0x0D,0x0B,0x09,0x07,0x05,0x03,0x01,
-		0x0E,0x0C,0x0A,0x08,0x06,0x04,0x02,0x0F
-	};
 
 	if (!drv->disk) {
 		drv->error=1;
@@ -527,7 +729,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 		drv->TrackData[d+19] = 0xD5;
 		drv->TrackData[d+20] = 0xAA;
 		drv->TrackData[d+21] = 0xAD;
-		dl = d+22;
+		dl = d + 22;
 		if (isread(drv->disk,buf,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't read sector"));
 			drv->error=1;
@@ -582,6 +784,15 @@ static void fdd_select_phase(struct FDD_DATA*data, int p)
 	data->state.CurrentPhase = p;
 }
 
+static void fdd_begin_write(struct FDD_DATA*data)
+{
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	data->time = 1;
+	data->state.ReadMode = 0;
+	data->last_tsc = 0;
+	fdd_rot(d);
+}
+
 byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 {
 	byte r = 0xFF;
@@ -626,7 +837,7 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		}
 		break;
 	case 15:
-		data->state.ReadMode = 0;
+		fdd_begin_write(data);
 		break;
 	}
 	data->state.C0XD = 0;
