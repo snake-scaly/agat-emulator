@@ -39,7 +39,12 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		break;
 	case 5: vs->page = 1; 
 		break;
-	case 6: vs->hgr = 0; 
+	case 6: 
+		if (vs->sr->cursystype == SYSTEM_A) {
+			vs->hgr = 0;
+		} else {
+			vs->hgr = 1; // low-res emulation was not implemented in Agat
+		}
 		break;
 	case 7: vs->hgr = 1; 
 		break;
