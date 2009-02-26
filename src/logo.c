@@ -1,3 +1,10 @@
+/*
+	Logo module
+	Copyright (c) Oleg Odintsov
+*/
+
+
+#define _WIN32_WINNT	0x500
 #include "common.h"
 #include "logo.h"
 #include <stdio.h>
@@ -9,6 +16,7 @@ static LPBYTE bmpdata;
 static int start_ticks=2, fin_ticks=20, end_ticks=80, delta_tick=30, cur_tick=0, simulate=0;
 
 static BOOL (WINAPI *AlphaBlendPtr)( IN HDC, IN int, IN int, IN int, IN int, IN HDC, IN int, IN int, IN int, IN int, IN BLENDFUNCTION);
+static BOOL (WINAPI *UpdateLayeredWindowPtr)(IN HWND, IN HDC, IN PPOINT, IN PSIZE, IN HDC, IN PPOINT, IN COLORREF, IN PBLENDFUNCTION, IN DWORD);
 
 
 static int simulate_aplha(HDC dest)
@@ -79,7 +87,8 @@ static LRESULT CALLBACK LogoProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 			bf.BlendFlags=0;
 			bf.SourceConstantAlpha=0x30;
 			bf.AlphaFormat=AC_SRC_ALPHA;
-			if (!AlphaBlendPtr||!AlphaBlendPtr(dc,0,0,w,h,bmpdc,0,0,w,h,bf)) {
+			if (UpdateLayeredWindowPtr) {
+			} else if (!AlphaBlendPtr||!AlphaBlendPtr(dc,0,0,w,h,bmpdc,0,0,w,h,bf)) {
 				simulate=1;
 				if (simulate_aplha(dc)<0) DestroyWindow(wnd);
 			}
@@ -88,9 +97,15 @@ static LRESULT CALLBACK LogoProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 		return 0;
 	case WM_TIMER:
 		cur_tick++;
-		if (cur_tick==start_ticks) ShowWindow(wnd,SW_SHOWNA);
-		else if (cur_tick==end_ticks) DestroyWindow(wnd);
-		else if (cur_tick>start_ticks&&cur_tick<fin_ticks&&!simulate) InvalidateRect(wnd,NULL,FALSE);
+		if (cur_tick==start_ticks) {
+			ShowWindow(wnd,SW_SHOWNA);
+		} else if (cur_tick==end_ticks) DestroyWindow(wnd);
+		else if (cur_tick>start_ticks&&cur_tick<fin_ticks) {
+			if (UpdateLayeredWindowPtr) {
+				BLENDFUNCTION bf = {AC_SRC_OVER, 0, 50 + (cur_tick - start_ticks) * 205 / (fin_ticks - start_ticks), AC_SRC_ALPHA};
+				UpdateLayeredWindow(wnd, NULL, NULL, NULL, NULL, NULL, RGB(0, 0, 0), &bf, LWA_ALPHA | LWA_COLORKEY);
+			} else if (!simulate) InvalidateRect(wnd,NULL,FALSE);
+		}
 		break;
 	case WM_LBUTTONDOWN:
 		DestroyWindow(wnd);
@@ -112,6 +127,7 @@ HWND CreateLogoWindow(HWND parent)
 	ATOM at;
 	FILE*in;
 	DWORD ofbits;
+	DWORD exstyle = WS_EX_TOPMOST;
 	int x, y;
 	in=fopen("logo.bmp","rb");
 	if (!in) return NULL;
@@ -161,6 +177,32 @@ HWND CreateLogoWindow(HWND parent)
 			if (!AlphaBlendPtr) FreeLibrary(lib);
 		}
 	}
-	wnd=CreateWindowEx(WS_EX_TOPMOST,(LPCTSTR)at,NULL,WS_POPUP,x,y,w,h,parent,NULL,NULL,NULL);
+	{
+		HMODULE lib;
+		lib=LoadLibrary(TEXT("USER32.DLL"));
+		if (lib) {
+			UpdateLayeredWindowPtr=(void*)GetProcAddress(lib,"UpdateLayeredWindow");
+			if (!UpdateLayeredWindowPtr) {
+				FreeLibrary(lib);
+			} else {
+				exstyle = WS_EX_LAYERED;
+			}
+		}
+	}
+	wnd=CreateWindowEx(exstyle,(LPCTSTR)at,NULL,WS_POPUP,x,y,w,h,parent,NULL,NULL,NULL);
+	if (wnd && UpdateLayeredWindowPtr) {
+		BLENDFUNCTION bf;
+		POINT pdst = {x, y};
+		SIZE  psz = {w, h};
+		POINT psrc = {0, 0};
+		bf.BlendOp=AC_SRC_OVER;
+		bf.BlendFlags=0;
+		bf.SourceConstantAlpha=0;
+		bf.AlphaFormat=AC_SRC_ALPHA;
+		if (!UpdateLayeredWindowPtr(wnd, NULL, &pdst, &psz, bmpdc, &psrc, RGB(0, 0, 0), &bf, ULW_ALPHA)) {
+			UpdateLayeredWindowPtr = NULL;
+			SetWindowLong(wnd, GWL_EXSTYLE, GetWindowLong(wnd, GWL_EXSTYLE) & ~WS_EX_LAYERED);
+		}
+	}
 	return wnd;
 }
