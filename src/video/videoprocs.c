@@ -584,14 +584,18 @@ void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 		if (yn==4) c = c1;
 		for (xn=4;xn;xn--,p++) {
 #ifdef DOUBLE_X
-			p[0]=c;
-			p++;
+			if (xn > 1) {
+				p[0]=c;
+				p++;
+			}
 #endif
 			p[0]=c;
 #ifdef DOUBLE_Y
 			p[bmp_pitch]=c;
 #ifdef DOUBLE_X
-			p[bmp_pitch-1]=c;
+			if (xn > 1) {
+				p[bmp_pitch-1]=c;
+			}
 #endif
 #endif
 		}

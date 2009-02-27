@@ -102,8 +102,8 @@ static LRESULT CALLBACK LogoProc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
 		} else if (cur_tick==end_ticks) DestroyWindow(wnd);
 		else if (cur_tick>start_ticks&&cur_tick<fin_ticks) {
 			if (UpdateLayeredWindowPtr) {
-				BLENDFUNCTION bf = {AC_SRC_OVER, 0, 50 + (cur_tick - start_ticks) * 205 / (fin_ticks - start_ticks), AC_SRC_ALPHA};
-				UpdateLayeredWindow(wnd, NULL, NULL, NULL, NULL, NULL, RGB(0, 0, 0), &bf, LWA_ALPHA | LWA_COLORKEY);
+				BLENDFUNCTION bf = {AC_SRC_OVER, 0, 50 + (cur_tick - start_ticks) * 205 / (fin_ticks - start_ticks - 1), AC_SRC_ALPHA};
+				UpdateLayeredWindow(wnd, NULL, NULL, NULL, NULL, NULL, RGB(0, 0, 0), &bf, LWA_ALPHA);
 			} else if (!simulate) InvalidateRect(wnd,NULL,FALSE);
 		}
 		break;
