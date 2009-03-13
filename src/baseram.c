@@ -108,13 +108,13 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 	case SYSTEM_A:
 		{
 			switch (st->apple_rom_mode&3) {
-			case 0:
+			case 2:
 				apple_set_ext_rom_mode(1, 0, st);
 				break;
 			case 1:
 				apple_set_ext_rom_mode(0, 1, st);
 				break;
-			case 2:
+			case 0:
 				apple_set_ext_rom_mode(0, 0, st);
 				break;
 			case 3:
@@ -515,8 +515,8 @@ byte baseram9_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 
 void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st)
 {
-	if (st->apple_emu) {
 //	printf("apple language card emulation: read=%i, write=%i\n", read, write);
+	if (st->apple_emu) {
 		fill_read_proc(st->sr->base_mem+26,2,read?apple_read_psrom_d:baseram9_read_psrom,st);
 		fill_read_proc(st->sr->base_mem+28,4,read?apple_read_psrom_e:baseram9_read,st);
 		fill_write_proc(st->sr->base_mem+26,2,write?apple_write_psrom_d:empty_write,st);
