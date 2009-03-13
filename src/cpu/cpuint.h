@@ -27,7 +27,7 @@ struct CPU_STATE
 	int need_cpusleep;
 	int term_req;
 	int sleep_req;
-	HANDLE wakeup;
+	HANDLE wakeup, response;
 
 
 	int  (*hook_proc)(void*p);

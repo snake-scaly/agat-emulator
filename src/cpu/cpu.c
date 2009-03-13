@@ -48,6 +48,8 @@ static int cpu_term(struct SLOT_RUN_STATE*st)
 	WaitForSingleObject(cs->th, 1000);
 	TerminateThread(cs->th, 0);
 	CloseHandle(cs->th);
+	CloseHandle(cs->wakeup);
+	CloseHandle(cs->response);
 	cs->free(cs);
 	free(cs);
 	return 0;
@@ -98,6 +100,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cs->undoc = cf->cfgint[CFG_INT_CPU_EXT];
 
 	cs->wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
+	cs->response = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	switch (cf->dev_type) {
 	case DEV_6502:
@@ -145,7 +148,7 @@ int cpu_pause(struct CPU_STATE*st, int p)
 		if (st->sleep_req) return 1;
 		ResetEvent(st->wakeup);
 		st->sleep_req = 1;
-		Sleep(100);
+		WaitForSingleObject(st->response, 5000);
 		return 0;
 	} else {
 		if (!st->sleep_req) return 1;
@@ -177,6 +180,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 		int r, t, rt;
 		while (cs->sleep_req) {
 			unsigned ta = get_n_msec();
+			PulseEvent(cs->response);
 			WaitForSingleObject(cs->wakeup, INFINITE);
 			t0 += get_n_msec() - ta;
 			if (cs->term_req) return 0;
