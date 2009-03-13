@@ -673,6 +673,7 @@ static void fdd_save_track(struct FDD_DATA*data)
 
 static void sound_phase()
 {
+	PlaySound(NULL, NULL, SND_NODEFAULT);
 	PlaySound("shugart.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOWAIT);
 }
 
