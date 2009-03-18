@@ -497,7 +497,7 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
 	byte ch=vs->videoterm_ram[saddr];
 	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
-	byte*fnt=vs->font[ch];
+	const byte*fnt = vs->videoterm_font + (ch&0x7F) * 16;
 	int mask;
 	int fl = 0;
 	int xi, yi, xn, yn;
@@ -558,7 +558,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte ch = mem[addr];
 	byte atr = ch>>6;
 	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
-	byte*fnt;
+	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
 	if (vs->videoterm) {

@@ -219,8 +219,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE2], TEXT("4.DSK"));
 		return 0;
 	case DEV_VIDEOTERM:
-		_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\VIDEOTERM.ROM"));
-		c->cfgint[CFG_INT_DRV_ROM_RES] = 200;
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\VIDEOTERM.ROM"));
+		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("FNTS\\VIDEOTERM_NORM.FNT"));
+		c->cfgint[CFG_INT_ROM_RES] = 200;
 		return 0;
 	case DEV_SYSTEM:
 		switch (c->slot_no) {
@@ -376,7 +377,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		}
 		break;
 	case DEV_VIDEOTERM:
-		_tcscpy(buf, c->cfgstr[CFG_STR_DRV_ROM]);
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		_tcscat(buf, TEXT("; "));
+		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:

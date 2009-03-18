@@ -5,6 +5,7 @@
 #define VIDEOTERM_RAM_SIZE 2048
 #define VIDEOTERM_PAGE_SIZE 512
 #define VIDEOTERM_NUM_REGS 32
+#define VIDEOTERM_FONT_SIZE 2048
 
 
 struct VIDEOTERM_STATE
@@ -19,6 +20,7 @@ struct VIDEOTERM_STATE
 	byte rom[VIDEOTERM_ROM_SIZE];
 	byte ram[VIDEOTERM_RAM_SIZE];
 	word ram_offset;
+	byte font[VIDEOTERM_FONT_SIZE];
 };
 
 
@@ -77,6 +79,7 @@ static int videoterm_command(struct SLOT_RUN_STATE*st, int cmd, int data, long p
 		vts->vs = vs;
 		vs->videoterm_ram = vts->ram;
 		vs->videoterm_ram_size = VIDEOTERM_RAM_SIZE;
+		vs->videoterm_font = vts->font;
 		return 0;
 	}
 	return 0;
@@ -209,11 +212,19 @@ int  videoterm_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	vts->rom_size = VIDEOTERM_ROM_SIZE;
 
 
-	rom = isfopen(cf->cfgstr[CFG_STR_DRV_ROM]);
+	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
 	if (!rom) {
-		load_buf_res(cf->cfgint[CFG_INT_DRV_ROM_RES], vts->rom, vts->rom_size);
+		load_buf_res(cf->cfgint[CFG_INT_ROM_RES], vts->rom, vts->rom_size);
 	} else {
 		isread(rom, vts->rom, vts->rom_size);
+		isclose(rom);
+	}
+
+	rom = isfopen(cf->cfgstr[CFG_STR_ROM2]);
+	if (!rom) {
+		puts("videoterm font load failed!");
+	} else {
+		isread(rom, vts->font, sizeof(vts->font));
 		isclose(rom);
 	}
 

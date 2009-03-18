@@ -55,11 +55,12 @@ struct VIDEO_STATE
 	int pal_regs[2];
 	int prev_pal;
 
-	byte*videoterm_ram;
+	const byte*videoterm_ram;
 	word videoterm_ram_size;
 	word videoterm_ram_ofs;
 	word videoterm_cur_ofs;
 	byte videoterm_cur_size[2];
+	const byte*videoterm_font;
 };
 
 enum {
