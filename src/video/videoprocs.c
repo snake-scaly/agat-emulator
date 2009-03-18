@@ -479,6 +479,71 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 
 
 
+
+void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	dword saddr = addr;
+	dword caddr = vs->videoterm_cur_ofs;
+	addr -= vs->videoterm_ram_ofs;
+	addr &= (vs->videoterm_ram_size - 1);
+	saddr &= (vs->videoterm_ram_size - 1);
+	caddr &= (vs->videoterm_ram_size - 1);
+	if (addr > 80*24) return;
+	{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=addr%80;
+	int y=(addr/80)%24;
+	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
+	byte ch=vs->videoterm_ram[saddr];
+	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
+	byte*fnt=vs->font[ch];
+	int mask;
+	int fl = 0;
+	int xi, yi, xn, yn;
+//	printf("addr = %x; x = %i; y = %i\n", addr, x, y);
+	r->left=x*CHAR_W2;
+	r->top=y*CHAR_H;
+	r->right=r->left+CHAR_W2;
+	r->bottom=r->top+CHAR_H;
+//	printf("addr = %x, cur = %x\n", saddr, vs->videoterm_cur_ofs);
+	if (saddr == caddr) {
+		if (vs->flash_mode || !(vs->videoterm_cur_size[0]&0x40))
+			fl = 1;
+	}
+	for (yn=8;yn;yn--,fnt++) {
+		byte*p=ptr;
+		for (xn=8,mask=0x80;xn;xn--,mask>>=1,p++) {
+			byte c1, c2, cl;
+			c1=((((*fnt)&mask)==0)==fl)?tc:bc;
+#ifndef DOUBLE_X
+			mask>>=1;
+			if ((((*fnt)&mask)==0)==fl) c1=tc;
+			xn--;
+#endif //DOUBLE_X
+			mask>>=1;
+			xn--;
+			c2=((((*fnt)&mask)==0)==fl)?tc:bc;
+#ifndef DOUBLE_X
+			mask>>=1;
+			if ((((*fnt)&mask)==0)==fl) c2=tc;
+			xn--;
+#endif //DOUBLE_X
+			cl=c2|(c1<<4);
+			p[0]=cl;
+#ifdef DOUBLE_Y
+			p[bmp_pitch]=cl;
+#endif
+		}
+		ptr+=bmp_pitch;
+#ifdef DOUBLE_Y
+		ptr+=bmp_pitch;
+#endif
+	}
+	}
+}
+
+
 void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
@@ -496,11 +561,15 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
-	if (ch<0xA0) {
+	if (vs->videoterm) {
+		apaint_t80_addr(vs, addr, r);
+		return;
+	}
+/*	if (ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
 		ch+=0xA0;
-	}
+	}*/
 	fnt = vs->font[ch];
 //	printf("%x -> (%i, %i)\n",addr, x, y);
 	r->left=x*PIX_W*7;

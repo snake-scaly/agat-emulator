@@ -727,6 +727,9 @@ BEGIN
     12119                   "Внешний файл"
     12120                   "Без звука"
     12121                   "Плата Softcard"
+    12122                   "ЦП 65C02"
+    12123                   "Плата Videx Videoterm"
+    12124                   "Плата Thunderclock Plus"
 END
 
 STRINGTABLE DISCARDABLE 

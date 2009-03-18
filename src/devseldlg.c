@@ -45,6 +45,8 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_SOFTCARD);
+		DevList_AddItem(hlist, DEV_VIDEOTERM);
+		DevList_AddItem(hlist, DEV_THUNDERCLOCK);
 		return 0;
 	}
 	return -1;

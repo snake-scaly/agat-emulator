@@ -26,10 +26,13 @@ struct STATE_6502
 
 #define CMD_ILL		1
 
+#include <stdio.h>
+
 struct CMD_6502
 {
 	char*adr_name, *cmd_name;
 	void(*adr)(struct STATE_6502*st);
+	void(*printadr)(struct STATE_6502*st, FILE*out);
 	void(*cmd)(struct STATE_6502*st);
 	int ticks;
 	unsigned flags;
@@ -194,83 +197,86 @@ static void ea_get_ind(struct STATE_6502*st)
 	st->ea=mem_read_word_page(st, addr);
 }
 //////////////////////////////////////////////////////
-/*
-static void ea_show_imm(FILE*out)
+
+static void ea_show_imm(struct STATE_6502*st, FILE*out)
 {
-	fprintf(out,"#%02X",mem_read(st->pc));
+	fprintf(out,"#%02X",mem_read(st->pc, st->sr));
 }
 
-static void ea_show_impl(FILE*out)
+static void ea_show_impl(struct STATE_6502*st, FILE*out)
 {
 }
 
-static void ea_show__acc(FILE*out)
+static void ea_show__acc(struct STATE_6502*st, FILE*out)
 {
 	fprintf(out," A");
 }
 
-static void ea_show_rel(FILE*out)
+static void ea_show_rel(struct STATE_6502*st, FILE*out)
 {
-	word a=(signed char)mem_read(st->pc)+(st->pc+1);
+	word a=(signed char)mem_read(st->pc, st->sr)+(st->pc+1);
 	fprintf(out," %04X",a);
 }
 
 
-static void ea_show_abs(FILE*out)
+static void ea_show_abs(struct STATE_6502*st, FILE*out)
 {
-	word a=mem_read_word(st->pc);
-	fprintf(out," %04X (%02X)",a,mem_read(a));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X (%02X)",a,mem_read(a, st->sr));
 }
 
-static void ea_show_zp(FILE*out)
+static void ea_show_zp(struct STATE_6502*st, FILE*out)
 {
-	byte a=mem_read(st->pc);
-	fprintf(out," %02X (%02X)",a,mem_read(a));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X (%02X)",a,mem_read(a, st->sr));
 }
 
-static void ea_show_zpx(FILE*out)
+static void ea_show_zpx(struct STATE_6502*st, FILE*out)
 {
-	byte a=mem_read(st->pc);
-	fprintf(out," %02X,X (%02X)",a,mem_read((word)(a+st->x)));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X,X (%02X)",a,mem_read((word)(a+st->x),st->sr));
 }
 
-static void ea_show_zpy(FILE*out)
+static void ea_show_zpy(struct STATE_6502*st, FILE*out)
 {
-	byte a=mem_read(st->pc);
-	fprintf(out," %02X,Y (%02X)",a,mem_read((word)(a+st->y)));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X,Y (%02X)",a,mem_read((word)(a+st->y), st->sr));
 }
 
-static void ea_show_absx(FILE*out)
+static void ea_show_absx(struct STATE_6502*st, FILE*out)
 {
-	word a=mem_read_word(st->pc);
-	fprintf(out," %04X,X (%02X)",a,mem_read((word)(a+st->x)));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X,X (%02X)",a,mem_read((word)(a+st->x), st->sr));
 }
 
-static void ea_show_absy(FILE*out)
+static void ea_show_absy(struct STATE_6502*st, FILE*out)
 {
-	word a=mem_read_word(st->pc);
-	fprintf(out," %04X,Y (%02X)",a,mem_read((word)(a+st->y)));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X,Y (%02X)",a,mem_read((word)(a+st->y),st->sr));
 }
 
-static void ea_show_indx(FILE*out)
+static void ea_show_indx(struct STATE_6502*st, FILE*out)
 {
-	byte a=mem_read(st->pc);
-	fprintf(out," (%02X,X)",a);
+	byte a=mem_read(st->pc,st->sr);
+	word adr = mem_read_word_page(st, a + st->x);
+	fprintf(out," (%02X,X) ([%04X]=%02X)",a,adr,mem_read(adr, st->sr));
 }
 
-static void ea_show_indy(FILE*out)
+static void ea_show_indy(struct STATE_6502*st, FILE*out)
 {
-	byte a=mem_read(st->pc);
-	fprintf(out," (%02X),Y",a);
+	byte a=mem_read(st->pc,st->sr);
+	word adr = mem_read_word_page(st, a) + st->y;
+	fprintf(out," (%02X),Y ([%04X]=%02X)",a,adr,mem_read(adr, st->sr));
 }
 
-static void ea_show_ind(FILE*out)
+static void ea_show_ind(struct STATE_6502*st, FILE*out)
 {
-	word a=mem_read_word(st->pc);
-	fprintf(out," (%04X)",a);
+	word a=mem_read_word(st,st->pc);
+	word adr = mem_read_word_page(st, a);
+	fprintf(out," (%04X) ([%04X]=%02X)",a,adr,mem_read(adr, st->sr));
 }
 
-*/
+
 ////////////////////////////////////////////////////////////
 
 
@@ -876,9 +882,8 @@ static void op_las(struct STATE_6502 *st)
 #define ea_get__acc 0
 
 
-//#define MAKE_COMMAND(cmd,addr,ticks) { #addr, #cmd, ea_show_##addr, ea_get_##addr, op_##cmd,ticks  }
-#define MAKE_COMMAND(cmd,addr,ticks) { #addr, #cmd, ea_get_##addr, op_##cmd,ticks, 0 }
-#define MAKE_COMMAND_ILL(cmd,addr,ticks) { #addr, #cmd, ea_get_##addr, op_##cmd,ticks, CMD_ILL  }
+#define MAKE_COMMAND(cmd,addr,ticks) { #addr, #cmd, ea_get_##addr, ea_show_##addr, op_##cmd,ticks, 0 }
+#define MAKE_COMMAND_ILL(cmd,addr,ticks) { #addr"*", #cmd, ea_get_##addr, ea_show_##addr, op_##cmd,ticks, CMD_ILL  }
 static struct CMD_6502 cmds[256]=
 {
   MAKE_COMMAND(brk,impl,8),
@@ -1154,6 +1159,15 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(isc,absx,7)              //FF
 };
 
+int cpu_debug = 0;
+static void dumpregs(struct CPU_STATE*cs);
+
+static void op_disassemble(struct STATE_6502*st, struct CMD_6502*c)
+{
+	fprintf(stderr, "%04X\t%s\t", st->pc - 1, c->cmd_name);
+	c->printadr(st, stderr);
+	fprintf(stderr, "\n");
+}
 
 static int exec_6502(struct CPU_STATE*cs)
 {
@@ -1161,6 +1175,8 @@ static int exec_6502(struct CPU_STATE*cs)
 	struct CMD_6502*c;
 	int b;
 	int n = 0;
+
+	if (cpu_debug) dumpregs(cs);
 
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
@@ -1187,6 +1203,7 @@ static int exec_6502(struct CPU_STATE*cs)
 	if (!c->cmd) {
 		return -1;
 	}
+	if (cpu_debug) op_disassemble(st, c);
 	if ((!cs->undoc) && (c->flags & CMD_ILL)) {
 		printf("undocumented command: %02X (%s %s)\n", b, c->cmd_name, c->adr_name);
 		return -1;

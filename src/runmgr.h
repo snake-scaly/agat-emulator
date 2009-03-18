@@ -27,6 +27,7 @@ enum {
 	SYS_COMMAND_FREEMENU, // used to free menus, param = menu handle
 	SYS_COMMAND_DUMPCPUREGS, // dump cpu registers on standard log
 	SYS_COMMAND_SET_CPU_HOOK, // set main cpu hook: data = proc addr, param = proc param
+	SYS_COMMAND_INIT_DONE, // do some work after all modules are initialized
 
 	SYS_N_COMMANDS
 };

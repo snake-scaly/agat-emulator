@@ -405,6 +405,9 @@ BEGIN
 	12119	"External file"
 	12120	"No sound"
 	12121	"Softcard"
+	12122	"CPU 65C02"
+	12123	"Videx Videoterm Card"
+	12124	"Thunderclock Plus Card"
 
 //	12200	NULL
 //	12201	NULL

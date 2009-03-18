@@ -99,7 +99,10 @@ static void* sound_init(struct SOUNDPARAMS*par)
 	fmt.wBitsPerSample = sizeof(sample_t) * 8;
 	fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
 
-	if (ACM_FAILED(waveOutOpen(&p->out,WAVE_MAPPER,&fmt,(DWORD)out_proc,(DWORD_PTR)p,CALLBACK_FUNCTION),TEXT("opening wave out"))) goto err0;
+	if (ACM_FAILED(waveOutOpen(&p->out,WAVE_MAPPER,&fmt,(DWORD)out_proc,(DWORD_PTR)p,CALLBACK_FUNCTION),TEXT("opening wave out"))) {
+		p->out = NULL;
+		return p;
+	}
 
 	for (i = 0; i < N_BUFFERS; ++i) {
 		p->bufs[i] = malloc(p->maxlen * sizeof(sample_t));
@@ -238,6 +241,7 @@ static void CALLBACK out_proc(HWAVEOUT hwo,UINT uMsg,DWORD dwInstance,
 
 void sound_timer(struct ACM_DATA*p)
 {
+	if (!p->out) return;
 	Sprintf(("acm: timer\n"));
 	EnterCriticalSection(&p->crit);
 	if (p->pending && (GetTickCount() - p->last_append) > TIMEOUT_MSEC) post_cur_buffer(p);

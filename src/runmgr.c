@@ -49,6 +49,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_FDD_TEAC:
 		puts("fdd_init");
 		return fdd_init(sr, st, sc);
+	case DEV_VIDEOTERM:
+		puts("videoterm_init");
+		return videoterm_init(sr, st, sc);
 	case DEV_MEMORY_XRAM7:
 		puts("xram7_init");
 		return xram7_init(sr, st, sc);
@@ -140,7 +143,6 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		SetWindowText(sr->video_w, title);
 	}
 
-
 	for (i = 0; i < NCONFTYPES; i++ ) {
 		sr->slots[i].sc = c->slots + i;
 		sr->slots[i].sr = sr;
@@ -156,6 +158,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	if (r < 0) goto fail;
 
 	system_command(sr, SYS_COMMAND_INITMENU, 0, (long)sr->popup_menu);
+	system_command(sr, SYS_COMMAND_INIT_DONE, 0, 0);
 
 	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 	return sr;

@@ -50,9 +50,16 @@ struct VIDEO_STATE
 	int combined;// = 0;
 	int page;// = 0;
 	int hgr;// = 1;
+	int videoterm; // = 0;
 	byte hgr_flags[40][192]; // first and last color of byte
 	int pal_regs[2];
 	int prev_pal;
+
+	byte*videoterm_ram;
+	word videoterm_ram_size;
+	word videoterm_ram_ofs;
+	word videoterm_cur_ofs;
+	byte videoterm_cur_size[2];
 };
 
 enum {
