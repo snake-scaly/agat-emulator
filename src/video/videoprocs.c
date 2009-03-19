@@ -506,10 +506,11 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+(y*bmp_pitch*cy+x*cx/2);
 	byte ch=vs->videoterm_ram[saddr];
 	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
-	const byte*fnt = vs->videoterm_font + (ch&0x7F) * 16;
+	const byte*fnt = vs->videoterm_font + ch * 16;
 	int mask;
-	int fl = 0;
+	int fl0 = 0;
 	int xi, yi, xn, yn;
+	int ys = vs->videoterm_cur_size[0] & 0x0F, ye = vs->videoterm_cur_size[1] & 0x0F;
 //	printf("addr = %x; x = %i; y = %i\n", addr, x, y);
 	r->left=x*cx;
 	r->top=y*cy;
@@ -518,10 +519,12 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 //	printf("addr = %x, cur = %x\n", saddr, vs->videoterm_cur_ofs);
 	if (saddr == caddr) {
 		if (vs->flash_mode || !(vs->videoterm_cur_size[0]&0x40))
-			fl = 1;
+			fl0 = 1;
 	}
-	for (yn=vs->videoterm_char_size[1];yn;yn--,fnt++) {
+	for (yn = 0;yn < vs->videoterm_char_size[1]; yn++,fnt++) {
+		int fl = 0;
 		byte*p=ptr;
+		if (yn >= ys && yn <= ye) fl = fl0;
 		for (xn=vs->videoterm_char_size[0],mask=0x80;xn;xn--,mask>>=1,p++) {
 			byte c1, c2, cl;
 			c1=((((*fnt)&mask)==0)==fl)?tc:bc;

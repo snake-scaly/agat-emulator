@@ -172,6 +172,7 @@ enum {
 enum {
 	CFG_STR_ROM,
 	CFG_STR_ROM2,
+	CFG_STR_ROM3,
 };
 
 enum {

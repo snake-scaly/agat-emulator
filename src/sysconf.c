@@ -221,6 +221,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_VIDEOTERM:
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\VIDEOTERM.ROM"));
 		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("FNTS\\VIDEOTERM_NORM.FNT"));
+		_tcscpy(c->cfgstr[CFG_STR_ROM3], TEXT("FNTS\\VIDEOTERM_GR.FNT"));
 		c->cfgint[CFG_INT_ROM_RES] = 200;
 		return 0;
 	case DEV_SYSTEM:
@@ -380,6 +381,10 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
+		if (c->cfgstr[CFG_STR_ROM3]) {
+			_tcscat(buf, TEXT("; "));
+			_tcscat(buf, c->cfgstr[CFG_STR_ROM3]);
+		}
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:

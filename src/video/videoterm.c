@@ -5,7 +5,8 @@
 #define VIDEOTERM_RAM_SIZE 2048
 #define VIDEOTERM_PAGE_SIZE 512
 #define VIDEOTERM_NUM_REGS 32
-#define VIDEOTERM_FONT_SIZE 2048
+#define VIDEOTERM_FONT_FILE_SIZE 2048
+#define VIDEOTERM_FONT_SIZE 4096
 
 
 struct VIDEOTERM_STATE
@@ -22,6 +23,8 @@ struct VIDEOTERM_STATE
 	word ram_offset;
 	byte font[VIDEOTERM_FONT_SIZE];
 };
+
+static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts);
 
 
 static int videoterm_term(struct SLOT_RUN_STATE*st)
@@ -48,6 +51,7 @@ static int videoterm_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 {
 	struct VIDEOTERM_STATE*vts = st->data;
 	struct VIDEO_STATE*vs = vts->vs;
+	int i;
 
 	READ_ARRAY(in, vts->regs);
 	READ_FIELD(in, vts->cur_reg);
@@ -57,6 +61,9 @@ static int videoterm_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 
 	vs->videoterm_ram = vts->ram;
 	vs->videoterm_ram_size = VIDEOTERM_RAM_SIZE;
+	for (i = 0; i < VIDEOTERM_NUM_REGS; ++i) {
+		vterm_update_reg(i, vts);
+	}
 	return 0;
 }
 
@@ -154,16 +161,16 @@ static void videoterm_update(struct VIDEOTERM_STATE*vts, struct VIDEO_STATE*vs)
 	}
 }
 
-static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
+static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 {
 	struct VIDEO_STATE*vs = vts->vs;
+	byte data = vts->regs[rno];
 	word lofs = vs->videoterm_ram_ofs & (vs->videoterm_ram_size - 1);
 	word lcur = vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1);
 	byte*cofs = (byte*)&vs->videoterm_cur_ofs;
 	byte*bofs = (byte*)&vs->videoterm_ram_ofs;
 
-	if (vts->regs[rno] == data) return;
-	vts->regs[rno] = data;
+
 	switch (rno) {
 	case 1:
 		vs->videoterm_scr_size[0] = data;
@@ -206,6 +213,13 @@ static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
 	}
 /*	printf("videoterm: reg[%i] = %x; ofs = %x; cofs = %x; csize = %i,%i\n", 
 		rno, data, vs->videoterm_ram_ofs, vs->videoterm_cur_ofs, vs->videoterm_cur_size[0], vs->videoterm_cur_size[1]);*/
+}
+
+static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
+{
+	if (vts->regs[rno] == data) return;
+	vts->regs[rno] = data;
+	vterm_update_reg(rno, vts);
 }
 
 static void vtermsel_io_w(word adr, byte data, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
@@ -253,12 +267,24 @@ int  videoterm_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 		isclose(rom);
 	}
 
+	memset(vts->font, 0xFF, sizeof(vts->font));
+
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM2]);
 	if (!rom) {
 		puts("videoterm font load failed!");
 	} else {
 		isread(rom, vts->font, sizeof(vts->font));
 		isclose(rom);
+	}
+
+	if (cf->cfgstr[CFG_STR_ROM3][0]) {
+		rom = isfopen(cf->cfgstr[CFG_STR_ROM3]);
+		if (!rom) {
+			puts("videoterm xfont load failed!");
+		} else {
+			isread(rom, vts->font + VIDEOTERM_FONT_FILE_SIZE, VIDEOTERM_FONT_FILE_SIZE);
+			isclose(rom);
+		}
 	}
 
 	st->data = vts;
