@@ -1,6 +1,7 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
+#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -106,7 +107,7 @@ END
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
 STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME
-CAPTION "Agat v1.3.1"
+CAPTION VERSION_NAME_STR
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
@@ -128,7 +129,7 @@ CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
     DEFPUSHBUTTON   "Закрыть",IDOK,68,128,50,14
-    CTEXT           "Agat v1.3.1",11,7,7,173,8,SS_NOTIFY
+    CTEXT           VERSION_NAME_STR,11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
@@ -834,42 +835,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Version
 //
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,2,1
- PRODUCTVERSION 1,3,2,1
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "041904b0"
-        BEGIN
-            VALUE "Comments", "Agat-7,9, Apple ][ emulator\0"
-            VALUE "CompanyName", "Nop\0"
-            VALUE "FileDescription", "Agat-7,9, Apple ][ emulator\0"
-            VALUE "FileVersion", "1, 3, 2, 1\0"
-            VALUE "InternalName", "emulator.exe\0"
-            VALUE "LegalCopyright", "Copyright © 2008,2009 Nop\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "interface.exe\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "Agat-7,9, Apple ][ emulator\0"
-            VALUE "ProductVersion", "1, 3, 2, 1\0"
-            VALUE "SpecialBuild", "\0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
+#include "resversion.h"
 
 #endif    // !_MAC
 

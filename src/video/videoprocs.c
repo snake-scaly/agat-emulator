@@ -563,11 +563,11 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
-/*	if (ch<0xA0) {
+	if (vs->sr->cursystype != SYSTEM_A && ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
 		ch+=0xA0;
-	}*/
+	}
 	fnt = vs->font[ch];
 //	printf("%x -> (%i, %i)\n",addr, x, y);
 	r->left=x*PIX_W*7;

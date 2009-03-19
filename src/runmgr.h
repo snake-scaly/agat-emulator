@@ -15,6 +15,7 @@ enum {
 	SYS_COMMAND_FLASH, // flash blinking parts of screen and so on
 	SYS_COMMAND_REPAINT, // repaint screen
 	SYS_COMMAND_TOGGLE_MONO, // toggle mono mode
+
 	SYS_COMMAND_FAST, // set/reset fast mode
 	SYS_COMMAND_XRAM_RELEASE, // restore XRAM module
 	SYS_COMMAND_PSROM_RELEASE, // restore PSROM module
@@ -25,9 +26,14 @@ enum {
 	SYS_COMMAND_INITMENU, // used to init menus, param = menu handle
 	SYS_COMMAND_UPDMENU, // used to update menus, param = menu handle
 	SYS_COMMAND_FREEMENU, // used to free menus, param = menu handle
+
 	SYS_COMMAND_DUMPCPUREGS, // dump cpu registers on standard log
 	SYS_COMMAND_SET_CPU_HOOK, // set main cpu hook: data = proc addr, param = proc param
 	SYS_COMMAND_INIT_DONE, // do some work after all modules are initialized
+	SYS_COMMAND_NOIRQ,
+	SYS_COMMAND_NONMI,
+	SYS_COMMAND_SET_CPUTIMER, // data = delay in cpu ticks, param = timer id
+	SYS_COMMAND_CPUTIMER,     // param = timer id
 
 	SYS_N_COMMANDS
 };

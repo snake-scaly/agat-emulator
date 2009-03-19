@@ -287,6 +287,12 @@ static void intr_M6502(struct CPU_STATE*cs, int r)
 	case CPU_INTR_IRQ:
 		st->IR|=4;
 		break;
+	case CPU_INTR_NOIRQ:
+		st->IR &= ~4;
+		break;
+	case CPU_INTR_NONMI:
+		st->IR &= ~2;
+		break;
 	}
 }
 

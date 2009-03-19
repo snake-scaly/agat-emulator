@@ -23,6 +23,10 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		return cpu_intr(cs, CPU_INTR_IRQ);
 	case SYS_COMMAND_NMI:
 		return cpu_intr(cs, CPU_INTR_NMI);
+	case SYS_COMMAND_NOIRQ:
+		return cpu_intr(cs, CPU_INTR_NOIRQ);
+	case SYS_COMMAND_NONMI:
+		return cpu_intr(cs, CPU_INTR_NONMI);
 	case SYS_COMMAND_START:
 		cpu_pause(cs, 0);
 		return 0;
@@ -32,6 +36,12 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_SET_CPU_HOOK:
 		cs->hook_proc = (void*)data;
 		cs->hook_data = (void*)param;
+		return 1;
+	case SYS_COMMAND_SET_CPUTIMER:
+		printf("cpu set timer %i %i\n", data, param);
+		cs->cpu_timer_delay = data;
+		cs->cpu_timer_id = param;
+		cs->cpu_timer_remains = 0;
 		return 1;
 	default:
 		return cpu_cmd(cs, cmd, data, param);
@@ -122,7 +132,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 		free(cs);
 		return -1;
 	}
-	Sleep(100);
+	WaitForSingleObject(cs->response, 5000);
 
 	st->data = cs;
 	st->free = cpu_term;
@@ -179,6 +189,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 	TCHAR bufs[2][256];
 	unsigned t0=get_n_msec();
 	int n_ticks = 0;
+	PulseEvent(cs->response);
 	while (!cs->term_req) {
 		int r, t, rt;
 		while (cs->sleep_req) {
@@ -187,6 +198,13 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			WaitForSingleObject(cs->wakeup, INFINITE);
 			t0 += get_n_msec() - ta;
 			if (cs->term_req) return 0;
+		}
+		if (cs->cpu_timer_delay) {
+			if (!cs->cpu_timer_remains) cs->cpu_timer_remains = cs->cpu_timer_delay;
+			-- cs->cpu_timer_remains;
+			if (!cs->cpu_timer_remains) {
+				system_command(cs->sr, SYS_COMMAND_CPUTIMER, 0, cs->cpu_timer_id);
+			}
 		}
 //		puts("exec_op");
 		if  (cs->hook_proc) {

@@ -212,6 +212,7 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 {
 	int i, r = 0;
 	if (!sr) return -1;
+//	printf("system_command(%i, %i, %i)\n", id, data, param);
 	for (i = 0; i < NCONFTYPES ; i++) {
 		int r0;
 		r0 = slot_command(sr->slots + i, id, data, param);

@@ -1,1 +1,1 @@
-cl installio.c advapi32.lib user32.lib
+cl -nologo -Ox installio.c advapi32.lib user32.lib

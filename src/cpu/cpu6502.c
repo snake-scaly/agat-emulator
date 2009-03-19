@@ -403,8 +403,7 @@ static void op_bpl(struct STATE_6502 *st)
 static void op_brk(struct STATE_6502 *st)
 {
 	push_stack_w(st, (word)(st->pc + 1));
-	st->f|=FLAG_B;
-	push_stack(st, st->f);
+	push_stack(st, st->f | FLAG_B);
 	st->f|=FLAG_I;
 	st->pc=mem_read_word(st, ADDR_IRQ);
 }
@@ -1180,22 +1179,21 @@ static int exec_6502(struct CPU_STATE*cs)
 
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
-		push_stack(st, st->f);
+		push_stack(st, st->f & ~FLAG_B);
 		st->pc=mem_read_word(st, ADDR_NMI);
 		st->ints_req&=~INT_NMI;
-		puts("nmi");
+//		puts("nmi");
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
 		puts("reset");
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
-		push_stack(st, st->f);
+		push_stack(st, st->f & ~FLAG_B);
 		st->f|=FLAG_I;
-		st->f&=~FLAG_B;
 		st->pc=mem_read_word(st, ADDR_IRQ);
 		st->ints_req&=~INT_IRQ;
-		puts("irq");
+//		puts("irq");
 	}
 
 	b=fetch_cmd_byte(st);
@@ -1227,6 +1225,12 @@ static void intr_6502(struct CPU_STATE*cs, int r)
 		break;
 	case CPU_INTR_IRQ:
 		st->ints_req |= INT_IRQ;
+		break;
+	case CPU_INTR_NOIRQ:
+		st->ints_req &= ~INT_IRQ;
+		break;
+	case CPU_INTR_NONMI:
+		st->ints_req &= ~INT_NMI;
 		break;
 	}
 }

@@ -29,6 +29,9 @@ struct CPU_STATE
 	int sleep_req;
 	HANDLE wakeup, response;
 
+	int cpu_timer_delay, cpu_timer_remains;
+	long cpu_timer_id;
+
 
 	int  (*hook_proc)(void*p);
 	void *hook_data;
@@ -47,6 +50,8 @@ enum {
 	CPU_INTR_IRQ,
 	CPU_INTR_NMI,
 	CPU_INTR_HRESET,
+	CPU_INTR_NOIRQ,
+	CPU_INTR_NONMI,
 };
 
 int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*sc);
