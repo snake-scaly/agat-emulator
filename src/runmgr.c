@@ -64,6 +64,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_SOFTCARD:
 		puts("softcard_init");
 		return softcard_init(sr, st, sc);
+	case DEV_THUNDERCLOCK:
+		puts("thunderclock_init");
+		return thunderclock_init(sr, st, sc);
 	}
 	return 0;
 }

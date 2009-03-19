@@ -224,7 +224,6 @@ static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
 
 static void vtermsel_io_w(word adr, byte data, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 {
-	videoterm_rom_select(vts);
 //	printf("videoterm_io_w: %01X: %02X\n", adr & 0x0F, data);
 	if (adr & 1) {
 		vterm_write_reg(vts->cur_reg, data, vts);
@@ -236,7 +235,6 @@ static void vtermsel_io_w(word adr, byte data, struct VIDEOTERM_STATE*vts) // C0
 
 static byte vtermsel_io_r(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 {
-	videoterm_rom_select(vts);
 //	printf("videoterm_io_r: %01X: %02X\n", adr & 0x0F, 0xFF);
 	vtermsel_io_touch(adr, vts);
 	return vts->regs[vts->cur_reg];
@@ -249,7 +247,7 @@ int  videoterm_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	ISTREAM*rom;
 	struct VIDEOTERM_STATE*vts;
 
-	puts("videoterm_init");
+	puts("in videoterm_init");
 
 	vts = calloc(1, sizeof(*vts));
 	if (!vts) return -1;

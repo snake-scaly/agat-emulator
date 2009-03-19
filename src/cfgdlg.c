@@ -267,6 +267,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot)
 	
 	case DEV_VIDEOTERM:
 		return vtermdlg_run(hwnd, slot);
+	case DEV_THUNDERCLOCK:
+		return select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	}
 
 	switch (slot->slot_no) {

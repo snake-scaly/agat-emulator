@@ -224,6 +224,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_ROM3], TEXT("FNTS\\VIDEOTERM_INV.FNT"));
 		c->cfgint[CFG_INT_ROM_RES] = 200;
 		return 0;
+	case DEV_THUNDERCLOCK:
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\THUNDERCLOCK.ROM"));
+		c->cfgint[CFG_INT_ROM_RES] = 300;
+		return 0;
 	case DEV_SYSTEM:
 		switch (c->slot_no) {
 		case CONF_MEMORY:
@@ -385,6 +389,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 			_tcscat(buf, TEXT("; "));
 			_tcscat(buf, c->cfgstr[CFG_STR_ROM3]);
 		}
+		return 0;
+	case DEV_THUNDERCLOCK:
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:
