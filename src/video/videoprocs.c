@@ -563,10 +563,6 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
-	if (vs->videoterm) {
-		apaint_t80_addr(vs, addr, r);
-		return;
-	}
 /*	if (ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
@@ -823,4 +819,5 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 	apaint_gr_addr, // 8
 	apaint_hgr_addr, // 9
 	paint_t64_addr, //10 inverse
+	apaint_t80_addr, //11
 };

@@ -221,7 +221,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_VIDEOTERM:
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\VIDEOTERM.ROM"));
 		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("FNTS\\VIDEOTERM_NORM.FNT"));
-		_tcscpy(c->cfgstr[CFG_STR_ROM3], TEXT("FNTS\\VIDEOTERM_GR.FNT"));
+		_tcscpy(c->cfgstr[CFG_STR_ROM3], TEXT("FNTS\\VIDEOTERM_INV.FNT"));
 		c->cfgint[CFG_INT_ROM_RES] = 200;
 		return 0;
 	case DEV_SYSTEM:

@@ -2,14 +2,14 @@
 
 void update_video_ap(struct VIDEO_STATE*vs)
 {
-	if (vs->videoterm) {
-		set_video_active_range(vs, 0x10000, vs->videoterm_ram_size, 1);
-		set_video_type(vs, 7);
-		return;
-	}
 	if (vs->text_mode) {
-		set_video_active_range(vs, (vs->page+1)*0x400, 0x400, 1);
-		set_video_type(vs, 7);
+		if (vs->videoterm) {
+			set_video_active_range(vs, 0x10000, vs->videoterm_ram_size, 1);
+			set_video_type(vs, 11);
+		} else {
+			set_video_active_range(vs, (vs->page+1)*0x400, 0x400, 1);
+			set_video_type(vs, 7);
+		}
 	} else if (vs->hgr) {
 		if (basemem_n_blocks(vs->sr) < (vs->page+2) * 4) return;
 		set_video_active_range(vs, (vs->page+1)*0x2000, 0x2000, 1);
@@ -71,4 +71,5 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		break;
 	}
 	update_video_ap(vs);
+	video_update_mode(vs);
 }

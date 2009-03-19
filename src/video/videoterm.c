@@ -156,7 +156,7 @@ static void vtermsel_io_touch(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 
 static void videoterm_update(struct VIDEOTERM_STATE*vts, struct VIDEO_STATE*vs)
 {
-	if (vs->videoterm) {
+	if (vs->videoterm && vs->text_mode) {
 		set_video_size(vs->sr, vs->videoterm_scr_size[0]*vs->videoterm_char_size[0], vs->videoterm_scr_size[1]*vs->videoterm_char_size[1]);
 	}
 }
