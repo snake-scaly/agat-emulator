@@ -264,6 +264,9 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot)
 			slot->cfgint[CFG_INT_MEM_SIZE] = r;
 		} else return FALSE;
 		return TRUE; }
+	
+	case DEV_VIDEOTERM:
+		return vtermdlg_run(hwnd, slot);
 	}
 
 	switch (slot->slot_no) {

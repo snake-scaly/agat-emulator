@@ -1,6 +1,7 @@
 #ifdef STANDALONE
 #include "windows.h"
 #include "../resource.h"
+#include "../version.h"
 
 IDB_APPLE2              BITMAP  DISCARDABLE     "..\\bmps\\apple2.bmp"
 IDB_AGAT7               BITMAP  DISCARDABLE     "..\\bmps\\agat7.bmp"
@@ -263,6 +264,25 @@ BEGIN
     LTEXT           "Файл по умолчанию:",12,7,68,72,8
 END
 
+
+IDD_VTCFG DIALOG DISCARDABLE  0, 0, 206, 91
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка Videx Videoterm"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW_NAME,80,19,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW,184,19,15,12
+    EDITTEXT        IDC_FNT_NAME,80,33,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FNT,184,33,15,12
+    EDITTEXT        IDC_XFNT_NAME,80,46,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_XFNT,184,46,15,12
+    DEFPUSHBUTTON   "OK",IDOK,44,70,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,111,70,50,14
+    LTEXT           "Выбор образов ПЗУ:",IDC_STATIC,7,7,71,8
+    LTEXT           "Firmware PROM:",100,7,22,73,8
+    LTEXT           "Charset PROM:",101,7,36,73,8
+    LTEXT           "Ext Charset PROM:",102,7,49,73,8
+END
 
 STRINGTABLE
 BEGIN
