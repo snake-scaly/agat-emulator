@@ -181,7 +181,7 @@ static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 		videoterm_update(vts, vs);
 		break;
 	case 9:
-		vs->videoterm_char_size[1] = data & 0x0F;
+		vs->videoterm_char_size[1] = (data & 0x0F) + 1;
 		videoterm_update(vts, vs);
 		break;
 	case 10:
@@ -211,8 +211,8 @@ static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1));
 		break;
 	}
-/*	printf("videoterm: reg[%i] = %x; ofs = %x; cofs = %x; csize = %i,%i\n", 
-		rno, data, vs->videoterm_ram_ofs, vs->videoterm_cur_ofs, vs->videoterm_cur_size[0], vs->videoterm_cur_size[1]);*/
+//	printf("videoterm: reg[%i] = %x; ofs = %x; cofs = %x; csize = %i,%i\n", 
+//		rno, data, vs->videoterm_ram_ofs, vs->videoterm_cur_ofs, vs->videoterm_cur_size[0], vs->videoterm_cur_size[1]);
 }
 
 static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
