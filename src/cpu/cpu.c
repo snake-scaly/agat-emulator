@@ -109,6 +109,9 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	case DEV_M6502:
 		init_cpu_M6502(cs);
 		break;
+	case DEV_65C02:
+		init_cpu_65c02(cs);
+		break;
 	}
 
 	cs->sleep_req = 1;

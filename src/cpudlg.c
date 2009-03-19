@@ -48,6 +48,7 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	hlist = GetDlgItem(hwnd, IDC_CPU_TYPE);
 	CpuList_AddItem(hlist, DEV_6502, conf->dev_type);
 	CpuList_AddItem(hlist, DEV_M6502, conf->dev_type);
+	CpuList_AddItem(hlist, DEV_65C02, conf->dev_type);
 	if (conf->cfgint[CFG_INT_CPU_EXT])
 		CheckDlgButton(hwnd, IDC_UNDOC, BST_CHECKED);
 	SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETRANGE, FALSE, MAKELONG(1, 500));
