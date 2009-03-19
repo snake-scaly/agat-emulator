@@ -484,17 +484,26 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	dword saddr = addr;
 	dword caddr = vs->videoterm_cur_ofs;
+	div_t d;
+	int x, y;
+	int cx = vs->videoterm_char_size[0] * vs->videoterm_char_scl[0];
+	int cy = vs->videoterm_char_size[1] * vs->videoterm_char_scl[1];
 	addr -= vs->videoterm_ram_ofs;
 	addr &= (vs->videoterm_ram_size - 1);
 	saddr &= (vs->videoterm_ram_size - 1);
 	caddr &= (vs->videoterm_ram_size - 1);
-	if (addr > 80*24) return;
+	d = div(addr, vs->videoterm_scr_size[0]);
+	x = d.rem;
+	y = d.quot;
+	if (y >= vs->videoterm_scr_size[1]) {
+		SetRectEmpty(r);
+		return;
+	}
+
 	{
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
-	int x=addr%80;
-	int y=(addr/80)%24;
-	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
+	byte*ptr=(byte*)bmp_bits+(y*bmp_pitch*cy+x*cx/2);
 	byte ch=vs->videoterm_ram[saddr];
 	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
 	const byte*fnt = vs->videoterm_font + (ch&0x7F) * 16;
@@ -502,43 +511,33 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int fl = 0;
 	int xi, yi, xn, yn;
 //	printf("addr = %x; x = %i; y = %i\n", addr, x, y);
-	r->left=x*CHAR_W2;
-	r->top=y*CHAR_H;
-	r->right=r->left+CHAR_W2;
-	r->bottom=r->top+CHAR_H;
+	r->left=x*cx;
+	r->top=y*cy;
+	r->right=r->left+cx;
+	r->bottom=r->top+cy;
 //	printf("addr = %x, cur = %x\n", saddr, vs->videoterm_cur_ofs);
 	if (saddr == caddr) {
 		if (vs->flash_mode || !(vs->videoterm_cur_size[0]&0x40))
 			fl = 1;
 	}
-	for (yn=8;yn;yn--,fnt++) {
+	for (yn=vs->videoterm_char_size[1];yn;yn--,fnt++) {
 		byte*p=ptr;
-		for (xn=8,mask=0x80;xn;xn--,mask>>=1,p++) {
+		for (xn=vs->videoterm_char_size[0],mask=0x80;xn;xn--,mask>>=1,p++) {
 			byte c1, c2, cl;
 			c1=((((*fnt)&mask)==0)==fl)?tc:bc;
-#ifndef DOUBLE_X
-			mask>>=1;
-			if ((((*fnt)&mask)==0)==fl) c1=tc;
-			xn--;
-#endif //DOUBLE_X
 			mask>>=1;
 			xn--;
 			c2=((((*fnt)&mask)==0)==fl)?tc:bc;
-#ifndef DOUBLE_X
-			mask>>=1;
-			if ((((*fnt)&mask)==0)==fl) c2=tc;
-			xn--;
-#endif //DOUBLE_X
 			cl=c2|(c1<<4);
 			p[0]=cl;
-#ifdef DOUBLE_Y
-			p[bmp_pitch]=cl;
-#endif
+			if (vs->videoterm_char_scl[1] > 1) {
+				p[bmp_pitch]=cl;
+			}
 		}
 		ptr+=bmp_pitch;
-#ifdef DOUBLE_Y
-		ptr+=bmp_pitch;
-#endif
+		if (vs->videoterm_char_scl[1] > 1) {
+			ptr+=bmp_pitch;
+		}
 	}
 	}
 }

@@ -80,6 +80,16 @@ static int videoterm_command(struct SLOT_RUN_STATE*st, int cmd, int data, long p
 		vs->videoterm_ram = vts->ram;
 		vs->videoterm_ram_size = VIDEOTERM_RAM_SIZE;
 		vs->videoterm_font = vts->font;
+		vs->videoterm_char_size[0] = 8;
+		vs->videoterm_char_size[1] = 9;
+		vs->videoterm_scr_size[0] = 80;
+		vs->videoterm_scr_size[1] = 24;
+		vs->videoterm_char_scl[0] = 1;
+#ifdef DOUBLE_Y
+		vs->videoterm_char_scl[1] = 2;
+#else
+		vs->videoterm_char_scl[1] = 1;
+#endif
 		return 0;
 	}
 	return 0;
@@ -137,38 +147,61 @@ static void vtermsel_io_touch(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 //	printf("videoterm_ram_offset (%X) = %03X\n", adr, vts->ram_offset);
 }
 
+static void videoterm_update(struct VIDEOTERM_STATE*vts, struct VIDEO_STATE*vs)
+{
+	if (vs->videoterm) {
+		set_video_size(vs->sr, vs->videoterm_scr_size[0]*vs->videoterm_char_size[0], vs->videoterm_scr_size[1]*vs->videoterm_char_size[1]);
+	}
+}
+
 static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)
 {
 	struct VIDEO_STATE*vs = vts->vs;
+	word lofs = vs->videoterm_ram_ofs & (vs->videoterm_ram_size - 1);
+	word lcur = vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1);
 	byte*cofs = (byte*)&vs->videoterm_cur_ofs;
 	byte*bofs = (byte*)&vs->videoterm_ram_ofs;
 
 	if (vts->regs[rno] == data) return;
 	vts->regs[rno] = data;
 	switch (rno) {
+	case 1:
+		vs->videoterm_scr_size[0] = data;
+		videoterm_update(vts, vs);
+		break;
+	case 6:
+		vs->videoterm_scr_size[1] = data;
+		videoterm_update(vts, vs);
+		break;
+	case 9:
+		vs->videoterm_char_size[1] = data & 0x0F;
+		videoterm_update(vts, vs);
+		break;
 	case 10:
 		vs->videoterm_cur_size[0] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		videoterm_update(vts, vs);
 		break;
 	case 11:
 		vs->videoterm_cur_size[1] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		video_repaint_screen(vs);
 		break;
 	case 12:
 		bofs[1] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		video_repaint_screen(vs);
 		break;
 	case 13:
 		bofs[0] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		video_repaint_screen(vs);
 		break;
 	case 14:
 		cofs[1] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		vid_invalidate_addr(vts->st->sr, 0x10000 + lcur);
+		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1));
 		break;
 	case 15:
 		cofs[0] = data;
-		invalidate_video_window(vts->st->sr, NULL);
+		vid_invalidate_addr(vts->st->sr, 0x10000 + lcur);
+		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1));
 		break;
 	}
 /*	printf("videoterm: reg[%i] = %x; ofs = %x; cofs = %x; csize = %i,%i\n", 

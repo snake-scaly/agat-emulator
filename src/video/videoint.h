@@ -60,6 +60,9 @@ struct VIDEO_STATE
 	word videoterm_ram_ofs;
 	word videoterm_cur_ofs;
 	byte videoterm_cur_size[2];
+	byte videoterm_char_size[2];
+	byte videoterm_char_scl[2];
+	byte videoterm_scr_size[2];
 	const byte*videoterm_font;
 };
 

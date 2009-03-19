@@ -141,8 +141,10 @@ void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
 {
 	WINDOWPLACEMENT pl;
 	RECT r={0,0,w,h};
+	if (sr->v_size.cx == w && sr->v_size.cy == h) return;
 	sr->v_size.cx = w;
 	sr->v_size.cy = h;
+	printf("set_video_size: %i %i\n", w, h);
 	pl.length = sizeof(pl);
 	GetWindowPlacement(sr->video_w, &pl);
 	AdjustWindowRectEx(&r,GetWindowLong(sr->video_w,GWL_STYLE),
