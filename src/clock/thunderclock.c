@@ -59,6 +59,7 @@ static int thunderclock_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 {
 	struct THUNDERCLOCK_STATE*tcs = st->data;
 	WRITE_FIELD(out, tcs->adjust);
+	WRITE_FIELD(out, tcs->ints);
 
 	return 0;
 }
@@ -67,6 +68,8 @@ static int thunderclock_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 {
 	struct THUNDERCLOCK_STATE*tcs = st->data;
 	READ_FIELD(in, tcs->adjust);
+	READ_FIELD(in, tcs->ints);
+
 	return 0;
 }
 
