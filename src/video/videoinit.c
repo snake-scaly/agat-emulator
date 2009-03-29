@@ -232,7 +232,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
 		fill_write_proc(sr->io_sel + 7, 1, videosel_w, vs);
-		fill_rw_proc(sr->baseio_sel + 4, 1, toggle_ints_r, toggle_ints_w, vs);
+//		fill_rw_proc(sr->baseio_sel + 4, 1, toggle_ints_r, toggle_ints_w, vs);
 		fill_rw_proc(sr->baseio_sel + 5, 1, set_palette_r, set_palette_w, vs);
 		goto l1;
 		break;

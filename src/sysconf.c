@@ -128,6 +128,7 @@ int reset_config(struct SYSCONFIG*c, int systype)
 		break;
 	case SYSTEM_9:
 		reset_slot_config(c->slots+CONF_SLOT2, DEV_MEMORY_XRAM9, systype);
+		reset_slot_config(c->slots+CONF_SLOT4, DEV_PRINTER9, systype);
 		reset_slot_config(c->slots+CONF_SLOT5, DEV_FDD_TEAC, systype);
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
@@ -195,6 +196,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		c->cfgint[CFG_INT_DRV_ROM_RES] = 21;
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("1.DSK"));
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE2], TEXT("2.DSK"));
+		return 0;
+	case DEV_PRINTER9:
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
+		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("ROMS\\CM6337P.ROM"));
 		return 0;
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
@@ -392,6 +397,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		return 0;
 	case DEV_THUNDERCLOCK:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		return 0;
+	case DEV_PRINTER9:
+		buf[0] = 0;
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:

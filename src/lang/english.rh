@@ -428,6 +428,7 @@ BEGIN
 	12122	"CPU 65C02"
 	12123	"Videx Videoterm Card"
 	12124	"Thunderclock Plus Card"
+	12125	"Printer Card for Agat-9"
 
 //	12200	NULL
 //	12201	NULL

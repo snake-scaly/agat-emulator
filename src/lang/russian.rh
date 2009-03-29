@@ -430,6 +430,7 @@ BEGIN
 	12122	"ЦП 65C02"
 	12123	"Плата Videx Videoterm"
 	12124	"Плата Thunderclock Plus"
+	12125	"Ячейка принтера Агат-9"
 
 //	12200	NULL
 //	12201	NULL

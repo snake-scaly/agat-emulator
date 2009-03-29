@@ -1,5 +1,5 @@
 @echo off
-for %%n in (cpu fdd joystick sound tape video installio lang langsel softcard clock .) do (
+for %%n in (cpu fdd joystick sound tape video installio lang langsel softcard clock printer .) do (
 	echo Building %%n...
 	pushd %%n
 	call make.bat

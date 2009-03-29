@@ -422,7 +422,7 @@ void enable_ints(struct SYS_RUN_STATE*sr)
 {
 	if (sr->ints_enabled) return;
 	sr->ints_enabled = 1;
-	puts("enable ints");
+//	puts("enable ints");
 	SetTimer(sr->video_w,TID_IRQ,2,NULL);
 	SetTimer(sr->video_w,TID_NMI,20,NULL);
 //	system_command(sr, SYS_COMMAND_IRQ, 0, 0);
@@ -433,7 +433,7 @@ void disable_ints(struct SYS_RUN_STATE*sr)
 {
 	if (!sr->ints_enabled) return;
 	sr->ints_enabled = 0;
-	puts("disable ints");
+//	puts("disable ints");
 	KillTimer(sr->video_w,TID_IRQ);
 	KillTimer(sr->video_w,TID_NMI);
 }

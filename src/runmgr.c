@@ -67,6 +67,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_THUNDERCLOCK:
 		puts("thunderclock_init");
 		return thunderclock_init(sr, st, sc);
+	case DEV_PRINTER9:
+		puts("printer9_init");
+		return printer9_init(sr, st, sc);
 	}
 	return 0;
 }
