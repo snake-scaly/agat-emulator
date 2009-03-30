@@ -421,6 +421,7 @@ int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r)
 void enable_ints(struct SYS_RUN_STATE*sr)
 {
 	if (sr->ints_enabled) return;
+	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	sr->ints_enabled = 1;
 //	puts("enable ints");
 	SetTimer(sr->video_w,TID_IRQ,2,NULL);

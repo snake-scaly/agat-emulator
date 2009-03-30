@@ -157,7 +157,8 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 	switch (adr) {
 	case 2:
 //		printf("printer: read reg %x = %02x\n", adr, pcs->regs[adr]);
-		return pcs->regs[adr];
+		pcs->regs[2]^=0x80;
+		return pcs->regs[2];
 	}
 	return empty_read(adr, pcs);
 }
@@ -176,6 +177,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 
 	pcs->st = st;
 	pcs->pemu = epson_create(0);
+	pcs->regs[2] = 0x0;
 
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
 	if (!rom) { free(pcs); return -1; }

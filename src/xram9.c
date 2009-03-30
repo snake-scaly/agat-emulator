@@ -209,7 +209,7 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st)
 
 static byte xram9_read_psrom_mode(word adr,struct XRAM_STATE*st)
 {
-	return st->psrom9_mode|(adr&0xF0);
+	return st->psrom9_mode|((adr>>8)&0xF0);
 	
 }
 

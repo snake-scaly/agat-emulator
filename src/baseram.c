@@ -164,6 +164,7 @@ int rama_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 			return -1;
 		}
 		fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
+		st->apple_rom_mode = 0xC1;
 		apple_set_ext_rom_mode(0, 1, st);
 	}
 	return 0;
@@ -510,7 +511,7 @@ void baseram9_write_mapping(word adr, byte d, struct BASERAM_STATE*st)
 byte baseram9_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 {
 //	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, psrom_mode|(adr&0xF0)|4);
-	return st->psrom9_mode|(adr&0xF0)|4;
+	return st->psrom9_mode|((adr>>8)&0xF0);
 }
 
 void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st)
@@ -550,7 +551,7 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 //		xram_apple_enable(1, 0);
 		break;
 	case 1:
-//		if (!dr) break; //??
+//		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
 		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 		else st->psrom9_ofs=0;
 		st->apple_rom_mode = 0xC1 | hi;
@@ -565,7 +566,7 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 //		xram_apple_enable(0, 0);
 		break;
 	case 3:
-//		if (!dr) break;
+//		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
 		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 		else st->psrom9_ofs=0;
 		st->apple_rom_mode = 0xC3 | hi;
@@ -590,6 +591,7 @@ void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 	fill_rw_proc(st->sr->io_sel+1, 1, empty_read_addr, empty_write, st);
 	fill_read_proc(st->sr->base_mem,24,baseram9_read, st);
 	fill_write_proc(st->sr->base_mem,24,baseram9_write, st);
+	st->apple_rom_mode = 0xC1;
 	apple_set_ext_rom_mode(0, 1, st);
 	system_command(st->sr, SYS_COMMAND_APPLEMODE, 0, 0);
 }

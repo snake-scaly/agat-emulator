@@ -127,25 +127,25 @@ byte enable_ints_r(word adr, struct VIDEO_STATE*vs) // C040-C04F
 {
 	printf("enable ints_r: %x\n",adr);
 	enable_ints(vs->sr);
-	return empty_read(adr, vs);
+	return empty_read_addr(adr, vs);
 }
 
 
 
 void disable_ints_w(word adr,byte data, struct VIDEO_STATE*vs) // C050-C05F
 {
-	printf("disable ints_w: %x\n",adr);
+//	printf("disable ints_w: %x\n",adr);
 	disable_ints(vs->sr);
 }
 
 byte disable_ints_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 {
-	printf("disable ints_r: %x\n",adr);
+//	printf("disable ints_r: %x\n",adr);
 	disable_ints(vs->sr);
-	return empty_read(adr, vs);
+	return empty_read_addr(adr, vs);
 }
 
-
+/*
 byte toggle_ints_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 {
 	printf("toggle ints_r: %x\n",adr);
@@ -158,14 +158,13 @@ void toggle_ints_w(word adr,byte data, struct VIDEO_STATE*vs) // C050-C05F
 	printf("toggle ints_w: %x\n",adr);
 	toggle_ints(vs->sr);
 }
-
+*/
 
 static void set_palette_w(word adr,byte data, struct VIDEO_STATE*vs) // C050-C05F, agat 9
 {
 //	printf("set palette: %x",adr);
 	if (adr&8) video_set_palette(vs, adr&7);
 	else vsel_ap_w(adr, data, vs);
-	disable_ints_w(adr, data, vs);
 }
 
 
@@ -174,7 +173,6 @@ static byte set_palette_r(word adr, struct VIDEO_STATE*vs) // C050-C05F, agat 9
 //	printf("get palette: %x",adr);
 	if (adr&8) video_set_palette(vs, adr&7);
 	else vsel_ap_r(adr, vs);
-	disable_ints_r(adr, vs);
 	return (adr&8&&!(adr&4))?0:0xFF;//empty_read(adr,d);
 }
 
@@ -232,7 +230,8 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
 		fill_write_proc(sr->io_sel + 7, 1, videosel_w, vs);
-//		fill_rw_proc(sr->baseio_sel + 4, 1, toggle_ints_r, toggle_ints_w, vs);
+		fill_rw_proc(sr->baseio_sel + 2, 1, disable_ints_r, disable_ints_w, vs);
+		fill_rw_proc(sr->baseio_sel + 4, 1, enable_ints_r, enable_ints_w, vs);
 		fill_rw_proc(sr->baseio_sel + 5, 1, set_palette_r, set_palette_w, vs);
 		goto l1;
 		break;
