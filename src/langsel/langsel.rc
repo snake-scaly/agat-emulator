@@ -58,7 +58,7 @@ END
 /////////////////////////////////////////////////////////////////////////////
 
 
-1 icon "..\\bmps\\logo0.ico"
+1 icon "..\\bmps\\agat.ico"
 1                       24      MOVEABLE PURE   "manifest"
 
 

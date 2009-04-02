@@ -50,7 +50,7 @@ IDB_AGAT9_LOGO          BITMAP  DISCARDABLE     "bmps\\agat9_logo.bmp"
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_MAIN                ICON    DISCARDABLE     "bmps\\logo0.ico"
+IDI_MAIN                ICON    DISCARDABLE     "bmps\\agat.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
