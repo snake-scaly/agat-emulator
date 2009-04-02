@@ -519,9 +519,8 @@ END
 //
 // Version
 //
+#include "resversion.rh"
 
-
-#include "resversion.h"
 #endif    // !_MAC
 
 
@@ -783,29 +782,6 @@ BEGIN
 END
 
 #endif    // Russian resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
-#endif //_WIN32
-
-#ifndef _MAC
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-#include "resversion.h"
-
-#endif    // !_MAC
-
-#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
