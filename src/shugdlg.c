@@ -9,8 +9,8 @@
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
-	{{203,189},{0,0}},
-	17,
+	{{203,198},{0,0}},
+	18,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
@@ -29,6 +29,7 @@ static struct RESIZE_DIALOG resize=
 		{IDC_IMGSEL2,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
 		{IDC_IMGROM,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_TOP}},
 		{IDC_IMGROMSEL,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
+		{IDC_FAST,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_TOP}},
 	}
 };
 
@@ -65,6 +66,8 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*sc)
 		CheckDlgButton(hwnd, IDC_RO1, BST_CHECKED);
 	if (sc->cfgint[CFG_INT_DRV_RO_FLAGS] & 2)
 		CheckDlgButton(hwnd, IDC_RO2, BST_CHECKED);
+	if (sc->cfgint[CFG_INT_DRV_FAST])
+		CheckDlgButton(hwnd, IDC_FAST, BST_CHECKED);
 
 	upd_controls(hwnd);
 	return 0;
@@ -138,6 +141,8 @@ static int dialog_ok(HWND hwnd, struct SLOTCONFIG*sc)
 		sc->cfgint[CFG_INT_DRV_RO_FLAGS] |= 2;
 	else 
 		sc->cfgint[CFG_INT_DRV_RO_FLAGS] &= ~2;
+
+	sc->cfgint[CFG_INT_DRV_FAST] = (IsDlgButtonChecked(hwnd, IDC_FAST) == BST_CHECKED);
 
 	EndDialog(hwnd, 1);
 	return 0;

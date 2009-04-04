@@ -192,6 +192,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
 		c->cfgint[CFG_INT_DRV_COUNT] = 1;
 		c->cfgint[CFG_INT_DRV_RO_FLAGS] = 3;
+		c->cfgint[CFG_INT_DRV_FAST] = 1;
 		_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\TEAC.ROM"));
 		c->cfgint[CFG_INT_DRV_ROM_RES] = 21;
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("1.DSK"));
@@ -201,11 +202,14 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
 		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("ROMS\\CM6337P.ROM"));
 		return 0;
+	case DEV_MOCKINGBOARD:
+		return 0;
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
 		c->cfgint[CFG_INT_DRV_COUNT] = 1;
 		c->cfgint[CFG_INT_DRV_RO_FLAGS] = 3;
+		c->cfgint[CFG_INT_DRV_FAST] = 1;
 		switch (systype) {
 		case SYSTEM_7:
 			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGART7.ROM"));
@@ -397,6 +401,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		return 0;
 	case DEV_THUNDERCLOCK:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		return 0;
+	case DEV_MOCKINGBOARD:
+		buf[0] = 0;
 		return 0;
 	case DEV_PRINTER9:
 		buf[0] = 0;

@@ -162,7 +162,7 @@ BEGIN
     LTEXT           "Тип монитора:",IDC_STATIC,7,7,52,8
 END
 
-IDD_TEACCFG DIALOG DISCARDABLE  0, 0, 203, 191
+IDD_TEACCFG DIALOG DISCARDABLE  0, 0, 203, 207
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка контроллера Teac"
 FONT 9, "Tahoma"
@@ -177,8 +177,10 @@ BEGIN
     PUSHBUTTON      "...",IDC_IMGSEL2,181,103,15,14
     EDITTEXT        IDC_IMGROM,7,145,169,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_IMGROMSEL,181,144,15,14
-    DEFPUSHBUTTON   "OK",IDOK,43,170,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,110,170,50,14
+    CONTROL         "«Быстрый» режим",IDC_FAST,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,25,166,81,10
+    DEFPUSHBUTTON   "OK",IDOK,43,186,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,186,50,14
     LTEXT           "Выбор типа устройства:",11,7,7,85,8
     LTEXT           "Устройство №1:",12,21,23,58,8
     LTEXT           "Устройство №2:",13,21,41,58,8
@@ -192,7 +194,7 @@ BEGIN
                     WS_TABSTOP,88,120,82,10
 END
 
-IDD_SHUGCFG DIALOG DISCARDABLE  0, 0, 203, 185
+IDD_SHUGCFG DIALOG DISCARDABLE  0, 0, 203, 198
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка контроллера Shugart"
 FONT 9, "Tahoma"
@@ -203,8 +205,10 @@ BEGIN
     PUSHBUTTON      "...",IDC_IMGSEL2,181,93,15,14
     EDITTEXT        IDC_IMGROM,7,142,169,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_IMGROMSEL,181,141,15,14
-    DEFPUSHBUTTON   "OK",IDOK,43,164,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,110,164,50,14
+    CONTROL         "«Быстрый» режим",IDC_FAST,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,21,161,81,10
+    DEFPUSHBUTTON   "OK",IDOK,43,177,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,177,50,14
     LTEXT           "Выбор количества устройств:",11,7,7,104,8
     LTEXT           "Образ диска по умолчанию:",14,7,50,98,8
     LTEXT           "Устройство №1:",15,21,64,58,8
@@ -431,6 +435,7 @@ BEGIN
 	12123	"Плата Videx Videoterm"
 	12124	"Плата Thunderclock Plus"
 	12125	"Ячейка принтера Агат-9"
+	12126	"Плата звука Mockingboard"
 
 //	12200	NULL
 //	12201	NULL

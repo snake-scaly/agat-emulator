@@ -5,6 +5,7 @@
 */
 
 #include <stdarg.h>
+#include <dsound.h>
 #include "syslib.h"
 #include "types.h"
 #include "debug.h"
@@ -93,7 +94,7 @@ int DD_FAILED(int code,const char_t*fmt,...)
 	if (!FAILED(code)) return 0;
 	va_start(l,fmt);
 	xvsprintf(buf,fmt,l);
-	errprint(0,TEXT("DirectDraw error while %s: %s (code %i)"),buf,dd_errmsg(code),code);
+	errprint(0,TEXT("DirectDraw error while %s: %s (code %x)"),buf,dd_errmsg(code),code);
 	return 1;
 }
 
@@ -105,7 +106,7 @@ int DS_FAILED(int code,const char_t*fmt,...)
 	if (!FAILED(code)) return 0;
 	va_start(l,fmt);
 	xvsprintf(buf,fmt,l);
-	errprint(TEXT("DirectSound error while %s: %s (code %i)"),buf,ds_errmsg(code),code);
+	errprint(TEXT("DirectSound error while %s: %s (code %x)"),buf,ds_errmsg(code),code);
 	return 1;
 }
 
@@ -167,5 +168,12 @@ static const char_t* ic_errmsg(int res)
 
 static const char_t* ds_errmsg(int res)
 {
+	switch (res) {
+	case DSERR_ALLOCATED: return TEXT("Resources was already allocated");
+	case DSERR_INVALIDPARAM: return TEXT("Invalid parameter");
+	case DSERR_NOAGGREGATION: return TEXT("No support for aggregation");
+	case DSERR_NODRIVER: return TEXT("No available sound driver");
+	case DSERR_OUTOFMEMORY: return TEXT("Out of memory");
+	}
 	return TEXT("Unknown error");
 }

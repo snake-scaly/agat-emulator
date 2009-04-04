@@ -70,6 +70,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_PRINTER9:
 		puts("printer9_init");
 		return printer9_init(sr, st, sc);
+	case DEV_MOCKINGBOARD:
+		puts("mockingboard_init");
+		return mockingboard_init(sr, st, sc);
 	}
 	return 0;
 }
@@ -181,6 +184,7 @@ fail:
 		for (j = 0; j < i ; j ++ ) {
 			free_slot_state(sr->slots + j);
 		}
+		term_video_window(sr);
 		if (sr->name) free((void*)sr->name);
 		free(sr);
 		return NULL;
