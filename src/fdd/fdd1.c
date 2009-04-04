@@ -78,6 +78,7 @@ struct FDD_DATA
 	struct SYS_RUN_STATE	*sr;
 	struct SLOT_RUN_STATE	*st;
 	int	last_tsc;
+	int	use_fast;
 };
 
 
@@ -328,6 +329,8 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	st->command = fdd1_command;
 	st->save = fdd1_save;
 	st->load = fdd1_load;
+
+	data->use_fast = cf->cfgint[CFG_INT_DRV_FAST];
 
 	return 0;
 }
@@ -804,10 +807,12 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		fdd_select_phase(data, a>>1);
 		break;
 	case 8:
+		if (data->use_fast) system_command(data->sr, SYS_COMMAND_FAST, 0, 0);
 		data->state.MotorOn = 0;
 //		printf("fdd1: motor off\n");
 		break;
 	case 9:
+		if (data->use_fast) system_command(data->sr, SYS_COMMAND_FAST, 1, 0);
 		data->state.MotorOn = 1;
 //		printf("fdd1: motor on\n");
 		break;

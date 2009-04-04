@@ -96,6 +96,7 @@ struct FDD_DATA
 	int	time;
 	int	type;
 	byte	fdd_rom[FDD_ROM_SIZE];
+	int	use_fast;
 };
 
 
@@ -365,6 +366,8 @@ int  fdd_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	st->command = fdd_command;
 	st->load = fdd_load;
 	st->save = fdd_save;
+
+	data->use_fast = cf->cfgint[CFG_INT_DRV_FAST];
 
 	return 0;
 }
@@ -684,6 +687,13 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 			prepare_to_write(data);
 		} else {
 			prepare_sector_to_read(data);
+		}
+	}
+	if (data->use_fast && (b&0x80)) { // enable
+		if (rk&0x80) {
+			system_command(data->st->sr, SYS_COMMAND_FAST, 1, 0);
+		} else {
+			system_command(data->st->sr, SYS_COMMAND_FAST, 0, 0);
 		}
 	}
 	update_regs(data);
