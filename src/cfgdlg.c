@@ -23,6 +23,10 @@ static struct RESIZE_DIALOG resize=
 	}
 };
 
+static void repl_at(LPTSTR str)
+{
+	for (;*str; ++str) if (*str == TEXT('@')) *str = 0;
+}
 
 int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
@@ -32,11 +36,13 @@ int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
 	ofn.lpstrFilter = localize_str(LOC_CFG, 0, buf[0], sizeof(buf[0])); //TEXT("Файлы ПЗУ (*.rom)\0*.rom\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	ofn.lpstrTitle = localize_str(LOC_CFG, 1, buf[1], sizeof(buf[1])); //TEXT("Выбор файла ПЗУ");
-	GetModuleFileName(NULL, path, MAX_PATH);
-	PathRemoveFileSpec(path);
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 	if (!GetOpenFileName(&ofn)) return FALSE;
@@ -56,11 +62,13 @@ int select_save_config(HWND hpar, TCHAR fname[CFGSTRLEN])
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
 	ofn.lpstrFilter = localize_str(LOC_CFG, 2, buf[0], sizeof(buf[0]));  //TEXT("Файлы конфигурации (*.cfg)\0*.cfg\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	ofn.lpstrTitle = localize_str(LOC_CFG, 3, buf[1], sizeof(buf[1])); //TEXT("Выбор файла конфигурации");
-	GetModuleFileName(NULL, path, MAX_PATH);
-	PathRemoveFileSpec(path);
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
 	_tcscat(path, TEXT("\\"SYSTEMS_DIR));
 	ofn.lpstrInitialDir = path;
 	ofn.lpstrDefExt = TEXT("cfg");
@@ -75,6 +83,30 @@ int select_save_config(HWND hpar, TCHAR fname[CFGSTRLEN])
 }
 
 
+int select_save_text(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 12, buf[0], sizeof(buf[0]));  //TEXT("Файлы конфигурации (*.cfg)\0*.cfg\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 13, buf[1], sizeof(buf[1])); //TEXT("Выбор файла конфигурации");
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	_tcscat(path, TEXT("\\"SYSTEMS_DIR));
+	ofn.lpstrInitialDir = path;
+	ofn.lpstrDefExt = TEXT("txt");
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetSaveFileName(&ofn)) return FALSE;
+	return TRUE;
+}
+
+
 int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;
@@ -83,6 +115,7 @@ int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
 	ofn.lpstrFilter = localize_str(LOC_CFG, 4, buf[0], sizeof(buf[0])); //TEXT("Файлы шрифтов (*.fnt)\0*.fnt\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	ofn.lpstrTitle = localize_str(LOC_CFG, 5, buf[1], sizeof(buf[1])); //TEXT("Выбор файла знакогенератора");
@@ -108,11 +141,13 @@ int select_disk(HWND hpar, TCHAR fname[CFGSTRLEN], int*readonly)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
 	ofn.lpstrFilter = localize_str(LOC_CFG, 6, buf[0], sizeof(buf[0])); //TEXT("Файлы образов (*.dsk)\0*.dsk\0Файлы \"сырых\" данных (*.nib)\0*.nib\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	ofn.lpstrTitle = localize_str(LOC_CFG, 7, buf[1], sizeof(buf[1])); //TEXT("Выбор файла образа диска");
-	GetModuleFileName(NULL, path, MAX_PATH);
-	PathRemoveFileSpec(path);
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_READONLY | OFN_NOCHANGEDIR;
 	if (readonly&&!*readonly) ofn.Flags &= ~OFN_READONLY;
@@ -137,10 +172,12 @@ int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
 	ofn.lpstrFilter = localize_str(LOC_CFG, 8, buf[0], sizeof(buf[0])); //TEXT("Файлы ленты (*.wav)\0*.wav\0Все файлы\0*.*\0");
+	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	GetModuleFileName(NULL, path, MAX_PATH);
-	PathRemoveFileSpec(path);
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
 	_tcscat(path, TEXT("\\tapes"));
 	ofn.lpstrInitialDir = path;
 	ofn.lpstrDefExt = TEXT("wav");

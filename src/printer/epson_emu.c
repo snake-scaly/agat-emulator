@@ -4,6 +4,7 @@
 */
 
 #include "epson_emu.h"
+#include "sysconf.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,20 +19,42 @@
 #define EPS_ESC 27
 
 
+static unsigned char koi2win[128] = {
+	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 218, 155, 176, 157, 183, 159,
+	160, 161, 162, 184, 186, 165, 166, 191, 168, 169, 170, 171, 172, 173, 174, 175,
+	156, 177, 178, 168, 170, 181, 182, 175, 184, 185, 186, 187, 188, 189, 190, 185,
+	254, 224, 225, 246, 228, 229, 244, 227, 245, 232, 233, 234, 235, 236, 237, 238,
+	239, 255, 240, 241, 242, 243, 230, 226, 252, 251, 231, 248, 253, 249, 247, 250,
+	222, 192, 193, 214, 196, 197, 212, 195, 213, 200, 201, 202, 203, 204, 205, 206,
+	207, 223, 208, 209, 210, 211, 198, 194, 220, 219, 199, 216, 221, 217, 215, 218
+};
+
+static int charkoi2win(unsigned char c)
+{
+	if (c < 0x80) return c;
+	return koi2win[c&0x7F];
+}
+
 struct EPSON_EMU
 {
+	HWND wnd;
 	int opened;
 	int esc_mode;
 	int esc_cnt;
 	int esc_cmd;
 	FILE*out;
 	int nfile;
+
+	int bin_l, bin_h, bin_cnt;
 };
 
-PEPSON_EMU epson_create(unsigned flags)
+PEPSON_EMU epson_create(unsigned flags, HWND wnd)
 {
 	PEPSON_EMU emu = calloc(1, sizeof(*emu));
 	if (!emu) return NULL;
+
+	emu->wnd = wnd;
 
 	return emu;
 }
@@ -49,10 +72,16 @@ int epson_open(PEPSON_EMU emu, unsigned flags)
 	char fname[1024];
 	if (!emu) return -1;
 	if (emu->opened) return 1;
+	_mkdir(PRNOUT_DIR);
 	++emu->nfile;
-	sprintf(fname, "spool%03i.bin", emu->nfile);
+	sprintf(fname, PRNOUT_DIR"\\spool%03i.txt", emu->nfile);
+	if (!select_save_text(emu->wnd, fname)) {
+		emu->out = NULL;
+		emu->opened = 1;
+	}
 	emu->out = fopen(fname, "wb");
 	if (!emu->out) return -1;
+	setbuf(emu->out, NULL);
 	emu->opened = 1;
 
 	return 0;
@@ -193,6 +222,25 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 	case 'l':
 		printf("Set left margin %i\n", data);
 		break;
+	case 'K':
+		printf("Selecting 60-dpi graphics...\n");
+		emu->bin_l = data;
+		return 0;
+	case 'L':
+		printf("Selecting 120-dpi graphics...\n");
+		emu->bin_l = data;
+		return 0;
+	case 'Y':
+		printf("Selecting ds/dd - graphics...\n");
+		emu->bin_l = data;
+		return 0;
+	case 'Z':
+		printf("Selecting qd - graphics...\n");
+		emu->bin_l = data;
+		return 0;
+	case '*':
+		printf("Selecting graphics %i...\n", data);
+		return 0;
 	case 'm':
 		printf("Select charset extension %i\n", data);
 		break;
@@ -241,9 +289,6 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 	case '.':
 		printf("Entering graphic mode...\n", data);
 		break;
-	case '*':
-		printf("Printing bit image...\n", data);
-		break;
 	case EPS_EM:
 		printf("Select cut-sheet %i\n", data);
 		break;
@@ -268,6 +313,27 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 	case 'e':
 		if (no == 3) emu->esc_mode = 0;
 		break;
+	case 'L': case 'K': case 'Y': case 'Z':
+		if (no == 3) {
+			emu->bin_h = data;
+			emu->bin_cnt = emu->bin_l | (emu->bin_h << 8);
+		}
+		if (no == emu->bin_cnt + 3) {
+			if (emu->out) {
+				int nchars = emu->bin_cnt / 12;
+				for (;nchars;--nchars) fputc(' ', emu->out);
+			}
+			emu->esc_mode = 0;
+		}
+		break;
+	case '*':
+		switch (no) {
+		case 3: emu->bin_l = data; break;
+		case 4: emu->bin_h = data; emu->bin_cnt = emu->bin_l | (emu->bin_h << 8); break;
+		default:
+			if (no == emu->bin_cnt + 4) emu->esc_mode = 0;
+		}
+		break;
 	}
 	return 0;
 }
@@ -277,9 +343,11 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 	int r;
 	if (!emu) return -1;
 	if (!emu->opened) {
+		if (!data) return 0;
 		r = epson_open(emu, 0);
 		if (r) return r;
 	}
+//	putchar(data);
 	if (emu->esc_mode) {
 		emu->esc_cnt ++;
 		switch (emu->esc_cnt) {
@@ -320,7 +388,14 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 			puts("Printer form feed");
 			break;
 		default:
-			fwrite(&data, 1, 1, emu->out);
+			if (emu->out) {
+				if (data == 10) {
+					fputc(13, emu->out);
+//					putchar(13);
+				}
+				fputc(charkoi2win(data), emu->out);
+//				putchar(charkoi2win(data));
+			}
 		}
 	}
 	return 0;

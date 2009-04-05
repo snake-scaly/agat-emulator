@@ -314,6 +314,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F4:
 			system_command(sr, SYS_COMMAND_TOGGLE_MONO, 0, 0);
 			break;
+		case VK_APPS:
+			system_command(sr, SYS_COMMAND_FAST, 1, 0);
+			break;
 		}
 //			printf("d=%x\n",d);
 			if (d) {
@@ -326,6 +329,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				sr->cur_key = 0;
 				system_command(sr, SYS_COMMAND_RESET, 0, 0);
 			}
+		}
+		break;
+	case WM_KEYUP:
+		switch (wp) {
+		case VK_APPS:
+			system_command(sr, SYS_COMMAND_FAST, 0, 0);
+			break;
 		}
 		break;
 	case WM_LBUTTONDOWN:

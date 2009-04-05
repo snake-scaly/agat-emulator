@@ -3,6 +3,7 @@
 
 #define SYSTEMS_DIR	"systems"
 #define SAVES_DIR 	"saves"
+#define PRNOUT_DIR 	"print"
 
 #include <windows.h>
 #include <tchar.h>

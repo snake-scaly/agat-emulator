@@ -38,7 +38,7 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		cs->hook_data = (void*)param;
 		return 1;
 	case SYS_COMMAND_SET_CPUTIMER:
-		printf("cpu set timer %i %i\n", data, param);
+//		printf("cpu set timer %i %i\n", data, param);
 		cs->cpu_timer_delay = data;
 		cs->cpu_timer_id = param;
 		cs->cpu_timer_remains = 0;

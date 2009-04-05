@@ -129,6 +129,7 @@ static void printer_data(struct PRINTER_STATE*pcs, byte data)
 
 static void printer_control(struct PRINTER_STATE*pcs, byte data)
 {
+//	printf("printer_control %02X\n", data);
 	if ((data ^ pcs->regs[1]) & 0x80) {
 		if (data & 0x80) printer_data(pcs, pcs->regs[0]);
 	}
@@ -176,7 +177,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 	if (!pcs) return -1;
 
 	pcs->st = st;
-	pcs->pemu = epson_create(0);
+	pcs->pemu = epson_create(0, sr->video_w);
 	pcs->regs[2] = 0x0;
 
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
