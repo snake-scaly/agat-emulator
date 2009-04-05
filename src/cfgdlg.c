@@ -283,7 +283,7 @@ static int select_sys(HWND hwnd, struct SYSCONFIG*conf, int id)
 	return 0;
 }
 
-static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot)
+static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 {
 	switch (slot->dev_type) {
 	case DEV_FDD_TEAC:
@@ -305,7 +305,9 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot)
 	case DEV_VIDEOTERM:
 		return vtermdlg_run(hwnd, slot);
 	case DEV_THUNDERCLOCK:
-		return select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+	case DEV_PRINTER9:
+		return prn9dlg_run(hwnd, slot);
 	}
 
 	switch (slot->slot_no) {
@@ -345,7 +347,7 @@ static int change_item(HWND hwnd, struct SYSCONFIG* conf, HWND hlist, int ind, i
 		r = devseldlg_run(hwnd, syst);
 		if (r != -1) {
 			r = reset_slot_config(&newslot, r, syst);
-			r = slot_configure(hwnd, &newslot);
+			r = slot_configure(hwnd, &newslot, 1);
 			if (r != TRUE) {
 				return 1;
 			}
@@ -354,7 +356,7 @@ static int change_item(HWND hwnd, struct SYSCONFIG* conf, HWND hlist, int ind, i
 		}
 	} else {
 		int r;
-		r = slot_configure(hwnd, conf->slots + id);
+		r = slot_configure(hwnd, conf->slots + id, 0);
 		if (r != TRUE) {
 			return 1;
 		}

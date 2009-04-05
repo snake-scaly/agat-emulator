@@ -363,6 +363,7 @@ static void fdd_write_data(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 	int tsc;
+	if (d->readonly) return;
 	tsc = cpu_get_tsc(data->sr);
 
 //	printf("Writeing: tsc = %i\n", tsc-data->last_tsc);
@@ -613,6 +614,7 @@ static void fdd_save_track(struct FDD_DATA*data)
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 	int ofs, nrot = 0;
 //	puts("save_track");
+	if (d->readonly) return;
 	if (d->rawfmt) {
 		fdd_save_track_nibble(data);
 		return;

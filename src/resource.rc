@@ -42,6 +42,7 @@ IDB_AGAT9               BITMAP  DISCARDABLE     "bmps\\agat9.bmp"
 IDB_APPLE2_LOGO         BITMAP  DISCARDABLE     "bmps\\apple2_logo.bmp"
 IDB_AGAT7_LOGO          BITMAP  DISCARDABLE     "bmps\\agat7_logo.bmp"
 IDB_AGAT9_LOGO          BITMAP  DISCARDABLE     "bmps\\agat9_logo.bmp"
+IDI_MAIN icon discardable "bmps\\agat.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -367,6 +368,22 @@ BEGIN
     LTEXT           "Ext Charset PROM:",102,7,49,73,8
 END
 
+
+IDD_PRN9CFG DIALOG DISCARDABLE  0, 0, 206, 75
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка ячейки принтера Агат-9"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW1_NAME,80,19,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW1,184,19,15,12
+    EDITTEXT        IDC_FW2_NAME,80,33,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW2,184,33,15,12
+    DEFPUSHBUTTON   "OK",IDOK,44,54,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,111,54,50,14
+    LTEXT           "Выбор образов ПЗУ:",IDC_STATIC,7,7,71,8
+    LTEXT           "PROM CX00:",100,7,22,73,8
+    LTEXT           "PROM C800:",101,7,36,73,8
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //

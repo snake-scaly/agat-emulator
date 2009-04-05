@@ -29,6 +29,7 @@
 #define IDI_MAIN                        114
 #define IDD_TAPECFG                     114
 #define IDD_VTCFG                       115
+#define IDD_PRN9CFG                     116
 #define IDC_CFGLIST                     1000
 #define IDC_SYSTYPE                     1001
 #define IDC_PERIPHERAL                  1002
@@ -77,7 +78,11 @@
 #define IDC_FNT_NAME                    1047
 #define IDC_CHOOSE_FNT                  1048
 #define IDC_XFNT_NAME                   1049
+#define IDC_FW1_NAME                    1049
 #define IDC_CHOOSE_XFNT                 1050
+#define IDC_FW2_NAME                    1050
+#define IDC_CHOOSE_FW1                  1051
+#define IDC_CHOOSE_FW2                  1052
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -87,7 +92,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        115
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1053
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

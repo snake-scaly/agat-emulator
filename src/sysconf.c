@@ -406,7 +406,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		buf[0] = 0;
 		return 0;
 	case DEV_PRINTER9:
-		buf[0] = 0;
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		_tcscat(buf, TEXT("; "));
+		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:
