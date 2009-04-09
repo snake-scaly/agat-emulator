@@ -19,9 +19,9 @@ struct CPU_STATE
 
 	int fast_mode;
 
-	unsigned long freq_6502;//=800; // 1MHz
+	unsigned long long freq_6502;//=800; // 1MHz
 	int undoc; // enable undocumented commands
-	unsigned long tsc_6502;
+	unsigned long long tsc_6502;
 	int min_msleep; //=10;
 	int lim_fetches; // =5000
 	int need_cpusleep;

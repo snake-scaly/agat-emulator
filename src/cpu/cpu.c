@@ -104,8 +104,8 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cs = calloc(1, sizeof(*cs));
 	if (!cs) return -1;
 	cs->sr = sr;
-	cs->min_msleep = 10;
-	cs->lim_fetches = 100;
+	cs->min_msleep = 30;
+	cs->lim_fetches = 1000;
 	cs->freq_6502 = cf->cfgint[CFG_INT_CPU_SPEED]*10;
 	cs->undoc = cf->cfgint[CFG_INT_CPU_EXT];
 
@@ -188,7 +188,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 {
 	TCHAR bufs[2][256];
 	unsigned t0=get_n_msec();
-	int n_ticks = 0;
+	long long n_ticks = 0;
 	PulseEvent(cs->response);
 	while (!cs->term_req) {
 		int r, t, rt;
@@ -198,13 +198,6 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			WaitForSingleObject(cs->wakeup, INFINITE);
 			t0 += get_n_msec() - ta;
 			if (cs->term_req) return 0;
-		}
-		if (cs->cpu_timer_delay) {
-			if (!cs->cpu_timer_remains) cs->cpu_timer_remains = cs->cpu_timer_delay;
-			-- cs->cpu_timer_remains;
-			if (!cs->cpu_timer_remains) {
-				system_command(cs->sr, SYS_COMMAND_CPUTIMER, 0, cs->cpu_timer_id);
-			}
 		}
 //		puts("exec_op");
 		if  (cs->hook_proc) {
@@ -230,6 +223,13 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 					cs->term_req = 1;
 					break;
 				}
+		}
+		if (cs->cpu_timer_delay) {
+			if (cs->cpu_timer_remains<=0) cs->cpu_timer_remains += cs->cpu_timer_delay;
+			cs->cpu_timer_remains -= r;
+			if (cs->cpu_timer_remains<=0) {
+				system_command(cs->sr, SYS_COMMAND_CPUTIMER, 0, cs->cpu_timer_id);
+			}
 		}
 		if (n_ticks>=cs->lim_fetches||cs->need_cpusleep) {
 			unsigned t=get_n_msec();
