@@ -168,7 +168,7 @@ static void xram_write_state(word adr, byte d, struct XRAM_STATE*st)
 {
 	d = adr | 0x80;
 	if (st->ram_state == d) return;
-//	printf("psrom_write_state = %x\n", d);
+//	printf("psrom_write_state = %x (%04X)\n", d, adr);
 	st->ram_state = d;
 	set_xram_procs(st);
 	if (st->ram_state & 0x20) { // read enabled

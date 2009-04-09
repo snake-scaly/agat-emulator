@@ -36,12 +36,14 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_FDD_TEAC);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTER9);
+		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
 		return 0;
 	case 1: // agathe 9
 		DevList_AddItem(hlist, DEV_MEMORY_XRAM9);
 		DevList_AddItem(hlist, DEV_FDD_TEAC);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTER9);
+		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
 		return 0;
 	case 2: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);

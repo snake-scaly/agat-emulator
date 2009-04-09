@@ -737,6 +737,7 @@ BEGIN
     12124                   "Плата Thunderclock Plus"
     12125                   "Ячейка принтера Агат-9"
     12126                   "Плата звука Mockingboard"
+    12127                   "Ячейка часов Nippel"
 END
 
 STRINGTABLE DISCARDABLE 

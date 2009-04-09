@@ -201,11 +201,13 @@ static void ram7_set_state(struct BASERAM_STATE*st, int state)
 
 void basemem7_state_w(word adr,byte data, struct BASERAM_STATE*st) // C0F0-C0FF
 {
+//	printf("basemem7_state_w @ %04X: %02X\n", adr, data);
 	ram7_set_state(st, adr&0x0F);
 }
 
 byte basemem7_state_r(word adr, struct BASERAM_STATE*st) // C0F0-C0FF
 {
+//	printf("basemem7_state_r @ %04X\n", adr);
 	ram7_set_state(st, adr&0x0F);
 	return empty_read(adr, st);
 }

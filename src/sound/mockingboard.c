@@ -497,7 +497,7 @@ static void start_timer(int channel, int no, struct SOUND_STATE*ss)
 	if (!(ss->psg_data[channel][MB_IER] & 0x40)) return;
 	div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
 //	printf("T1 latch: %02X%02X; div = %i\n", ss->psg_data[channel][MB_LATCH1H], ss->psg_data[channel][MB_LATCH1L], div);
-	div /= 4;
+//	div /= 4;
 	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, (long)ss);
 }
 

@@ -204,6 +204,8 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		return 0;
 	case DEV_MOCKINGBOARD:
 		return 0;
+	case DEV_NIPPELCLOCK:
+		return 0;
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
@@ -403,12 +405,17 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_MOCKINGBOARD:
-		buf[0] = 0;
+		buf[0] = '\x97';
+		buf[1] = 0;
 		return 0;
 	case DEV_PRINTER9:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
+		return 0;
+	case DEV_NIPPELCLOCK:
+		buf[0] = '\x97';
+		buf[1] = 0;
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:

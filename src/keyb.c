@@ -47,7 +47,7 @@ int decode_key(unsigned long keydata)
 {
 	int scan = (keydata>>16)&0xFF;
 	int ext = keydata&(1L<<24);
-	printf("data %x; scan=%x ext=%x\n",keydata,scan,ext);
+//	printf("data %x; scan=%x ext=%x\n",keydata,scan,ext);
 	if (scan==0x46 && ext) return -1;
 	if (ext) {
 		return keycodes_ext[scan];
