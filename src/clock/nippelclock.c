@@ -120,7 +120,7 @@ static void update_clock(struct NIPPELCLOCK_STATE*ncs)
 	ncs->regs[9] = cvtnum(tm.tm_year % 100, ncs);
 	ncs->regs[8] = cvtnum(tm.tm_mon + 1, ncs);
 	ncs->regs[7] = cvtnum(tm.tm_mday, ncs);
-	ncs->regs[6] = cvtnum(tm.tm_wday, ncs);
+	ncs->regs[6] = cvtnum(((tm.tm_wday + 6) % 7) + 1, ncs);
 	ncs->regs[4] = cvtnum(tm.tm_hour, ncs);
 	ncs->regs[2] = cvtnum(tm.tm_min, ncs);
 	ncs->regs[0] = cvtnum(tm.tm_sec, ncs);
@@ -142,7 +142,7 @@ static void write_clock(struct NIPPELCLOCK_STATE*ncs)
 	if (tm.tm_year < 40) tm.tm_year += 100;
 	tm.tm_mon = cvtres(ncs->regs[8], ncs) - 1;
 	tm.tm_mday = cvtres(ncs->regs[7], ncs);
-	tm.tm_wday = cvtres(ncs->regs[6], ncs);
+	tm.tm_wday = (cvtres(ncs->regs[6], ncs) + 7) % 7;
 	if ((ncs->regs[REG_B]&2)) {
 		tm.tm_hour = cvtres(ncs->regs[4], ncs);
 	} else {
