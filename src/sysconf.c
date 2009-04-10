@@ -6,22 +6,12 @@
 
 #include "localize.h"
 
-/*
-const TCHAR*memsizes_s[NMEMSIZES] = {
-	TEXT("———"), // 1
-	TEXT("4 Кбайта"), // 2
-	TEXT("8 Кбайт"), // 4
-	TEXT("16 Кбайт"), // 8
-	TEXT("32 Кбайта"), // 16
-	TEXT("48 Кбайт"), // 32
-	TEXT("64 Кбайта"), // 64
-	TEXT("128 Кбайт"), // 128
-	TEXT("12 Кбайт"),  //256
-	TEXT("20 Кбайт"),  //512
-	TEXT("24 Кбайта"), //1024
-	TEXT("36 Кбайт"),  //2048
+char conf_present[NSYSTYPES][NCONFTYPES] = {
+	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1}
 };
-*/
+
 
 const unsigned memsizes_b[NMEMSIZES] = {
 	0,
@@ -38,68 +28,6 @@ const unsigned memsizes_b[NMEMSIZES] = {
 	36 * 1024
 };
 
-/*
-const TCHAR*devnames[] = {
-	TEXT("———"),
-	TEXT("Псевдо-ПЗУ"),
-	TEXT("Доп. ОЗУ"),
-	TEXT("Доп. ОЗУ"),
-	TEXT("Language card"),
-	TEXT("Контроллер Teac"),
-	TEXT("Контроллер Shugart"),
-
-	TEXT("— Система —"),
-	TEXT("Отсутствует"),
-	TEXT("Мышь"),
-	TEXT("Джойстик"),
-	TEXT("MMSYSTEM"),
-	TEXT("DirectSound"),
-	TEXT("Системный звук"),
-	TEXT("Цветной"),
-	TEXT("Монохромный"),
-	TEXT("ЦП 6502"),
-	TEXT("ЦП M6502"),
-	TEXT("Отсутствует"),
-	TEXT("Внешний файл"),
-	TEXT("Без звука")
-};
-
-const TCHAR*confnames[] = {
-	NULL,
-	NULL,
-	TEXT("Слот №2"),
-	TEXT("Слот №3"),
-	TEXT("Слот №4"),
-	TEXT("Слот №5"),
-	TEXT("Слот №6"),
-	NULL,
-	NULL,
-	NULL,
-	TEXT("(Процессор)"),
-	TEXT("(Память)"),
-	TEXT("(ПЗУ)"),
-	TEXT("(Набор символов)"),
-	TEXT("(Звук)"),
-	TEXT("(Джойстик)"), 
-	TEXT("(Монитор)"),
-	TEXT("(Магнитофон)"),
-};
-
-const TCHAR*sysnames[] = {
-	TEXT("Агат–7"),
-	TEXT("Агат–9"),
-	TEXT("Apple ][")
-};
-
-const TCHAR*drvtypenames[] = {
-	TEXT("нет"),
-	TEXT("ЕС5088"),
-	TEXT("1S1D"),
-	TEXT("1S2D"),
-	TEXT("2S1D"),
-	TEXT("2S2D"),
-};
-*/
 
 
 int clear_config(struct SYSCONFIG*c)

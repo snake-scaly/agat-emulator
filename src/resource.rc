@@ -742,11 +742,13 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    12201                   "Слот №1"
     12202                   "Слот №2"
     12203                   "Слот №3"
     12204                   "Слот №4"
     12205                   "Слот №5"
     12206                   "Слот №6"
+    12207                   "Слот №7"
 END
 
 STRINGTABLE DISCARDABLE 

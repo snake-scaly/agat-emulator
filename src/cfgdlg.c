@@ -255,7 +255,7 @@ static int set_per_comment(HWND hlist, int id, LPTSTR comment)
 	return 0;
 }
 
-static int update_list(HWND hwnd, struct SYSCONFIG*conf)
+static int update_list(HWND hwnd, struct SYSCONFIG*conf, int systype)
 {
 	int i, id;
 	HWND hlist;
@@ -265,6 +265,7 @@ static int update_list(HWND hwnd, struct SYSCONFIG*conf)
 
 	for (i = 0; i < NCONFTYPES; i++) {
 		TCHAR buf[1024];
+		if (!conf_present[systype][i]) continue;
 		if (!get_confnames(i)) continue;
 		if (i >= CONF_EXT && conf->slots[i].dev_type == DEV_NULL) {
 			continue;
@@ -279,7 +280,7 @@ static int update_list(HWND hwnd, struct SYSCONFIG*conf)
 static int select_sys(HWND hwnd, struct SYSCONFIG*conf, int id)
 {
 	reset_config(conf, id);
-	update_list(hwnd, conf);
+	update_list(hwnd, conf, id);
 	return 0;
 }
 
@@ -396,7 +397,7 @@ static int dialog_init(HWND hwnd, struct SYSCONFIG*conf)
 
 	ListView_SetExtendedListViewStyle(hlist, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	resize_loadlistviewcolumns(hlist, "devlist");
-	update_list(hwnd, conf);
+	update_list(hwnd, conf, conf->systype);
 	return 0;
 }
 
@@ -437,7 +438,7 @@ static int dialog_notify(HWND hwnd, struct SYSCONFIG*conf, int id, LPNMHDR hdr)
 			r = change_item(hwnd, conf, hdr->hwndFrom, ((LPNMITEMACTIVATE)hdr) -> iItem, 
 					ListView_GetItemLParam(hdr->hwndFrom, ((LPNMITEMACTIVATE)hdr) -> iItem),
 					((LPNMITEMACTIVATE)hdr) -> iSubItem);
-			if (!r) update_list(hwnd, conf);
+			if (!r) update_list(hwnd, conf, conf->systype);
 			return 0;
 		}
 		break;
