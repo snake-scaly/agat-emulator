@@ -8,53 +8,26 @@
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#define EPS_BEL	7
-#define EPS_FF	12
-#define EPS_SO  14
-#define EPS_SI  15
-#define EPS_DC2 18
-#define EPS_DC4 20
-#define EPS_EM	25
-#define EPS_ESC 27
-
-
-static unsigned char koi2win[128] = {
-	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 218, 155, 176, 157, 183, 159,
-	160, 161, 162, 184, 186, 165, 166, 191, 168, 169, 170, 171, 172, 173, 174, 175,
-	156, 177, 178, 168, 170, 181, 182, 175, 184, 185, 186, 187, 188, 189, 190, 185,
-	254, 224, 225, 246, 228, 229, 244, 227, 245, 232, 233, 234, 235, 236, 237, 238,
-	239, 255, 240, 241, 242, 243, 230, 226, 252, 251, 231, 248, 253, 249, 247, 250,
-	222, 192, 193, 214, 196, 197, 212, 195, 213, 200, 201, 202, 203, 204, 205, 206,
-	207, 223, 208, 209, 210, 211, 198, 194, 220, 219, 199, 216, 221, 217, 215, 218
-};
-
-static int charkoi2win(unsigned char c)
-{
-	if (c < 0x80) return c;
-	return koi2win[c&0x7F];
-}
+#include <assert.h>
 
 struct EPSON_EMU
 {
-	HWND wnd;
-	int opened;
 	int esc_mode;
 	int esc_cnt;
 	int esc_cmd;
-	FILE*out;
-	int nfile;
 
-	int bin_l, bin_h, bin_cnt;
+	int bin_cnt;
+	unsigned char*data;
+
+	struct EPSON_EXPORT exp;
 };
 
-PEPSON_EMU epson_create(unsigned flags, HWND wnd)
+PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp)
 {
 	PEPSON_EMU emu = calloc(1, sizeof(*emu));
 	if (!emu) return NULL;
 
-	emu->wnd = wnd;
+	emu->exp = *exp;
 
 	return emu;
 }
@@ -62,39 +35,10 @@ PEPSON_EMU epson_create(unsigned flags, HWND wnd)
 void epson_free(PEPSON_EMU emu)
 {
 	if (!emu) return;
-	if (emu->opened) epson_close(emu);
+	if (emu->data) free(emu->data);
+	emu->data = NULL;
+	if (emu->exp.free_data) emu->exp.free_data(emu->exp.param);
 	free(emu);
-}
-
-
-int epson_open(PEPSON_EMU emu, unsigned flags)
-{
-	char fname[1024];
-	if (!emu) return -1;
-	if (emu->opened) return 1;
-	_mkdir(PRNOUT_DIR);
-	++emu->nfile;
-	sprintf(fname, PRNOUT_DIR"\\spool%03i.txt", emu->nfile);
-	if (!select_save_text(emu->wnd, fname)) {
-		emu->out = NULL;
-		emu->opened = 1;
-	}
-	emu->out = fopen(fname, "wb");
-	if (!emu->out) return -1;
-	setbuf(emu->out, NULL);
-	emu->opened = 1;
-
-	return 0;
-}
-
-int epson_close(PEPSON_EMU emu)
-{
-	if (!emu) return -1;
-	if (!emu->opened) return 1;
-	if (emu->out) fclose(emu->out);
-	emu->out = NULL;
-	emu->opened = 0;
-	return 0;
 }
 
 int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
@@ -166,6 +110,9 @@ int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
 	default:
 		return 0;
 	}
+	if (emu->exp.write_command) {
+		emu->exp.write_command(emu->exp.param, cmd, 0, NULL);
+	}
 	emu->esc_mode = 0;
 	return 0;
 }
@@ -224,19 +171,19 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 		break;
 	case 'K':
 		printf("Selecting 60-dpi graphics...\n");
-		emu->bin_l = data;
+		emu->bin_cnt = data;
 		return 0;
 	case 'L':
 		printf("Selecting 120-dpi graphics...\n");
-		emu->bin_l = data;
+		emu->bin_cnt = data;
 		return 0;
 	case 'Y':
 		printf("Selecting ds/dd - graphics...\n");
-		emu->bin_l = data;
+		emu->bin_cnt = data;
 		return 0;
 	case 'Z':
 		printf("Selecting qd - graphics...\n");
-		emu->bin_l = data;
+		emu->bin_cnt = data;
 		return 0;
 	case '*':
 		printf("Selecting graphics %i...\n", data);
@@ -293,6 +240,9 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 		printf("Select cut-sheet %i\n", data);
 		break;
 	}
+	if (emu->exp.write_command) {
+		emu->exp.write_command(emu->exp.param, cmd, 1, &data);
+	}
 	emu->esc_mode = 0;
 	return 0;
 }
@@ -315,23 +265,34 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 		break;
 	case 'L': case 'K': case 'Y': case 'Z':
 		if (no == 3) {
-			emu->bin_h = data;
-			emu->bin_cnt = emu->bin_l | (emu->bin_h << 8);
+			emu->bin_cnt |= data<<8;
+			emu->data = realloc(emu->data, emu->bin_cnt);
+			assert(emu->data);
 		}
-		if (no == emu->bin_cnt + 3) {
-			if (emu->out) {
-				int nchars = emu->bin_cnt / 12;
-				for (;nchars;--nchars) fputc(' ', emu->out);
+		if (no >= emu->bin_cnt + 3) {
+			if (emu->exp.write_command) {
+				emu->exp.write_command(emu->exp.param, cmd, emu->bin_cnt, emu->data);
 			}
 			emu->esc_mode = 0;
+		} else if (no > 3) {
+			emu->data[no - 4] = data;
 		}
 		break;
 	case '*':
 		switch (no) {
-		case 3: emu->bin_l = data; break;
-		case 4: emu->bin_h = data; emu->bin_cnt = emu->bin_l | (emu->bin_h << 8); break;
+		case 3: emu->bin_cnt = data; break;
+		case 4: emu->bin_cnt |= data<<8;
+			emu->data = realloc(emu->data, emu->bin_cnt);
+			assert(emu->data);
 		default:
-			if (no == emu->bin_cnt + 4) emu->esc_mode = 0;
+			if (no >= emu->bin_cnt + 4) {
+				if (emu->exp.write_command) {
+					emu->exp.write_command(emu->exp.param, cmd, emu->bin_cnt, emu->data);
+				}
+				emu->esc_mode = 0;
+			} else if (no > 4) {
+				emu->data[no - 5] = data;
+			}
 		}
 		break;
 	}
@@ -342,12 +303,6 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 {
 	int r;
 	if (!emu) return -1;
-	if (!emu->opened) {
-		if (!data) return 0;
-		r = epson_open(emu, 0);
-		if (r) return r;
-	}
-//	putchar(data);
 	if (emu->esc_mode) {
 		emu->esc_cnt ++;
 		switch (emu->esc_cnt) {
@@ -371,30 +326,43 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 			break;
 		case EPS_SI:
 			puts("Select condensed printing");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		case EPS_DC2:
 			puts("Cancel condensed printing");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		case EPS_SO:
 			puts("Select double-width printing");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		case EPS_DC4:
 			puts("Cancel double-width printing");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		case EPS_BEL:
 			puts("Printer beep");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		case EPS_FF:
 			puts("Printer form feed");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
 			break;
 		default:
-			if (emu->out) {
-				if (data == 10) {
-					fputc(13, emu->out);
-//					putchar(13);
-				}
-				fputc(charkoi2win(data), emu->out);
-//				putchar(charkoi2win(data));
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
 			}
 		}
 	}

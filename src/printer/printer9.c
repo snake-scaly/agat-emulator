@@ -170,6 +170,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 	int i;
 	ISTREAM*rom;
 	struct PRINTER_STATE*pcs;
+	struct EPSON_EXPORT exp;
 
 	puts("in printer9_init");
 
@@ -177,7 +178,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 	if (!pcs) return -1;
 
 	pcs->st = st;
-	pcs->pemu = epson_create(0, sr->video_w);
+
 	pcs->regs[2] = 0x0;
 
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
@@ -189,6 +190,23 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 	if (!rom) { free(pcs); return -2; }
 	isread(rom, pcs->rom2, sizeof(pcs->rom2));
 	isclose(rom);
+
+
+
+	i = export_text_init(&exp, 0, sr->video_w);
+	if (i < 0)  {
+		free(pcs);
+		return -2;
+	}
+
+	pcs->pemu = epson_create(0, &exp);
+	if (!pcs->pemu) {
+		exp.free_data(exp.param);
+		free(pcs);
+		return -3;
+	}
+
+
 
 	st->data = pcs;
 	st->free = printer_term;
