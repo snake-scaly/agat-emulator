@@ -273,9 +273,15 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 	for (i = 0; i < NCONFTYPES; i++) {
 		int r0;
 		DWORD bb = MAKEDWORD(i, ~i), bb1;
+		printf("loading conf %i\n", i);
 		r0 = isread(in, &bb1, sizeof(bb1));
-		if (r0 != sizeof(bb1)) return -1;
-		if (bb1 != bb) return -2;
+		if (r0 != sizeof(bb1)) {
+			return -1;
+		}	
+		if (bb1 != bb) {
+			printf("conf %i prefix failed\n", i);
+			return -2;
+		}
 		r0 = load_slot_state(sr->slots + i, in);
 		if (r0 < 0) return r;
 	}
