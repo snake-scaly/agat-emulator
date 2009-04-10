@@ -1,31 +1,22 @@
 #include "epson_emu.h"
-#include "export_text.h"
+#include "export.h"
 #include "sysconf.h"
 #include <io.h>
 #include <stdio.h>
 
 
-static unsigned char koi2win[128] = {
-	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 218, 155, 176, 157, 183, 159,
-	160, 161, 162, 184, 186, 165, 166, 191, 168, 169, 170, 171, 172, 173, 174, 175,
-	156, 177, 178, 168, 170, 181, 182, 175, 184, 185, 186, 187, 188, 189, 190, 185,
-	254, 224, 225, 246, 228, 229, 244, 227, 245, 232, 233, 234, 235, 236, 237, 238,
-	239, 255, 240, 241, 242, 243, 230, 226, 252, 251, 231, 248, 253, 249, 247, 250,
-	222, 192, 193, 214, 196, 197, 212, 195, 213, 200, 201, 202, 203, 204, 205, 206,
-	207, 223, 208, 209, 210, 211, 198, 194, 220, 219, 199, 216, 221, 217, 215, 218
-};
 
-static int charkoi2win(unsigned char c)
-{
-	if (c < 0x80) return c;
-	return koi2win[c&0x7F];
-}
+#define BUF_SIZE 256
 
 struct EXPORT_TEXT
 {
 	FILE*out;
 	HWND wnd;
+	unsigned flags;
+
+	unsigned char buf[BUF_SIZE];
+	int buf_pos;
+
 	int  opened;
 };
 
@@ -53,21 +44,50 @@ static void open_out(struct EXPORT_TEXT*et)
 	if (!et->out) return;
 }
 
+
+static void buf_back(struct EXPORT_TEXT*et)
+{
+	if (et->buf_pos) -- et->buf_pos;
+}
+
+static void buf_flush(struct EXPORT_TEXT*et)
+{
+	fwrite(et->buf, 1, et->buf_pos, et->out);
+	et->buf_pos = 0;
+}
+
+static void buf_add(struct EXPORT_TEXT*et, int ch)
+{
+	if (et->buf_pos == BUF_SIZE) {
+		fwrite(et->buf, 1, 1, et->out);
+		memmove(et->buf, et->buf + 1, BUF_SIZE - 1);
+		et->buf[et->buf_pos - 1] = ch;
+	} else {
+		et->buf[et->buf_pos++] = ch;
+	}
+}
+
 static void txt_write_char(struct EXPORT_TEXT*et, int ch)
 {
 	if (ch && !et->opened) {
 		open_out(et);
 	}
 	if (!et->out) return;
-	if (ch == 10) {
-		fputc(13, et->out);
+	switch (ch) {
+	case 8:
+		buf_back(et);
+		break;
+	case 10:
+		buf_add(et, ch);
+		break;
 	}
 	if (ch < ' ') return;
-	fputc(charkoi2win(ch), et->out);
+	buf_add(et, ch);
 }
 
 static void txt_write_command(struct EXPORT_TEXT*et, int cmd, int nparams, unsigned char*params)
 {
+	buf_flush(et);
 	switch (cmd) {
 	case 'L': case 'K': case 'Y': case 'Z': case '*':
 		if (et->out) {
@@ -81,7 +101,10 @@ static void txt_write_command(struct EXPORT_TEXT*et, int cmd, int nparams, unsig
 static void txt_free_data(struct EXPORT_TEXT*et)
 {
 	if (et) {
-		if (et->out) fclose(et->out);
+		if (et->out) {
+			buf_flush(et);
+			fclose(et->out);
+		}
 		free(et);
 	}
 }
@@ -94,6 +117,7 @@ int  export_text_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et = calloc(sizeof(*et), 1);
 	if (!et) return -1;
 
+	et->flags = flags;
 	et->wnd = wnd;
 
 	exp->param = et;

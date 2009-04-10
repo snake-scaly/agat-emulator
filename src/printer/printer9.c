@@ -24,6 +24,7 @@
 #include "localize.h"
 
 #include "epson_emu.h"
+#include "export.h"
 
 struct PRINTER_STATE
 {
@@ -165,6 +166,21 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 }
 
 
+#define POLAR_READY	0x40
+#define POLAR_BUSY	0x00
+#define CHAR_KOI8	0x00
+#define CHAR_GOST	0x04
+#define CHAR_CPA80	0x20
+#define CHAR_FX85	0x24
+#define DATA_INVERSE	0x10
+#define DATA_NORMAL	0x00
+#define READY_ACK	0x08
+#define READY_BUSY	0x00
+#define PRINTER_FX	0x00
+#define PRINTER_D100	0x02
+
+
+
 int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
 	int i;
@@ -179,7 +195,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 
 	pcs->st = st;
 
-	pcs->regs[2] = 0x0;
+	pcs->regs[2] = POLAR_BUSY | CHAR_FX85 | DATA_NORMAL | READY_BUSY | PRINTER_FX;
 
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
 	if (!rom) { free(pcs); return -1; }
@@ -193,13 +209,13 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 
 
 
-	i = export_text_init(&exp, 0, sr->video_w);
+	i = export_tiff_init(&exp, 0, sr->video_w);
 	if (i < 0)  {
 		free(pcs);
 		return -2;
 	}
 
-	pcs->pemu = epson_create(0, &exp);
+	pcs->pemu = epson_create(EPSON_TEXT_RECODE_FX, &exp);
 	if (!pcs->pemu) {
 		exp.free_data(exp.param);
 		free(pcs);

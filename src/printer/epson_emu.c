@@ -10,8 +10,53 @@
 #include <stdio.h>
 #include <assert.h>
 
+
+static unsigned char koi2win[128] = {
+	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 218, 155, 176, 157, 183, 159,
+	160, 161, 162, 184, 186, 165, 166, 191, 168, 169, 170, 171, 172, 173, 174, 175,
+	156, 177, 178, 168, 170, 181, 182, 175, 184, 185, 186, 187, 188, 189, 190, 185,
+	254, 224, 225, 246, 228, 229, 244, 227, 245, 232, 233, 234, 235, 236, 237, 238,
+	239, 255, 240, 241, 242, 243, 230, 226, 252, 251, 231, 248, 253, 249, 247, 250,
+	222, 192, 193, 214, 196, 197, 212, 195, 213, 200, 201, 202, 203, 204, 205, 206,
+	207, 223, 208, 209, 210, 211, 198, 194, 220, 219, 199, 216, 221, 217, 215, 218
+};
+
+static unsigned char fx2win[128] = {
+         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+         0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+         0, 192, 193, 194, 195, 196, 197,   0, 198, 199, 200, 201, 202, 203, 204, 205,
+       206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221,
+       222, 223,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
+         0, 224, 225, 226, 227, 228, 229,   0, 230, 231, 232, 233, 234, 235, 236, 237,
+       238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253,
+       254, 255,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0
+};
+
+static int charkoi2win(unsigned char c)
+{
+	if (c < 0x80) return c;
+	return koi2win[c&0x7F];
+}
+
+
+static int charfx2win(unsigned char c)
+{
+	if (c < 0x80) return c;
+	return fx2win[c&0x7F]?fx2win[c&0x7F]:c;
+}
+
+static int no_recode(unsigned char c)
+{
+	return c;
+}
+
+
+
 struct EPSON_EMU
 {
+	unsigned flags;
+
 	int esc_mode;
 	int esc_cnt;
 	int esc_cmd;
@@ -20,6 +65,8 @@ struct EPSON_EMU
 	unsigned char*data;
 
 	struct EPSON_EXPORT exp;
+
+	int (*recode)(unsigned char c);
 };
 
 PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp)
@@ -27,7 +74,23 @@ PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp)
 	PEPSON_EMU emu = calloc(1, sizeof(*emu));
 	if (!emu) return NULL;
 
+	emu->flags = flags;
 	emu->exp = *exp;
+
+	switch (emu->flags & EPSON_TEXT_RECODE_MASK) {
+	case EPSON_TEXT_NO_RECODE:
+		emu->recode = no_recode;
+		break;
+	case EPSON_TEXT_RECODE_KOI:
+		emu->recode = charkoi2win;
+		break;
+	case EPSON_TEXT_RECODE_FX:
+		emu->recode = charfx2win;
+		break;
+	default:
+		free(emu);
+		return NULL;
+	}
 
 	return emu;
 }
@@ -362,7 +425,7 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 			break;
 		default:
 			if (emu->exp.write_char) {
-				emu->exp.write_char(emu->exp.param, data);
+				emu->exp.write_char(emu->exp.param, emu->recode(data));
 			}
 		}
 	}
