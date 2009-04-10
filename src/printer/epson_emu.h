@@ -6,6 +6,7 @@
 #include <windows.h>
 
 #define EPS_BEL	7
+#define EPS_BS	8
 #define EPS_LF	10
 #define EPS_FF	12
 #define EPS_CR	13
