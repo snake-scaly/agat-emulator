@@ -125,7 +125,7 @@ static byte printer_rom_r(word adr, struct PRINTER_STATE*pcs) // CX00-CXFF
 static void printer_data(struct PRINTER_STATE*pcs, byte data)
 {
 //	printf("write printer data: %02x (%c)\n", data, data);
-	epson_write(pcs->pemu, data);
+	epson_write(pcs->pemu, data & 0x7F);
 }
 
 static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-C0XF

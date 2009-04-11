@@ -309,6 +309,23 @@ BEGIN
     LTEXT           "Режим вывода:",102,7,54,68,8
 END
 
+
+IDD_PRNACFG DIALOG DISCARDABLE  0, 0, 206, 79
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка Printer Interface Card"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW1_NAME,80,19,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW1,184,19,15,12
+    COMBOBOX        IDC_PRINT_MODE,80,38,119,54,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,43,60,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,60,50,14
+    LTEXT           "Выбор образа ПЗУ:",IDC_STATIC,7,7,67,8
+    LTEXT           "PROM",100,7,22,73,8
+    LTEXT           "Режим вывода:",102,7,40,68,8
+END
+
 STRINGTABLE
 BEGIN
 // Generic text: 3000
@@ -464,15 +481,16 @@ BEGIN
 	12125	"Ячейка принтера Агат-9"
 	12126	"Плата звука Mockingboard"
 	12127   "Ячейка часов Nippel"
+	12128	"Плата Parallel Printer Card"
 
-//	12200	NULL
-//	12201	NULL
+	12200	"Слот №0"
+	12201	"Слот №1"
 	12202	"Слот №2"
 	12203	"Слот №3"
 	12204	"Слот №4"
 	12205	"Слот №5"
 	12206	"Слот №6"
-//	12207	NULL
+	12207	"Слот №7"
 //	12208	NULL
 //	12209	NULL
 	12210	"(Процессор)"

@@ -76,6 +76,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_NIPPELCLOCK:
 		puts("nippelclock_init");
 		return nippelclock_init(sr, st, sc);
+	case DEV_PRINTERA:
+		puts("printera_init");
+		return printera_init(sr, st, sc);
 	}
 	return 0;
 }

@@ -419,6 +419,7 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		break;
 	case EPS_CR:
 		page_cr(et);
+		page_lf(et);
 		break;
 	case EPS_LF:
 		page_cr(et);

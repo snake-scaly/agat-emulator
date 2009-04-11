@@ -48,6 +48,7 @@ static int dialog_init(HWND hwnd, void*p)
 	case 2: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
+		DevList_AddItem(hlist, DEV_PRINTERA);
 		DevList_AddItem(hlist, DEV_SOFTCARD);
 		DevList_AddItem(hlist, DEV_VIDEOTERM);
 		DevList_AddItem(hlist, DEV_THUNDERCLOCK);

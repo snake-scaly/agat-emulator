@@ -156,7 +156,7 @@ int rama_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 //		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
 		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
 	}
-	if (sr->config->slots[CONF_SLOT2].dev_type == DEV_MEMORY_XRAMA) { // language card installed
+	if (sr->config->slots[CONF_SLOT0].dev_type == DEV_MEMORY_XRAMA) { // language card installed
 		st->ram_size = 0x10000;
 		st->ram = realloc(st->ram, st->ram_size);
 		if (!st->ram) {

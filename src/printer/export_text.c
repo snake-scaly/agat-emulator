@@ -78,7 +78,8 @@ static void txt_write_char(struct EXPORT_TEXT*et, int ch)
 		buf_back(et);
 		break;
 	case 10:
-		buf_add(et, ch);
+	case 13:
+		buf_add(et, 10);
 		break;
 	}
 	if (ch < ' ') return;

@@ -9,7 +9,7 @@
 char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1}
+	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1}
 };
 
 
@@ -61,7 +61,8 @@ int reset_config(struct SYSCONFIG*c, int systype)
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
 	case SYSTEM_A:
-		reset_slot_config(c->slots+CONF_SLOT2, DEV_MEMORY_XRAMA, systype);
+		reset_slot_config(c->slots+CONF_SLOT1, DEV_PRINTERA, systype);
+		reset_slot_config(c->slots+CONF_SLOT0, DEV_MEMORY_XRAMA, systype);
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
 	}
@@ -130,6 +131,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
 		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("ROMS\\CM6337P.ROM"));
+		return 0;
+	case DEV_PRINTERA:
+		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CENTRONI.ROM"));
 		return 0;
 	case DEV_MOCKINGBOARD:
 		return 0;
@@ -343,6 +348,11 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
+		return 0;
+	case DEV_PRINTERA:
+		localize_str(LOC_PRINTER, c->cfgint[CFG_INT_PRINT_MODE], buf, 1024);
+		_tcscat(buf, TEXT("; "));
+		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_NIPPELCLOCK:
 		buf[0] = '\x97';

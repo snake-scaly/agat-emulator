@@ -6,7 +6,7 @@
 #include "localize.h"
 #include "resource.h"
 
-static struct RESIZE_DIALOG resize=
+static struct RESIZE_DIALOG resize9=
 {
 	RESIZE_LIMIT_MIN,
 	{{206,110},{0,0}},
@@ -25,6 +25,28 @@ static struct RESIZE_DIALOG resize=
 
 		{100,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 		{101,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
+		{102,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
+	}
+};
+
+
+
+static struct RESIZE_DIALOG resizea=
+{
+	RESIZE_LIMIT_MIN,
+	{{206,79},{0,0}},
+	7,
+	{
+		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+
+		{IDC_FW1_NAME,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
+
+		{IDC_CHOOSE_FW1,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
+
+		{IDC_PRINT_MODE,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
+
+		{100,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 		{102,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 	}
 };
@@ -109,9 +131,22 @@ static int dialog_notify(HWND hwnd, void*p, int id, LPNMHDR hdr)
 	return 1;
 }
 
-static struct DIALOG_DATA dialog =
+static struct DIALOG_DATA dialog9 =
 {
-	&resize,
+	&resize9,
+
+	dialog_init, 
+	dialog_destroy,
+	dialog_command,
+	dialog_notify,
+
+	dialog_close,
+	dialog_ok
+};
+
+static struct DIALOG_DATA dialoga =
+{
+	&resizea,
 
 	dialog_init, 
 	dialog_destroy,
@@ -124,5 +159,10 @@ static struct DIALOG_DATA dialog =
 
 int prn9dlg_run(HWND hpar, struct SLOTCONFIG *conf)
 {
-	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_PRN9CFG), hpar, conf);
+	return dialog_run(&dialog9, MAKEINTRESOURCE(IDD_PRN9CFG), hpar, conf);
+}
+
+int prnadlg_run(HWND hpar, struct SLOTCONFIG *conf)
+{
+	return dialog_run(&dialoga, MAKEINTRESOURCE(IDD_PRNACFG), hpar, conf);
 }

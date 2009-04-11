@@ -357,6 +357,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_PRINTER9:
 		return prn9dlg_run(hwnd, slot);
+	case DEV_PRINTERA:
+		return prnadlg_run(hwnd, slot);
 	}
 
 	switch (slot->slot_no) {

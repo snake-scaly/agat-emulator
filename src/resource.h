@@ -2,13 +2,6 @@
 // Microsoft Developer Studio generated include file.
 // Used by resource1.rc
 //
-#define IDC_NEW                         200
-#define IDC_RESET                       201
-#define IDC_CONFIG                      202
-#define IDC_DELETE                      203
-#define IDC_ABOUT                       204
-#define IDC_STOP                        205
-#define IDC_CALLHELP  			206
 #define IDD_MAIN                        101
 #define IDD_ABOUT                       102
 #define IDD_CONFIG                      103
@@ -31,6 +24,14 @@
 #define IDD_TAPECFG                     114
 #define IDD_VTCFG                       115
 #define IDD_PRN9CFG                     116
+#define IDD_PRNACFG                     117
+#define IDC_NEW                         200
+#define IDC_RESET                       201
+#define IDC_CONFIG                      202
+#define IDC_DELETE                      203
+#define IDC_ABOUT                       204
+#define IDC_STOP                        205
+#define IDC_CALLHELP                    206
 #define IDC_CFGLIST                     1000
 #define IDC_SYSTYPE                     1001
 #define IDC_PERIPHERAL                  1002

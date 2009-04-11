@@ -310,6 +310,22 @@ BEGIN
 END
 
 
+IDD_PRNACFG DIALOG DISCARDABLE  0, 0, 206, 79
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Printer Interface Card configuration"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW1_NAME,80,19,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW1,184,19,15,12
+    COMBOBOX        IDC_PRINT_MODE,80,38,119,54,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,43,60,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,110,60,50,14
+    LTEXT           "PROM images:",IDC_STATIC,7,7,67,8
+    LTEXT           "PROM",100,7,22,73,8
+    LTEXT           "Output mode:",102,7,40,68,8
+END
+
 STRINGTABLE
 BEGIN
 // Generic text: 3000
@@ -463,15 +479,16 @@ BEGIN
 	12125	"Printer Card for Agat-9"
 	12126   "Mockingboard Sound Card"
 	12127   "Nippel Clock Card"
+	12128	"Parallel Printer Interface Card"
 
-//	12200	NULL
-//	12201	NULL
+	12200	"Slot #0"
+	12201	"Slot #1"
 	12202	"Slot #2"
 	12203	"Slot #3"
 	12204	"Slot #4"
 	12205	"Slot #5"
 	12206	"Slot #6"
-//	12207	NULL
+	12207	"Slot #7"
 //	12208	NULL
 //	12209	NULL
 	12210	"(Processor)"
