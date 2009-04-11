@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <htmlhelp.h>
 #include <commctrl.h>
 #include "resize.h"
 #include "dialog.h"
@@ -16,7 +17,7 @@ static struct RESIZE_DIALOG resize =
 {
 	RESIZE_LIMIT_MIN | RESIZE_NO_SIZEBOX,
 	{{187,179},{0,0}},
-	10,
+	11,
 	{
 		{IDC_CFGLIST,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_BOTTOM}},
 		{IDOK,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_NONE}},
@@ -27,6 +28,7 @@ static struct RESIZE_DIALOG resize =
 		{IDC_CONFIG,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
 		{IDC_DELETE,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
 		{12,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
+		{IDC_CALLHELP,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 		{IDC_ABOUT,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 
 	}
@@ -503,6 +505,14 @@ static int dialog_close(HWND hwnd, void*p)
 	return 0;
 }
 
+static void on_help(HWND hwnd)
+{
+	extern TCHAR lang[256];
+	TCHAR path[MAX_PATH];
+	wsprintf(path, TEXT("%s\\%s.chm"), HELP_DIR, lang);
+	HtmlHelp(hwnd, path, HH_DISPLAY_TOC, 0);
+}
+
 static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 {
 	switch (id) {
@@ -521,6 +531,9 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 		return 0;
 	case IDC_ABOUT:
 		aboutdlg_run(hwnd);
+		return 0;
+	case IDC_CALLHELP:
+		on_help(hwnd);
 		return 0;
 	case IDC_NEW:
 		if (new_config(hwnd) < 0) MessageBeep(MB_ICONEXCLAMATION);

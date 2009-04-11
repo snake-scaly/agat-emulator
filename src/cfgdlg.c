@@ -90,17 +90,65 @@ int select_save_text(HWND hpar, TCHAR fname[CFGSTRLEN])
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;
-	ofn.lpstrFilter = localize_str(LOC_CFG, 12, buf[0], sizeof(buf[0]));  //TEXT("Файлы конфигурации (*.cfg)\0*.cfg\0Все файлы\0*.*\0");
+	ofn.lpstrFilter = localize_str(LOC_CFG, 12, buf[0], sizeof(buf[0]));
 	repl_at(buf[0]);
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
-	ofn.lpstrTitle = localize_str(LOC_CFG, 13, buf[1], sizeof(buf[1])); //TEXT("Выбор файла конфигурации");
+	ofn.lpstrTitle = localize_str(LOC_CFG, 13, buf[1], sizeof(buf[1]));
 	GetCurrentDirectory(MAX_PATH, path);
 //	GetModuleFileName(NULL, path, MAX_PATH);
 //	PathRemoveFileSpec(path);
-	_tcscat(path, TEXT("\\"SYSTEMS_DIR));
+	_tcscat(path, TEXT("\\"PRNOUT_DIR));
 	ofn.lpstrInitialDir = path;
 	ofn.lpstrDefExt = TEXT("txt");
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetSaveFileName(&ofn)) return FALSE;
+	return TRUE;
+}
+
+
+int select_save_bin(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 14, buf[0], sizeof(buf[0])); 
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 15, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	_tcscat(path, TEXT("\\"PRNOUT_DIR));
+	ofn.lpstrInitialDir = path;
+	ofn.lpstrDefExt = TEXT("bin");
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetSaveFileName(&ofn)) return FALSE;
+	return TRUE;
+}
+
+
+int select_save_tiff(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 16, buf[0], sizeof(buf[0])); 
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 17, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	_tcscat(path, TEXT("\\"PRNOUT_DIR));
+	ofn.lpstrInitialDir = path;
+	ofn.lpstrDefExt = TEXT("tiff");
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 	if (!GetSaveFileName(&ofn)) return FALSE;
 	return TRUE;

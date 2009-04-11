@@ -45,13 +45,14 @@ int load_buf_res(int no, void*buf, int len)
 	return 0;
 }
 
+TCHAR lang[256];
+
 int main(int argc, const char* argv[])
 {
 	resize_set_cfgname(TEXT(INI_NAME));
 	localize_init();
 	{
-		TCHAR lang[256];
-		GetPrivateProfileString(TEXT("Environment"), TEXT("Lang"), TEXT(""), lang, 256, TEXT(INI_NAME));
+		GetPrivateProfileString(TEXT("Environment"), TEXT("Lang"), TEXT("russian"), lang, 256, TEXT(INI_NAME));
 		localize_set_lang(lang);
 	}
 	debug_init();

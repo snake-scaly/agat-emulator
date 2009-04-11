@@ -1,13 +1,14 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by resource.rc
+// Used by resource1.rc
 //
-#define IDC_NEW                         3
-#define IDC_RESET                       3
-#define IDC_CONFIG                      4
-#define IDC_DELETE                      5
-#define IDC_ABOUT                       6
-#define IDC_STOP                        7
+#define IDC_NEW                         200
+#define IDC_RESET                       201
+#define IDC_CONFIG                      202
+#define IDC_DELETE                      203
+#define IDC_ABOUT                       204
+#define IDC_STOP                        205
+#define IDC_CALLHELP  			206
 #define IDD_MAIN                        101
 #define IDD_ABOUT                       102
 #define IDD_CONFIG                      103
@@ -83,6 +84,7 @@
 #define IDC_FW2_NAME                    1050
 #define IDC_CHOOSE_FW1                  1051
 #define IDC_CHOOSE_FW2                  1052
+#define IDC_PRINT_MODE                  1053
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -92,7 +94,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        115
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1053
+#define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

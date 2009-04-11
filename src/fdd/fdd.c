@@ -218,7 +218,7 @@ static int free_menu(struct FDD_DRIVE_DATA*drv, int s, int d, HMENU menu)
 static int update_menu(struct FDD_DRIVE_DATA*drv, int s, int d, HMENU menu)
 {
 	if (drv->present) {
-		EnableMenuItem(drv->submenu, FDD_BASE_CMD + (s*4 + d*2 + 1), drv->disk?MF_ENABLED:MF_GRAYED|MF_BYCOMMAND);
+		EnableMenuItem(drv->submenu, FDD_BASE_CMD + (s*4 + d*2 + 1), (drv->disk?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
 	}
 	return 0;
 }
@@ -250,6 +250,12 @@ static int fdd_command(struct SLOT_RUN_STATE*st, int cmd, int cdata, long param)
 	struct FDD_DATA*data = st->data;
 	HMENU menu;
 	switch (cmd) {
+	case SYS_COMMAND_RESET:
+	case SYS_COMMAND_HRESET:
+		if (data->state.rk&0x80 && data->use_fast) 
+			system_command(st->sr, SYS_COMMAND_FAST, 0, 0);
+		data->state.rk &= ~(0x80 | 0x40);
+		break;
 	case SYS_COMMAND_INITMENU:
 		menu = (HMENU) param;
 		init_menu(data->drives + 0, st->sc->slot_no, 0, menu);

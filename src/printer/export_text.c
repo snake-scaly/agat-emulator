@@ -98,16 +98,29 @@ static void txt_write_command(struct EXPORT_TEXT*et, int cmd, int nparams, unsig
 	}
 }
 
+static void txt_close(struct EXPORT_TEXT*et)
+{
+	if (!et->opened) return;
+	et->opened = 0;
+	if (et->out) {
+		buf_flush(et);
+		fclose(et->out);
+	}
+}
+
 static void txt_free_data(struct EXPORT_TEXT*et)
 {
 	if (et) {
-		if (et->out) {
-			buf_flush(et);
-			fclose(et->out);
-		}
+		txt_close(et);
 		free(et);
 	}
 }
+
+static int txt_opened(struct EXPORT_TEXT*et)
+{
+	return et->opened;
+}
+
 
 
 int  export_text_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
@@ -123,7 +136,9 @@ int  export_text_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	exp->param = et;
 	exp->write_char = txt_write_char;
 	exp->write_command = txt_write_command;
+	exp->close = txt_close;
 	exp->free_data = txt_free_data;
+	exp->opened = txt_opened;
 	return 0;
 }
 

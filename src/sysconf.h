@@ -4,6 +4,7 @@
 #define SYSTEMS_DIR	"systems"
 #define SAVES_DIR 	"saves"
 #define PRNOUT_DIR 	"print"
+#define HELP_DIR 	"help"
 
 #include <windows.h>
 #include <tchar.h>
@@ -162,6 +163,13 @@ enum {
 };
 
 enum {
+	PRINT_RAW,
+	PRINT_TEXT,
+	PRINT_TIFF,
+	PRINT_PRINT
+};
+
+enum {
 	CFG_INT_DRV_TYPE1,
 	CFG_INT_DRV_TYPE2,
 	CFG_INT_DRV_COUNT,
@@ -209,5 +217,9 @@ enum {
 	CFG_STR_TAPE,
 };
 
+
+enum {
+	CFG_INT_PRINT_MODE,
+};
 
 #endif //SYSCONF_H

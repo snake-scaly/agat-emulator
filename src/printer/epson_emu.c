@@ -10,6 +10,15 @@
 #include <stdio.h>
 #include <assert.h>
 
+//#define EPSON_DEBUG
+
+#ifdef EPSON_DEBUG
+#define Pprintf(s) printf s
+#define Pputs(s) puts(s)
+#else
+#define Pprintf(s)
+#define Pputs(s)
+#endif
 
 static unsigned char koi2win[128] = {
 	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
@@ -107,68 +116,71 @@ void epson_free(PEPSON_EMU emu)
 int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
 {
 	switch (cmd) {
+	case '`':
+		Pputs("Unknown Esc ` command");
+		break;
 	case '0':
-		puts("Set line spacing to 1/8 inch");
+		Pputs("Set line spacing to 1/8 inch");
 		break;
 	case '1':
-		puts("Set line spacing to 7/72 inch");
+		Pputs("Set line spacing to 7/72 inch");
 		break;
 	case '2':
-		puts("Set line spacing to 1/6 inch");
+		Pputs("Set line spacing to 1/6 inch");
 		break;
 	case '4':
-		puts("Select italic font");
+		Pputs("Select italic font");
 		break;
 	case '5':
-		puts("Cancel italic font");
+		Pputs("Cancel italic font");
 		break;
 	case '6':
-		puts("Extend charset");
+		Pputs("Extend charset");
 		break;
 	case '7':
-		puts("Reduce charset");
+		Pputs("Reduce charset");
 		break;
 	case '8':
-		puts("Disable paper-out detector");
+		Pputs("Disable paper-out detector");
 		break;
 	case '9':
-		puts("Enable paper-out detector");
+		Pputs("Enable paper-out detector");
 		break;
 	case 'E':
-		puts("Select bold font");
+		Pputs("Select bold font");
 		break;
 	case 'F':
-		puts("Cancel bold font");
+		Pputs("Cancel bold font");
 		break;
 	case 'G':
-		puts("Select double-strike font");
+		Pputs("Select double-strike font");
 		break;
 	case 'H':
-		puts("Cancel double-strike font");
+		Pputs("Cancel double-strike font");
 		break;
 	case 'M':
-		puts("Enable 12-cpi printing");
+		Pputs("Enable 12-cpi printing");
 		break;
 	case 'O':
-		puts("Cancel top and bottom margin setting");
+		Pputs("Cancel top and bottom margin setting");
 		break;
 	case 'P':
-		puts("Enable 10-cpi printing");
+		Pputs("Enable 10-cpi printing");
 		break;
 	case 'T':
-		puts("Cancel superscript/subscript");
+		Pputs("Cancel superscript/subscript");
 		break;
 	case 'g':
-		puts("Enable 15-cpi printing");
+		Pputs("Enable 15-cpi printing");
 		break;
 	case EPS_SI:
-		puts("Select condensed printing");
+		Pputs("Select condensed printing");
 		break;
 	case EPS_SO:
-		puts("Select double width printing");
+		Pputs("Select double width printing");
 		break;
 	case '<':
-		puts("Print one line unidirectionally");
+		Pputs("Print one line unidirectionally");
 		break;
 	default:
 		return 0;
@@ -184,123 +196,123 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 {
 	switch (cmd) {
 	case ' ':
-		printf("Select space between chars to %i\n", data);
+		Pprintf(("Select space between chars to %i\n", data));
 		break;
 	case '!':
-		printf("Master select: %02X\n", data);
+		Pprintf(("Master select: %02X\n", data));
 		break;
 	case '-':
-		printf("Select underline mode: %i\n", data);
+		Pprintf(("Select underline mode: %i\n", data));
 		break;
 	case '+':
-		printf("Set line spacing to %i/360 inches\n", data);
+		Pprintf(("Set line spacing to %i/360 inches\n", data));
 		break;
 	case '3':
-		printf("Set line spacing to %i/216 inches\n", data);
+		Pprintf(("Set line spacing to %i/216 inches\n", data));
 		break;
 	case 'A':
-		printf("Set line spacing to %i/72 inch\n", data);
+		Pprintf(("Set line spacing to %i/72 inch\n", data));
 		break;
 	case 'a':
-		printf("Select justification %i\n", data);
+		Pprintf(("Select justification %i\n", data));
 		break;
 	case 'B':
-		printf("Setting vertical tabs...\n");
+		Pprintf(("Setting vertical tabs...\n"));
 		if (data) return 0;
 		break;
 	case 'C':
 		if (data) {
-			printf("Setting page length to %i lines\n", data);
+			Pprintf(("Setting page length to %i lines\n", data));
 		} else return 0;
 		break;
 	case 'D':
-		printf("Setting horizontal tabs...\n");
+		Pprintf(("Setting horizontal tabs...\n"));
 		if (data) return 0;
 		break;
 	case 'e':
-		printf("Setting fixed tab increment...\n");
+		Pprintf(("Setting fixed tab increment...\n"));
 		return 0;
 	case 'I':
-		printf("Select charset extension %i\n", data);
+		Pprintf(("Select charset extension %i\n", data));
 		break;
 	case 'J':
-		printf("Advance vertical position by %i/180 inches\n", data);
+		Pprintf(("Advance vertical position by %i/180 inches\n", data));
 		break;
 	case 'k':
-		printf("Select typeface %i\n", data);
+		Pprintf(("Select typeface %i\n", data));
 		break;
 	case 'l':
-		printf("Set left margin %i\n", data);
+		Pprintf(("Set left margin %i\n", data));
 		break;
 	case 'K':
-		printf("Selecting 60-dpi graphics...\n");
+		Pprintf(("Selecting 60-dpi graphics...\n"));
 		emu->bin_cnt = data;
 		return 0;
 	case 'L':
-		printf("Selecting 120-dpi graphics...\n");
+		Pprintf(("Selecting 120-dpi graphics...\n"));
 		emu->bin_cnt = data;
 		return 0;
 	case 'Y':
-		printf("Selecting ds/dd - graphics...\n");
+		Pprintf(("Selecting ds/dd - graphics...\n"));
 		emu->bin_cnt = data;
 		return 0;
 	case 'Z':
-		printf("Selecting qd - graphics...\n");
+		Pprintf(("Selecting qd - graphics...\n"));
 		emu->bin_cnt = data;
 		return 0;
 	case '*':
-		printf("Selecting graphics %i...\n", data);
+		Pprintf(("Selecting graphics %i...\n", data));
 		return 0;
 	case 'm':
-		printf("Select charset extension %i\n", data);
+		Pprintf(("Select charset extension %i\n", data));
 		break;
 	case 'N':
-		printf("Set bottom margin %i\n", data);
+		Pprintf(("Set bottom margin %i\n", data));
 		break;
 	case 'p':
-		printf("Select proportional mode %i\n", data);
+		Pprintf(("Select proportional mode %i\n", data));
 		break;
 	case 'Q':
-		printf("Set right margin %i\n", data);
+		Pprintf(("Set right margin %i\n", data));
 		break;
 	case 'q':
-		printf("Select outline/shadow mode %i\n", data);
+		Pprintf(("Select outline/shadow mode %i\n", data));
 		break;
 	case 'R':
-		printf("Select character set %i\n", data);
+		Pprintf(("Select character set %i\n", data));
 		break;
 	case 'S':
-		printf("Select superscript/subscript: %i\n", data);
+		Pprintf(("Select superscript/subscript: %i\n", data));
 		break;
 	case 's':
-		printf("Select speed mode %i\n", data);
+		Pprintf(("Select speed mode %i\n", data));
 		break;
 	case 't':
-		printf("Select character table %i\n", data);
+		Pprintf(("Select character table %i\n", data));
 		break;
 	case 'U':
-		printf("Select unidirectional printing %i\n", data);
+		Pprintf(("Select unidirectional printing %i\n", data));
 		break;
 	case 'W':
-		printf("Select double-width printing %i\n", data);
+		Pprintf(("Select double-width printing %i\n", data));
 		break;
 	case 'w':
-		printf("Select double-height printing %i\n", data);
+		Pprintf(("Select double-height printing %i\n", data));
 		break;
 	case 'x':
-		printf("Select print quality %i\n", data);
+		Pprintf(("Select print quality %i\n", data));
 		break;
 	case '/':
-		printf("Select vertical tab channel %i\n", data);
+		Pprintf(("Select vertical tab channel %i\n", data));
 		break;
 	case '%':
-		printf("Select user defined character set %i\n", data);
+		Pprintf(("Select user defined character set %i\n", data));
 		break;
 	case '.':
-		printf("Entering graphic mode...\n", data);
+		Pprintf(("Entering graphic mode...\n", data));
 		break;
 	case EPS_EM:
-		printf("Select cut-sheet %i\n", data);
+		Pprintf(("Select cut-sheet %i\n", data));
 		break;
 	}
 	if (emu->exp.write_command) {
@@ -317,7 +329,11 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 		if (!data) emu->esc_mode = 0;
 		break;
 	case 'C':
-		printf("Setting page length to %i inches\n", data);
+		if (emu->exp.write_command) {
+			unsigned char bb[2] = {0, data};
+			emu->exp.write_command(emu->exp.param, cmd, 2, bb);
+		}
+		Pprintf(("Setting page length to %i inches\n", data));
 		emu->esc_mode = 0;
 		break;
 	case 'D':
@@ -332,13 +348,14 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 			emu->data = realloc(emu->data, emu->bin_cnt);
 			assert(emu->data);
 		}
+		if (no > 3) {
+			emu->data[no - 4] = data;
+		}
 		if (no >= emu->bin_cnt + 3) {
 			if (emu->exp.write_command) {
 				emu->exp.write_command(emu->exp.param, cmd, emu->bin_cnt, emu->data);
 			}
 			emu->esc_mode = 0;
-		} else if (no > 3) {
-			emu->data[no - 4] = data;
 		}
 		break;
 	case '*':
@@ -348,13 +365,14 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 			emu->data = realloc(emu->data, emu->bin_cnt);
 			assert(emu->data);
 		default:
+			if (no > 4) {
+				emu->data[no - 5] = data;
+			}
 			if (no >= emu->bin_cnt + 4) {
 				if (emu->exp.write_command) {
 					emu->exp.write_command(emu->exp.param, cmd, emu->bin_cnt, emu->data);
 				}
 				emu->esc_mode = 0;
-			} else if (no > 4) {
-				emu->data[no - 5] = data;
 			}
 		}
 		break;
@@ -366,6 +384,7 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 {
 	int r;
 	if (!emu) return -1;
+	Pprintf(("esc_mode = %i; esc_cnt = %i; char = %c (%i, 0x%02X)\n", emu->esc_mode, emu->esc_cnt, data, data, data));
 	if (emu->esc_mode) {
 		emu->esc_cnt ++;
 		switch (emu->esc_cnt) {
@@ -388,37 +407,49 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 			emu->esc_cmd = 0;
 			break;
 		case EPS_SI:
-			puts("Select condensed printing");
+			Pputs("Select condensed printing");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
 			break;
 		case EPS_DC2:
-			puts("Cancel condensed printing");
+			Pputs("Cancel condensed printing");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
 			break;
 		case EPS_SO:
-			puts("Select double-width printing");
+			Pputs("Select double-width printing");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
 			break;
 		case EPS_DC4:
-			puts("Cancel double-width printing");
+			Pputs("Cancel double-width printing");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
 			break;
 		case EPS_BEL:
-			puts("Printer beep");
+			Pputs("Printer beep");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
 			break;
 		case EPS_FF:
-			puts("Printer form feed");
+			Pputs("Printer form feed");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
+			break;
+		case EPS_CR:
+			Pputs("Printer carriage return");
+			if (emu->exp.write_char) {
+				emu->exp.write_char(emu->exp.param, data);
+			}
+			break;
+		case EPS_LF:
+			Pputs("Printer line feed");
 			if (emu->exp.write_char) {
 				emu->exp.write_char(emu->exp.param, data);
 			}
@@ -429,6 +460,23 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 			}
 		}
 	}
+	return 0;
+}
+
+
+int epson_flush(PEPSON_EMU emu)
+{
+	if (!emu) return -1;
+	emu->esc_mode = 0;
+	if (emu->exp.close) emu->exp.close(emu->exp.param);
+	else return -1;
+	return 0;
+}
+
+int epson_hasdata(PEPSON_EMU emu)
+{
+	if (!emu) return 0;
+	if (emu->exp.opened) return emu->exp.opened(emu->exp.param);
 	return 0;
 }
 

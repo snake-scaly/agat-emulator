@@ -12,6 +12,8 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	switch (cmd) {
 	case SYS_COMMAND_FAST:
 		r = cs->fast_mode;
+//		if (data) cs->fast_mode ++;
+//		else cs->fast_mode --;
 		cs->fast_mode = data;
 //		printf("fast mode: %i\n", data);
 		return r;

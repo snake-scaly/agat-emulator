@@ -22,14 +22,15 @@ BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
                     LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,155
     DEFPUSHBUTTON   "&Запуск",IDOK,130,7,50,14
-    PUSHBUTTON      "&Выход",IDCANCEL,130,46,50,14
-    PUSHBUTTON      "&Создать...",IDC_NEW,130,76,50,14
-    PUSHBUTTON      "&Изменить...",IDC_CONFIG,130,94,50,14
-    PUSHBUTTON      "&Удалить",IDC_DELETE,130,112,50,14
-    PUSHBUTTON      "&О программе",IDC_ABOUT,130,148,50,14
     PUSHBUTTON      "&Стоп",IDC_STOP,130,26,50,14,WS_DISABLED
-    CONTROL         "",11,"Static",SS_ETCHEDHORZ,130,68,50,1
-    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,137,50,1
+    PUSHBUTTON      "&Выход",IDCANCEL,130,46,50,14
+    PUSHBUTTON      "&Создать...",IDC_NEW,130,69,50,14
+    PUSHBUTTON      "&Изменить...",IDC_CONFIG,130,87,50,14
+    PUSHBUTTON      "&Удалить",IDC_DELETE,130,105,50,14
+    PUSHBUTTON      "С&правка",IDC_CALLHELP,130,130,50,14
+    PUSHBUTTON      "&О программе",IDC_ABOUT,130,148,50,14
+    CONTROL         "",11,"Static",SS_ETCHEDHORZ,130,65,50,1
+    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,125,49,1
 END
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
@@ -289,7 +290,7 @@ BEGIN
 END
 
 
-IDD_PRN9CFG DIALOG DISCARDABLE  0, 0, 206, 75
+IDD_PRN9CFG DIALOG DISCARDABLE  0, 0, 206, 110
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка ячейки принтера Агат-9"
 FONT 9, "Tahoma"
@@ -298,11 +299,14 @@ BEGIN
     PUSHBUTTON      "...",IDC_CHOOSE_FW1,184,19,15,12
     EDITTEXT        IDC_FW2_NAME,80,33,101,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_CHOOSE_FW2,184,33,15,12
-    DEFPUSHBUTTON   "OK",IDOK,44,54,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,111,54,50,14
+    COMBOBOX        IDC_PRINT_MODE,80,52,119,54,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,43,85,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,85,50,14
     LTEXT           "Выбор образов ПЗУ:",IDC_STATIC,7,7,71,8
     LTEXT           "PROM CX00:",100,7,22,73,8
     LTEXT           "PROM C800:",101,7,36,73,8
+    LTEXT           "Режим вывода:",102,7,54,68,8
 END
 
 STRINGTABLE
@@ -374,7 +378,11 @@ BEGIN
 	10010	"Выбор файла ленты для записи"
 	10011	"Выбор файла ленты"
 	10012	"Текстовые файлы (*.txt)@*.txt@Все файлы@*.*@"
-	10013	"Выбор файла для записи"
+	10013	"Выбор текстового файла для записи"
+	10014	"Бинарные файлы (*.bin)@*.bin@Все файлы@*.*@"
+	10015	"Выбор бинарного файла для записи"
+	10016	"Файлы изображений Tiff (*.tiff)@*.tiff@Все файлы@*.*@"
+	10017	"Выбор графического файла для записи"
 
 	10020	"Ресурс"
 	10021	"Устройство"
@@ -496,5 +504,12 @@ BEGIN
 	12511	"%s: %s"
 	12512	"нет; %s: %s"
 	12513	"%s: %s; %s: %s"
+
+	13000	"Вывод без обработки"
+	13001	"Вывод в текстовый файл"
+	13002	"Вывод в графический файл Tiff"
+	13003	"Печать на принтере Windows"
+
+	13100   "Закончить печать"
 
 END

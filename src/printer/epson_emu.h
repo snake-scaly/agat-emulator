@@ -32,11 +32,16 @@ struct EPSON_EXPORT
 	void*param;
 	void (*write_char)(void*param, int ch);
 	void (*write_command)(void*param, int cmd, int nparams, unsigned char*params);
+	void (*close)(void*param);
 	void (*free_data)(void*param);
+	int  (*opened)(void*param);
 };
 
 PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp);
 void epson_free(PEPSON_EMU emu);
 
 int epson_write(PEPSON_EMU emu, unsigned char data);
+
+int epson_flush(PEPSON_EMU emu);
+int epson_hasdata(PEPSON_EMU emu);
 
