@@ -565,6 +565,17 @@ static int dialog_notify(HWND hwnd, void*p, int id, LPNMHDR hdr)
 	return 1;
 }
 
+static int  dialog_message(HWND hwnd, void*param, UINT msg, WPARAM wp, LPARAM lp)
+{
+	switch (msg) {
+	case WM_HELP:
+		on_help(hwnd);
+		break;
+	}
+	return 1;
+}
+
+
 static struct DIALOG_DATA dialog =
 {
 	&resize,
@@ -574,6 +585,10 @@ static struct DIALOG_DATA dialog =
 	dialog_command,
 	dialog_notify,
 	dialog_close,
+	NULL,
+	dialog_close,
+	NULL,
+	dialog_message
 };
 
 int maindlg_run(HWND hpar)

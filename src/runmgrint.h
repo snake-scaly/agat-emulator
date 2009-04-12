@@ -18,7 +18,10 @@ struct SYS_RUN_STATE
 
 	HWND base_w;
 	SIZE v_size;
+	int  fullscreen;
 	HWND video_w;
+	WINDOWPLACEMENT old_pl;
+	LONG old_style;
 	HMENU popup_menu;
 	DWORD th;
 	HANDLE h;

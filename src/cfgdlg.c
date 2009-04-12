@@ -167,8 +167,9 @@ int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 	ofn.lpstrFile = fname;
 	ofn.nMaxFile = CFGSTRLEN;
 	ofn.lpstrTitle = localize_str(LOC_CFG, 5, buf[1], sizeof(buf[1])); //TEXT("Выбор файла знакогенератора");
-	GetModuleFileName(NULL, path, MAX_PATH);
-	PathRemoveFileSpec(path);
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 	if (!GetOpenFileName(&ofn)) return FALSE;
@@ -226,7 +227,7 @@ int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 	GetCurrentDirectory(MAX_PATH, path);
 //	GetModuleFileName(NULL, path, MAX_PATH);
 //	PathRemoveFileSpec(path);
-	_tcscat(path, TEXT("\\tapes"));
+	_tcscat(path, TEXT("\\"TAPES_DIR));
 	ofn.lpstrInitialDir = path;
 	ofn.lpstrDefExt = TEXT("wav");
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;

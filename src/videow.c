@@ -62,6 +62,7 @@ int create_video_buffer(struct SYS_RUN_STATE*sr)
 	sr->mem_bmp=CreateDIBSection(NULL,(BITMAPINFO*)&bi,DIB_RGB_COLORS,&sr->bmp_bits,NULL,0);
 	if (!sr->mem_bmp) return -2;
 	if (!sr->bmp_bits) return -4;
+	sr->fullscreen = 0;
 	GdiFlush();
 	sr->old_bmp = SelectObject(sr->mem_dc, sr->mem_bmp);
 	return 0;
@@ -230,6 +231,24 @@ static void on_clear_state(HWND w, struct SYS_RUN_STATE*sr)
 	}
 }
 
+static void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
+{
+	if (sr->fullscreen == fs) return;
+	printf("set fullscreen %i\n", fs);
+	sr->fullscreen = fs;
+	if (fs) {
+		RECT r;
+		sr->old_pl.length = sizeof(sr->old_pl);
+		GetWindowPlacement(sr->video_w, &sr->old_pl);
+		GetClientRect(GetDesktopWindow(), &r);
+		sr->old_style = SetWindowLong(sr->video_w, GWL_STYLE, WS_OVERLAPPED | WS_VISIBLE);
+		MoveWindow(sr->video_w, r.left, r.top, r.right-r.left, r.bottom-r.top, TRUE);
+	} else {
+		SetWindowLong(sr->video_w, GWL_STYLE, sr->old_style);
+		SetWindowPlacement(sr->video_w, &sr->old_pl);
+	}
+	InvalidateRect(sr->video_w, NULL, TRUE);
+}
 
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
@@ -291,25 +310,49 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			PAINTSTRUCT ps;
 			HDC dc;
 			dc=BeginPaint(w,&ps);
-			if (!BitBlt(dc,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right-ps.rcPaint.left,ps.rcPaint.bottom-ps.rcPaint.top,sr->mem_dc,ps.rcPaint.left,ps.rcPaint.top,SRCCOPY)) {
-//				WIN_ERROR(GetLastError(),TEXT("blitter failure"));
+			if (sr->fullscreen) {
+				RECT r;
+				GetClientRect(w, &r);
+				SetStretchBltMode(dc, COLORONCOLOR);
+				StretchBlt(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,
+					sr->mem_dc,0,0,sr->v_size.cx,sr->v_size.cy,SRCCOPY);
+			} else {
+				BitBlt(dc,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right-ps.rcPaint.left,ps.rcPaint.bottom-ps.rcPaint.top,sr->mem_dc,ps.rcPaint.left,ps.rcPaint.top,SRCCOPY);
 			}
 			EndPaint(w,&ps);
 			return 0;
 		}
 		break;
 	case WM_CLOSE:
+		if (sr->fullscreen) set_fullscreen(sr, 0);
+		UpdateWindow(w);
 		system_command(sr, SYS_COMMAND_STOP, 0, 0);
 		free_config(sr->config);
 		free_system_state(sr);
 		break;
+	case WM_ACTIVATE:
+		if (wp == WA_INACTIVE && sr->fullscreen) {
+			set_fullscreen(sr, 0);
+		}
+		break;
+	case WM_SYSKEYDOWN:
+		switch (wp) {
+		case VK_RETURN:
+			if (GetKeyState(VK_MENU)&0x8000) {
+				set_fullscreen(sr, !sr->fullscreen);
+			}
+			break;
+		}
+		break;
 	case WM_KEYDOWN:
 		{
+			int d;
 #ifdef KEY_SCANCODES
-			int d=decode_key(lp);
+			d=decode_key(lp);
 #else
-			int d=decode_key(wp);
+			d=decode_key(wp);
 #endif
+
 		switch (wp) {
 		case VK_F4:
 			system_command(sr, SYS_COMMAND_TOGGLE_MONO, 0, 0);
@@ -424,7 +467,23 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 
 int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r)
 {
-	InvalidateRect(sr->video_w, r, FALSE);
+	if (sr->fullscreen && r) {
+		RECT rw, r1;
+		double k1, k2;
+		GetClientRect(sr->video_w, &rw);
+		k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
+		k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
+//		printf("rw = %i,%i,%i,%i; v_size = %i,%i\n", rw.left, rw.top, rw.right, rw.bottom, sr->v_size.cx, sr->v_size.cy);
+//		printf("k1 = %g; k2 = %g\n", k1, k2);
+		r1.left = r->left * k1;
+		r1.top = r->top * k2;
+		r1.right = (r->right + 1) * k1 - 1;
+		r1.bottom = (r->bottom + 1) * k2 - 1;
+//		printf("%i,%i,%i,%i -> %i,%i,%i,%i\n", r->left, r->top, r->right, r->bottom, r1.left, r1.top, r1.right, r1.bottom);
+		InvalidateRect(sr->video_w, &r1, FALSE);
+	} else {
+		InvalidateRect(sr->video_w, r, FALSE);
+	}	
 	return 0;
 }
 

@@ -5,6 +5,7 @@
 #define SAVES_DIR 	"saves"
 #define PRNOUT_DIR 	"print"
 #define HELP_DIR 	"help"
+#define TAPES_DIR 	"tapes"
 
 #include <windows.h>
 #include <tchar.h>
