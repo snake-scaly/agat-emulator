@@ -432,14 +432,6 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		et->open_out(et);
 	}
 	et->prev_char = ch;
-	if (ch == EPS_LF && !et->was_cr && et->auto_cr) {
-		page_cr(et);
-		if (lch == EPS_LF) et->was_cr = 0;
-	}
-	if (ch == EPS_CR && !et->was_lf && et->auto_lf) {
-		page_lf(et);
-		if (lch == EPS_CR) et->was_lf = 0;
-	}
 	if (!et->opened) return;
 	switch (ch) {
 	case EPS_BS:
@@ -452,6 +444,7 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		page_cr(et);
 		break;
 	case EPS_LF:
+		if (et->auto_cr) page_cr(et);
 		page_lf(et);
 		break;
 	case EPS_SI:
@@ -472,6 +465,9 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		break;
 	}
 	if (ch < ' ') return;
+	if (et->was_cr && !et->was_lf && et->auto_lf) {
+		page_lf(et);
+	}
 	et->was_cr = et->was_lf = 0;
 	printch(et, ch);
 }
@@ -525,7 +521,9 @@ static  void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char
 		et->page_start(et);
 		et->page_dirty = 1;
 	}
+	et->prev_char = 0;
 	et->was_cr = et->was_lf = 0;
+	Tprintf(("graphics output at %i,%i, width = %i\n",et->pos_x,et->pos_y,w));
 	Tprintf(("\ngraphics data:\n"));
 	for (y = 0, m = 0x80; y < 8; ++y, m>>=1) {
 		for (x = 0; x < w; ++x) {
