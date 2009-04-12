@@ -71,6 +71,11 @@ struct EXPORT_TIFF
 	int	res_x, res_y;
 	int	x0, y0;
 
+	int	prev_char;
+	int	was_cr, was_lf;
+	int	auto_lf;
+	int	auto_cr;
+
 	void (*open_out)(struct EXPORT_TIFF*et);
 	void (*close_out)(struct EXPORT_TIFF*et);
 	void (*page_start)(struct EXPORT_TIFF*et);
@@ -106,6 +111,17 @@ static void tiff_open_out(struct EXPORT_TIFF*et)
 	et->out = fopen(name, "wb");
 	if (!et->out) return;
 	tiff_create(et->out, &et->tiff);
+
+	et->dc = CreateCompatibleDC(NULL);
+	assert(et->dc);
+	et->bmp = CreateCompatibleBitmap(et->dc, et->page_w, et->page_h);
+	assert(et->bmp);
+	SelectObject(et->dc, et->bmp);
+	SetStretchBltMode(et->dc, BLACKONWHITE);
+	SetBkMode(et->dc, TRANSPARENT);
+	SetTextColor(et->dc, RGB(0,0,0));
+	SelectObject(et->dc, GetStockObject(WHITE_BRUSH));
+
 	et->fnt_dirty = 1;
 	et->page_dirty = 0;
 	et->pos_x = et->x0;
@@ -222,6 +238,7 @@ static void printch(struct EXPORT_TIFF*et, int ch)
 static void page_cr(struct EXPORT_TIFF*et)
 {
 	et->pos_x = et->x0;
+	et->was_cr = 1;
 }
 
 static void new_page(struct EXPORT_TIFF*et);
@@ -234,6 +251,7 @@ static void page_lf(struct EXPORT_TIFF*et)
 	et->fi.dwidth = 0;
 	et->fi.dheight = 0;
 	et->fi.condensed = 0;
+	et->was_lf = 1;
 	if (et->pos_y - et->y0 > et->page_cur_h) new_page(et);
 }
 
@@ -354,6 +372,7 @@ static void tiff_finish_page(struct EXPORT_TIFF*et)
 	tiff_new_chunk_short(out, tiff, 296, 2); // unit, 2 = inch +
 	tiff_new_chunk_string(out, tiff, 305, "Agat emulator"); // software
 
+	ZeroMemory(&bd, sizeof(bd));
 	bd.bih.biSize = sizeof(bd.bih);
 	bd.bih.biWidth = et->page_w;
 	bd.bih.biHeight = -et->page_h;
@@ -402,12 +421,24 @@ static void new_page(struct EXPORT_TIFF*et)
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	et->page_dirty = 0;
+	et->prev_char = 0;
+	et->was_cr = et->was_lf = 1;
 }
 
 static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 {
+	int lch = et->prev_char;
 	if (ch && !et->opened) {
 		et->open_out(et);
+	}
+	et->prev_char = ch;
+	if (ch == EPS_LF && !et->was_cr && et->auto_cr) {
+		page_cr(et);
+		if (lch == EPS_LF) et->was_cr = 0;
+	}
+	if (ch == EPS_CR && !et->was_lf && et->auto_lf) {
+		page_lf(et);
+		if (lch == EPS_CR) et->was_lf = 0;
 	}
 	if (!et->opened) return;
 	switch (ch) {
@@ -419,10 +450,8 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		break;
 	case EPS_CR:
 		page_cr(et);
-		page_lf(et);
 		break;
 	case EPS_LF:
-		page_cr(et);
 		page_lf(et);
 		break;
 	case EPS_SI:
@@ -443,6 +472,7 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 		break;
 	}
 	if (ch < ' ') return;
+	et->was_cr = et->was_lf = 0;
 	printch(et, ch);
 }
 
@@ -495,6 +525,7 @@ static  void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char
 		et->page_start(et);
 		et->page_dirty = 1;
 	}
+	et->was_cr = et->was_lf = 0;
 	Tprintf(("\ngraphics data:\n"));
 	for (y = 0, m = 0x80; y < 8; ++y, m>>=1) {
 		for (x = 0; x < w; ++x) {
@@ -507,6 +538,7 @@ static  void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char
 			SetPixelV(et->bdc, x, y, ((*data)&m)?RGB(0,0,0):RGB(255,255,255));
 		}
 	}
+	Tprintf(("line height = %i; graphics height = %i\n", et->line_h, 8 * et->res_y / SRC_VERT_DPI));
 	et->pos_x += et->stretch(et, w, res);
 }
 
@@ -715,6 +747,7 @@ int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->x0 = et->y0 = 40;
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
+	et->auto_lf = et->auto_cr = 1;
 
 	et->page_finish = tiff_finish_page;
 	et->page_start = tiff_start_page;
@@ -722,23 +755,12 @@ int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->close_out = tiff_close_out;
 	et->stretch = raster_stretch;
 
-	et->dc = CreateCompatibleDC(NULL);
-	assert(et->dc);
-	et->bmp = CreateCompatibleBitmap(et->dc, et->page_w, et->page_h);
-	assert(et->bmp);
-	SelectObject(et->dc, et->bmp);
-
 	et->bdc = CreateCompatibleDC(NULL);
 	assert(et->bdc);
 //	et->bbmp = CreateCompatibleBitmap(et->bdc, et->page_w, et->page_h/66);
 	et->bbmp = CreateBitmap(et->page_w, et->page_h/66, 1, 1, NULL);
 	assert(et->bbmp);
 	SelectObject(et->bdc, et->bbmp);
-
-	SetStretchBltMode(et->dc, BLACKONWHITE);
-	SetBkMode(et->dc, TRANSPARENT);
-	SetTextColor(et->dc, RGB(0,0,0));
-	SelectObject(et->dc, GetStockObject(WHITE_BRUSH));
 
 	new_page(et);
 
@@ -769,6 +791,7 @@ int  export_print_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->page_w = (et->page_w + 31) & ~31;
 	et->page_h = 11.75 * et->res_y;
 	et->x0 = et->y0 = 40;
+	et->auto_lf = et->auto_cr = 1;
 
 	et->page_cur_h = et->page_h;
 	et->page_finish = print_finish_page;

@@ -342,6 +342,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_RETURN:
 			if (GetKeyState(VK_MENU)&0x8000) {
 				set_fullscreen(sr, !sr->fullscreen);
+				return 0;
 			}
 			break;
 		}
