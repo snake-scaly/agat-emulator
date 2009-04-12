@@ -335,6 +335,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			set_fullscreen(sr, 0);
 		}
 		break;
+	case WM_HELP:
+		return TRUE;
 	case WM_SYSKEYDOWN:
 		switch (wp) {
 		case VK_RETURN:
