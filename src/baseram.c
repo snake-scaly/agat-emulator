@@ -540,12 +540,14 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 {
 	int dr = 0;
 	int hi = adr & 8;
-	int mde = adr & 7;
+	int mde = adr & 3;
 	byte last_mode = st->apple_rom_mode;
 //	printf("apple_read_psrom_mode(%x)\n", adr);
-	if (adr==st->last_addr) { // double reading
+	if (adr&3==st->last_addr) { // double reading
 		dr = 1;
-	} else st->last_addr = adr;
+	} else st->last_addr = adr&3;
+	if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
+	else st->psrom9_ofs=0;
 	switch (mde) {
 	case 0:
 		st->apple_rom_mode = 0xC2 | hi;
@@ -554,25 +556,20 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 		break;
 	case 1:
 //		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
-		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
-		else st->psrom9_ofs=0;
 		st->apple_rom_mode = 0xC1 | hi;
 		apple_set_ext_rom_mode(0, 1, st);
 //		xram_apple_enable(0, 1);
 		break;
 	case 2:
-		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
-		else st->psrom9_ofs=0;
 		st->apple_rom_mode = 0xC0 | hi;
 		apple_set_ext_rom_mode(0, 0, st);
 //		xram_apple_enable(0, 0);
 		break;
 	case 3:
 //		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
-		if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
-		else st->psrom9_ofs=0;
+		if ((st->apple_rom_mode&3)==1) dr = 1;
 		st->apple_rom_mode = 0xC3 | hi;
-		apple_set_ext_rom_mode(1, 1, st);
+		apple_set_ext_rom_mode(1, dr, st);
 //		xram_apple_enable(1, 1);
 		break;
 	}
