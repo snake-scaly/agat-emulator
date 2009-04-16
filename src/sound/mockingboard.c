@@ -89,7 +89,7 @@ struct SOUND_STATE
 };
 
 
-static void mb_callback(struct SOUND_STATE*ss);
+static void mb_callback(struct SOUND_STATE*ss, int channel);
 
 
 
@@ -195,6 +195,7 @@ static int sound_init(struct SOUND_STATE*ss)
 			fill_buf_noise(ss->buffers[i], ss->buflen, ss->ampn, 2.0*M_PI*ss->freq0/ss->freq);
 		}	
 		IDirectSoundBuffer_SetVolume(ss->buffers[i], -10000);
+		IDirectSoundBuffer_SetPan(ss->buffers[i], (i&1)?-10000:10000);
 	}
 	return 0;
 err2:
@@ -267,6 +268,7 @@ static int mb_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 		}
 	}
 	start_timer(0, 0, ss);
+	start_timer(1, 0, ss);
 	return 0;
 }
 
@@ -288,8 +290,8 @@ static int mb_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		ss->cpu_freq_khz = cpu_get_freq(st->sr);
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if (param == (long)ss) {
-			mb_callback(ss);
+		if ((param&~1L) == (long)ss) {
+			mb_callback(ss, param & 1);
 			return 1;
 		}
 		return 0;
@@ -397,7 +399,7 @@ void update_gen_amp(int channel, int gen, byte data, struct SOUND_STATE *ss)
 		int lev;
 		data &= 15;
 		lev = ((15 - data) * -10000)/15;
-//		printf("new sound level %i\n", lev);
+//		printf("new sound level %i on channel %i:%i\n", lev, channel, gen);
 		IDirectSoundBuffer_SetVolume(ss->buffers[channel + gen*2], lev);
 		IDirectSoundBuffer_SetVolume(ss->buffers[channel + (gen + NGENS)*2], lev);
 	}
@@ -498,13 +500,13 @@ static void start_timer(int channel, int no, struct SOUND_STATE*ss)
 	div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
 //	printf("T1 latch: %02X%02X; div = %i\n", ss->psg_data[channel][MB_LATCH1H], ss->psg_data[channel][MB_LATCH1L], div);
 //	div /= 4;
-	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, (long)ss);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, ((long)ss) | channel);
 }
 
 static void stop_timer(int channel, int no, struct SOUND_STATE*ss)
 {
 	if (no) return;
-	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, (long)ss);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, ((long)ss) | channel);
 }
 
 
@@ -538,10 +540,9 @@ static void psg_pcr(int channel, byte data, struct SOUND_STATE*ss)
 }
 
 
-static void mb_callback(struct SOUND_STATE*ss)
+static void mb_callback(struct SOUND_STATE*ss, int channel)
 {
-	int channel = 0;
-//	printf("mockingboard interrupt (%i)\n", GetTickCount());
+//	printf("mockingboard interrupt (%i, %i)\n", GetTickCount(), channel);
 	ss->psg_data[channel][MB_IFR] |= 0x40;
 	fix_ifr(channel, ss);
 	system_command(ss->st->sr, SYS_COMMAND_IRQ, 0, 0);
