@@ -139,9 +139,10 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 	}
 	if (isread(drv->disk,drv->disk_header,sizeof(drv->disk_header))!=sizeof(drv->disk_header)) {
 		errprint(TEXT("can't read header from disk %s"),name);
-		isclose(drv->disk);
-		drv->disk=0;
-		return -1;
+		memset(drv->disk_header, 0, sizeof(drv->disk_header));
+//		isclose(drv->disk);
+//		drv->disk=0;
+//		return -1;
 	}
 	drv->readonly=ro;
 	if (!memcmp(std_sig,drv->disk_header,sizeof(std_sig)-1)) {
@@ -475,6 +476,7 @@ static int decode_ts(const byte*data, byte vtscs[4])
 static int fdd_save_track_nibble(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	if (!d->disk) return -1;
 	osseek(d->disk, d->start_ofs + d->Track*NIBBLE_TRACK_LEN, SSEEK_SET);
 	if (oswrite(d->disk, d->TrackData, NIBBLE_TRACK_LEN) != NIBBLE_TRACK_LEN) {
 		errprint(TEXT("can't write track"));
@@ -594,11 +596,11 @@ l3:		mov	al, [esi + 56h + ebx]
 		rcl	al, 1
 		mov	[edi + ebx], al
 		inc	bl
+		jz	fin
 		inc	cl
 		cmp	cl, 56h
 		jne	l3
-		cmp	bl, 02h
-		jne	l2
+		jmp	short l2
 fin:
 		popad
 	}
@@ -615,12 +617,46 @@ static int copy_sect(struct FDD_DRIVE_DATA *d, byte*buf, int ofs, int len, int *
 	return ofs;
 }
 
+static void dump_buf(byte*data, int len)
+{
+	char buf[1024];
+	char *p;
+	const unsigned char *d = data;
+	int n, ofs = 0;
+	printf("dump(%i):\n",len);
+	while (len) {
+		const unsigned char *d1 = d;
+		int m, m1;
+		p = buf;
+		n = 16;
+		m = n;
+		for (; n && len; --n, --len, ++d) {
+			p += sprintf(p, "%02X ", *d);
+		}
+		m1 = n;
+		for (; n; --n) {
+			p += sprintf(p, "__ ");
+		}
+		for (; m > m1; --m, ++d1) {
+			int c = *d1;
+			if (c <' ') c = '.';
+			p += sprintf(p, "%c", c);
+		}
+		for (; m; --m) {
+			p += sprintf(p, " ");
+		}
+		*p = 0;
+		printf("%04x: %s\n", ofs, buf);
+		ofs += 16;
+	}
+}
 
 static void fdd_save_track(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 	int ofs, nrot = 0;
 //	puts("save_track");
+	if (!d->disk) return;
 	if (d->readonly) return;
 	if (d->rawfmt) {
 		fdd_save_track_nibble(data);
@@ -665,12 +701,15 @@ static void fdd_save_track(struct FDD_DATA*data)
 			printf("invalid sector data tail!\n");
 			continue;
 		}
+//		dump_buf(sbuf + 3, 0x157);
 		r = fdd_decode_mfm(sbuf + 3, buf);
 		if (r) {
 			printf("decode_mfm = %i\n", r);
 			continue;
 		}
-//		printf("%i: %x %x %x %x %x\n", ofs1, buf[0], buf[1], buf[2], buf[3], buf[4]);
+//		dump_buf(sbuf + 3, 0x157);
+//		dump_buf(buf, 256);
+//		printf("buf: %x %x %x %x %x (%s)\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf);
 		osseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + ren[vtscs[2]]) *
 			FDD_SECTOR_DATA_SIZE, SSEEK_SET);
 		if (oswrite(d->disk, buf, FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
