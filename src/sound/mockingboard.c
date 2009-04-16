@@ -85,6 +85,10 @@ struct SOUND_STATE
 	int  psg_curreg[NCHANS];
 	byte psg_regs[NCHANS][NREGS];
 
+	long long envelope_time[NCHANS];
+	long long envelope_delay[NCHANS];
+	byte old_env[NCHANS][NGENS];
+
 	int cpu_freq_khz;
 };
 
@@ -195,7 +199,7 @@ static int sound_init(struct SOUND_STATE*ss)
 			fill_buf_noise(ss->buffers[i], ss->buflen, ss->ampn, 2.0*M_PI*ss->freq0/ss->freq);
 		}	
 		IDirectSoundBuffer_SetVolume(ss->buffers[i], -10000);
-		IDirectSoundBuffer_SetPan(ss->buffers[i], (i&1)?-10000:10000);
+		IDirectSoundBuffer_SetPan(ss->buffers[i], (i&1)?10000:-10000);
 	}
 	return 0;
 err2:
@@ -252,6 +256,8 @@ static int mb_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 static void start_timer(int channel, int no, struct SOUND_STATE*ss);
 static void psg_write_reg(int channel, byte reg, byte data, struct SOUND_STATE *ss);
 
+#define ENVELOPE_PERIOD 1000
+
 static int mb_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 {
 	struct SOUND_STATE*ss = st->data;
@@ -269,6 +275,7 @@ static int mb_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	}
 	start_timer(0, 0, ss);
 	start_timer(1, 0, ss);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, ((long)ss) | 2);
 	return 0;
 }
 
@@ -288,10 +295,11 @@ static int mb_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		return 0;
 	case SYS_COMMAND_INIT_DONE:
 		ss->cpu_freq_khz = cpu_get_freq(st->sr);
+		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, ((long)ss) | 2);
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if ((param&~1L) == (long)ss) {
-			mb_callback(ss, param & 1);
+		if ((param&~3L) == (long)ss) {
+			mb_callback(ss, param & 3);
 			return 1;
 		}
 		return 0;
@@ -307,7 +315,7 @@ static void psg_reset(int channel, struct SOUND_STATE*ss)
 	int i;
 //	printf("psg_reset on channel %i\n", channel);
 	memset(ss->psg_regs[channel], 0, sizeof(ss->psg_regs[channel]));
-	for (i = 0; i < NBUFS; ++i) {
+	for (i = channel; i < NBUFS; i+=2) {
 		IDirectSoundBuffer_Stop(ss->buffers[i]);
 		IDirectSoundBuffer_SetVolume(ss->buffers[i], 0);
 		IDirectSoundBuffer_SetFrequency(ss->buffers[i], ss->freq);
@@ -369,10 +377,10 @@ static void update_gen_enable(int channel, byte data, struct SOUND_STATE *ss)
 	}
 	if ((data & 32) == 0) {
 //		printf("enable C-noise %i\n", channel);
-		IDirectSoundBuffer_Play(ss->buffers[6|channel], 0, 0, DSBPLAY_LOOPING);
+		IDirectSoundBuffer_Play(ss->buffers[10|channel], 0, 0, DSBPLAY_LOOPING);
 	} else {
 //		printf("disable C-noise %i\n", channel);
-		IDirectSoundBuffer_Stop(ss->buffers[6|channel]);
+		IDirectSoundBuffer_Stop(ss->buffers[10|channel]);
 	}
 	if ((data & 16) == 0) {
 //		printf("enable B-noise %i\n", channel);
@@ -383,17 +391,19 @@ static void update_gen_enable(int channel, byte data, struct SOUND_STATE *ss)
 	}
 	if ((data & 8) == 0) {
 //		printf("enable A-noise %i\n", channel);
-		IDirectSoundBuffer_Play(ss->buffers[10|channel], 0, 0, DSBPLAY_LOOPING);
+		IDirectSoundBuffer_Play(ss->buffers[6|channel], 0, 0, DSBPLAY_LOOPING);
 	} else {
 //		printf("disable A-noise %i\n", channel);
-		IDirectSoundBuffer_Stop(ss->buffers[10|channel]);
+		IDirectSoundBuffer_Stop(ss->buffers[6|channel]);
 	}
 }
 
 void update_gen_amp(int channel, int gen, byte data, struct SOUND_STATE *ss)
 {
+//	printf("update_gen_amp[%i,%i] = %i\n", channel, gen, data);
 	if (data & 16) { // envelope
-		data = 0;
+		return;
+//		data = 0;
 	}
 	{
 		int lev;
@@ -410,17 +420,21 @@ void update_env_freq(int channel, byte d1, byte d2, struct SOUND_STATE *ss)
 	int div = (((unsigned)d2)<<16) | (((unsigned) d1)<<8);
 	double f1;
 	int i;
+	ss->envelope_delay[channel] = div;
+	ss->envelope_time[channel] = 0;
 	if (!div) return;
-	f1 = ss->cpu_freq_khz * 1000.0 / div;
+//	f1 = ss->cpu_freq_khz * 1000.0 / div;
 //	printf("freq_env[%i] = %g Hz\n", channel, f1);
 }
 
 void update_env_shape(int channel, byte data, struct SOUND_STATE *ss)
 {
+	ss->envelope_time[channel] = 0;
 }
 
 static void psg_write_reg(int channel, byte reg, byte data, struct SOUND_STATE *ss)
 {
+//	printf("psg_write_reg[%i][%i]=%i\n", channel, reg, data);
 	ss->psg_regs[channel][reg] = data;
 	switch (reg) {
 	case 0: //case 1:
@@ -540,8 +554,49 @@ static void psg_pcr(int channel, byte data, struct SOUND_STATE*ss)
 }
 
 
+static void env_callback_chan(struct SOUND_STATE*ss, int channel)
+{
+	int pattern = ss->psg_regs[channel][13];
+	long long div = ss->envelope_delay[channel];
+	int gen;
+	long long vol;
+	ss->envelope_time[channel] += ENVELOPE_PERIOD/2;
+	if (!div) return;
+	if ((!(pattern & 8) || (pattern & 1)) && (ss->envelope_time[channel] > div)) {
+//		ss->envelope_time[channel] = div + 1;
+		vol = (pattern&2)?div:0;
+	} else {
+		long long xdiv = div;
+		if (pattern & 2) xdiv <<= 1; // ALT
+		vol = ss->envelope_time[channel] % xdiv;
+		if (vol > div) vol = xdiv - vol;
+		if (!(pattern & 4)) vol = div - vol;
+	}
+//	printf("envelope[%i]: time=%lli, div=%lli, pattern=%x, vol=%lli\n", channel, ss->envelope_time[channel], div, pattern, vol);
+	for (gen = 0; gen < NGENS; ++gen) {
+		if (ss->psg_regs[channel][8 + gen] & 16) {
+			if (ss->old_env[channel][gen] != vol) {
+				int lev = ((div - vol) * -10000)/div;
+//				printf("envelope[%i]: setting level %i on generator %i\n", channel, lev, gen);
+				IDirectSoundBuffer_SetVolume(ss->buffers[channel + gen * 2], lev);
+				IDirectSoundBuffer_SetVolume(ss->buffers[channel + (gen + NGENS)*2], lev);
+			}
+		}
+	}
+}
+
+static void env_callback(struct SOUND_STATE*ss)
+{
+	env_callback_chan(ss, 0);
+	env_callback_chan(ss, 1);
+}
+
 static void mb_callback(struct SOUND_STATE*ss, int channel)
 {
+	if (channel == 2) {
+		env_callback(ss);
+		return;
+	}
 //	printf("mockingboard interrupt (%i, %i)\n", GetTickCount(), channel);
 	ss->psg_data[channel][MB_IFR] |= 0x40;
 	fix_ifr(channel, ss);
