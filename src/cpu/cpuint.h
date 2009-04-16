@@ -9,6 +9,15 @@
 #include "runmgr.h"
 #include "runmgrint.h"
 
+struct CPU_TIMER
+{
+	long used;
+	int  delay, remains;
+	long param;
+};
+
+#define MAX_CPU_TIMERS	32
+
 struct CPU_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -28,6 +37,8 @@ struct CPU_STATE
 	int term_req;
 	int sleep_req;
 	HANDLE wakeup, response;
+
+	struct CPU_TIMER timers[MAX_CPU_TIMERS];
 
 	int cpu_timer_delay, cpu_timer_remains;
 	long cpu_timer_id;

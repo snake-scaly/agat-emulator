@@ -5,6 +5,29 @@
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs);
 
+static struct CPU_TIMER* find_timer(struct CPU_STATE*cs, long param)
+{
+	struct CPU_TIMER*r;
+	int i;
+	for (r = cs->timers, i = MAX_CPU_TIMERS; i; --i, ++r)
+		if (r->used && r->param == param) return r;
+	return NULL;
+}
+
+static struct CPU_TIMER* new_timer(struct CPU_STATE*cs, int delay, long param)
+{
+	struct CPU_TIMER*r;
+	int i;
+	for (r = cs->timers, i = MAX_CPU_TIMERS; i; --i, ++r)
+		if (!InterlockedExchange(&r->used, 1)) {
+			r->delay = delay;
+			r->remains = 0;
+			r->param = param;
+			return r;
+		}
+	return NULL;
+}
+
 static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct CPU_STATE*cs = st->data;
@@ -39,12 +62,17 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		cs->hook_proc = (void*)data;
 		cs->hook_data = (void*)param;
 		return 1;
-	case SYS_COMMAND_SET_CPUTIMER:
-//		printf("cpu set timer %i %i\n", data, param);
-		cs->cpu_timer_delay = data;
-		cs->cpu_timer_id = param;
-		cs->cpu_timer_remains = 0;
-		return 1;
+	case SYS_COMMAND_SET_CPUTIMER: {
+		struct CPU_TIMER*r;
+		r = find_timer(cs, param);
+		if (r) {
+			r->delay = data;
+			r->remains = 0;
+			r->used = data?1:0;
+		} else {
+			r = new_timer(cs, data, param);
+		}
+		return r?1:0; }
 	default:
 		return cpu_cmd(cs, cmd, data, param);
 	}
@@ -185,6 +213,19 @@ int cpu_step(struct CPU_STATE*st, int ncmd)
 	return 0;
 }
 
+static void decrement_timers(struct CPU_STATE*cs, int n)
+{
+	struct CPU_TIMER*r;
+	int i;
+	for (r = cs->timers, i = MAX_CPU_TIMERS; i; --i, ++r)
+		if (r->used && r->delay) {
+			if (r->remains<=0) r->remains += r->delay;
+			r->remains -= n;
+			if (r->remains<=0) {
+				system_command(cs->sr, SYS_COMMAND_CPUTIMER, 0, r->param);
+			}
+		}
+}
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 {
@@ -226,13 +267,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 					break;
 				}
 		}
-		if (cs->cpu_timer_delay) {
-			if (cs->cpu_timer_remains<=0) cs->cpu_timer_remains += cs->cpu_timer_delay;
-			cs->cpu_timer_remains -= r;
-			if (cs->cpu_timer_remains<=0) {
-				system_command(cs->sr, SYS_COMMAND_CPUTIMER, 0, cs->cpu_timer_id);
-			}
-		}
+		decrement_timers(cs, r);
 		if (n_ticks>=cs->lim_fetches||cs->need_cpusleep) {
 			unsigned t=get_n_msec();
 			unsigned rt=n_ticks/cs->freq_6502;
