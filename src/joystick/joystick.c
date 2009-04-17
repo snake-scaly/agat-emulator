@@ -14,9 +14,10 @@
 #include "runmgr.h"
 #include "runmgrint.h"
 
+#define MAX_TIME 3600
 
 struct JOYPROC {
-	int (*status)(struct JOYDATA*j, int no);
+	int (*status)(struct JOYDATA*j, int no, unsigned dt);
 	int (*button)(struct JOYDATA*j, int no);
 	void (*reset)(struct JOYDATA*j);
 };
@@ -31,7 +32,7 @@ struct JOYDATA
 };
 
 
-static int  joy_status_none(struct JOYDATA*j, int no)
+static int  joy_status_none(struct JOYDATA*j, int no, unsigned dt)
 {
 	return 0x7F;
 }
@@ -45,14 +46,14 @@ static void joy_reset_none(struct JOYDATA*j)
 {
 }
 
-static int  joy_status_joy(struct JOYDATA*j, int no)
+static int  joy_status_joy(struct JOYDATA*j, int no, unsigned dt)
 {
+	int clk;
 	if (!j->joy_present) return 0x7F;
-	j->reset_time++;
 //	printf("dt=%i; X=%i; Y=%i\n",reset_time,lastinf.wXpos,lastinf.wYpos);
 	switch (no) {
-	case 0:	return (j->reset_time<(j->lastinf.wXpos>>8))?0xFF:0x7F; break;
-	case 1:	return (j->reset_time<(j->lastinf.wYpos>>8))?0xFF:0x7F; break;
+	case 0:	return (dt<(j->lastinf.wXpos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 1:	return (dt<(j->lastinf.wYpos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
 	}
 	return 0x7F;
 }
@@ -72,7 +73,6 @@ static int  joy_button_joy(struct JOYDATA*j, int no)
 static void joy_reset_joy(struct JOYDATA*j)
 {
 	if (joyGetPos(JOYSTICKID1,&j->lastinf)==JOYERR_NOERROR) {
-		j->reset_time=0;
 		j->joy_present=1;
 	} else {
 		j->joy_present=0;
@@ -81,14 +81,13 @@ static void joy_reset_joy(struct JOYDATA*j)
 }
 
 
-static int  joy_status_mouse(struct JOYDATA*j, int no)
+static int  joy_status_mouse(struct JOYDATA*j, int no, unsigned dt)
 {
 	if (!j->joy_present) return 0x7F;
-	j->reset_time++;
-//	printf("dt=%i; X=%i; Y=%i\n",reset_time,lastinf.wXpos,lastinf.wYpos);
+//	printf("dt=%i; X=%i; Y=%i\n",dt,(j->sr->xmousepos>>8)*MAX_TIME,(j->sr->ymousepos>>8)*MAX_TIME);
 	switch (no) {
-	case 0:	return (j->reset_time<(j->sr->xmousepos>>8))?0xFF:0x7F; break;
-	case 1:	return (j->reset_time<(j->sr->ymousepos>>8))?0xFF:0x7F; break;
+	case 0:	return (dt<(j->sr->xmousepos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 1:	return (dt<(j->sr->ymousepos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
 	}
 	return 0x7F;
 }
@@ -105,7 +104,6 @@ static int  joy_button_mouse(struct JOYDATA*j, int no)
 
 static void joy_reset_mouse(struct JOYDATA*j)
 {
-	j->reset_time=0;
 	j->joy_present=1;
 }
 
@@ -129,12 +127,13 @@ static int joystick_term(struct SLOT_RUN_STATE*st)
 
 static void joy_w(word adr, byte data, struct JOYDATA*d) // C070-C07F
 {
+	d->reset_time=cpu_get_tsc(d->sr);
 	d->procs.reset(d);
 }
 
 static byte joy_r(word adr, struct JOYDATA*d) // C070-C07F
 {
-	d->procs.reset(d);
+	joy_w(adr, 0, d);
 	return empty_read(adr, d);
 }
 
@@ -146,7 +145,9 @@ static byte joyb_r(word adr, struct JOYDATA*d) // C061-C062
 
 static byte joyp_r(word adr, struct JOYDATA*d) // C064-C065
 {
-	return d->procs.status(d, (adr&1));
+	unsigned clk;
+	clk = cpu_get_tsc(d->sr) - d->reset_time;
+	return d->procs.status(d, (adr&1), clk);
 }
 
 int  joystick_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
