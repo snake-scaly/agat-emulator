@@ -560,7 +560,7 @@ static void env_callback_chan(struct SOUND_STATE*ss, int channel)
 	long long div = ss->envelope_delay[channel];
 	int gen;
 	long long vol;
-	ss->envelope_time[channel] += ENVELOPE_PERIOD/2;
+	ss->envelope_time[channel] += ENVELOPE_PERIOD;
 	if (!div) return;
 	if ((!(pattern & 8) || (pattern & 1)) && (ss->envelope_time[channel] > div)) {
 //		ss->envelope_time[channel] = div + 1;
