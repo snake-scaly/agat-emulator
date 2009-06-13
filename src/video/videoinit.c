@@ -23,18 +23,18 @@ static int video_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 
 	WRITE_FIELD(out, vs->vid_mode);
 	WRITE_FIELD(out, vs->vid_type);
-	WRITE_FIELD(out, vs->flash_mode);
-	WRITE_FIELD(out, vs->cur_mono);
-	WRITE_ARRAY(out, vs->c1_palette);
-	WRITE_ARRAY(out, vs->c2_palette);
-	WRITE_ARRAY(out, vs->c4_palette);
+	WRITE_FIELD(out, vs->pal.flash_mode);
+	WRITE_FIELD(out, vs->pal.cur_mono);
+	WRITE_ARRAY(out, vs->pal.c1_palette);
+	WRITE_ARRAY(out, vs->pal.c2_palette);
+	WRITE_ARRAY(out, vs->pal.c4_palette);
 
-	WRITE_FIELD(out, vs->text_mode);
-	WRITE_FIELD(out, vs->combined);
-	WRITE_FIELD(out, vs->page);
-	WRITE_FIELD(out, vs->hgr);
+	WRITE_FIELD(out, vs->ainf.text_mode);
+	WRITE_FIELD(out, vs->ainf.combined);
+	WRITE_FIELD(out, vs->ainf.page);
+	WRITE_FIELD(out, vs->ainf.hgr);
 
-	WRITE_FIELD(out, vs->prev_pal);
+	WRITE_FIELD(out, vs->pal.prev_pal);
 
 
 	return 0;
@@ -52,18 +52,18 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 
 	READ_FIELD(in, vs->vid_mode);
 	READ_FIELD(in, vs->vid_type);
-	READ_FIELD(in, vs->flash_mode);
-	READ_FIELD(in, vs->cur_mono);
-	READ_ARRAY(in, vs->c1_palette);
-	READ_ARRAY(in, vs->c2_palette);
-	READ_ARRAY(in, vs->c4_palette);
+	READ_FIELD(in, vs->pal.flash_mode);
+	READ_FIELD(in, vs->pal.cur_mono);
+	READ_ARRAY(in, vs->pal.c1_palette);
+	READ_ARRAY(in, vs->pal.c2_palette);
+	READ_ARRAY(in, vs->pal.c4_palette);
 
-	READ_FIELD(in, vs->text_mode);
-	READ_FIELD(in, vs->combined);
-	READ_FIELD(in, vs->page);
-	READ_FIELD(in, vs->hgr);
+	READ_FIELD(in, vs->ainf.text_mode);
+	READ_FIELD(in, vs->ainf.combined);
+	READ_FIELD(in, vs->ainf.page);
+	READ_FIELD(in, vs->ainf.hgr);
 
-	READ_FIELD(in, vs->prev_pal);
+	READ_FIELD(in, vs->pal.prev_pal);
 
 	video_update_mode(vs);
 	video_repaint_screen(vs);
@@ -79,7 +79,7 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 		return 0;
 	case SYS_COMMAND_HRESET:
 		disable_ints(vs->sr);
-		video_set_pal(vs, 0);
+		video_set_pal(&vs->pal, 0);
 //		videosel(0);
 		return 0;
 	case SYS_COMMAND_FLASH:
@@ -195,8 +195,8 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	vs->prev_base = -1;
 	vs->vid_mode = -1;
 	vs->vid_type = -1;
-	vs->hgr = 1;
-	vs->prev_pal = -1;
+	vs->ainf.hgr = 1;
+	vs->pal.prev_pal = -1;
 
 	puts(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
 	s=isfopen(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
@@ -215,7 +215,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	st->load = video_load;
 	st->save = video_save;
 
-	video_set_pal(vs, 0);
+	video_set_pal(&vs->pal, 0);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
 		video_set_mode(vs, VIDEO_MODE_AGAT);
@@ -241,7 +241,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		fill_read_proc(sr->baseio_sel + 5, 1, vsel_ap_r, vs);
 		fill_write_proc(sr->baseio_sel + 5, 1, vsel_ap_w, vs);
 	l1:
-		vs->page = 0;
+		vs->ainf.page = 0;
 		video_set_mono(vs, 0, sr->config->slots[CONF_MONITOR].dev_type == DEV_MONO);
 		break;
 	}

@@ -2,8 +2,8 @@
 
 static void vid_invalidate_addr_comb(struct VIDEO_STATE*vs, dword adr)
 {
-	dword badr = (vs->page+1)*0x400;
-	if (vs->text_mode||!vs->combined) return;
+	dword badr = (vs->ainf.page+1)*0x400;
+	if (vs->ainf.text_mode||!vs->ainf.combined) return;
 	if (adr>=badr&&adr<badr+0x400) 
 	{
 		RECT r;

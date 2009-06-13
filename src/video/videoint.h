@@ -23,6 +23,45 @@
 #define MCGR_W (CHAR_W/8)
 #define MCGR_H (CHAR_H/8)
 
+struct RASTER_BLOCK
+{
+	int mode, vtype, base_addr, mem_size, el_size, prev_base;
+	int dirty;
+};
+
+struct APPLE_INFO
+{
+	int text_mode;// = 0;
+	int combined;// = 0;
+	int page;// = 0;
+	int hgr;// = 1;
+	int videoterm; // = 0;
+	byte hgr_flags[40][192]; // first and last color of byte
+};
+
+struct PAL_INFO
+{
+	int flash_mode; //=0;
+	int cur_mono;  //= 0;
+	int c1_palette[1]; //={0};
+	int c2_palette[2]; //={0,15};
+	int c4_palette[4]; //={0,1,2,4};
+	int pal_regs[2];
+	int prev_pal;
+};
+
+struct VTERM_INFO
+{
+	const byte*ram;
+	word ram_size;
+	word ram_ofs;
+	word cur_ofs;
+	byte cur_size[2];
+	byte char_size[2];
+	byte char_scl[2];
+	byte scr_size[2];
+	const byte*font;
+};
 
 struct VIDEO_STATE
 {
@@ -40,30 +79,9 @@ struct VIDEO_STATE
 	int vid_mode;
 	int vid_type;
 
-	int flash_mode; //=0;
-	int cur_mono;  //= 0;
-	int c1_palette[1]; //={0};
-	int c2_palette[2]; //={0,15};
-	int c4_palette[4]; //={0,1,2,4};
-
-	int text_mode;// = 0;
-	int combined;// = 0;
-	int page;// = 0;
-	int hgr;// = 1;
-	int videoterm; // = 0;
-	byte hgr_flags[40][192]; // first and last color of byte
-	int pal_regs[2];
-	int prev_pal;
-
-	const byte*videoterm_ram;
-	word videoterm_ram_size;
-	word videoterm_ram_ofs;
-	word videoterm_cur_ofs;
-	byte videoterm_cur_size[2];
-	byte videoterm_char_size[2];
-	byte videoterm_char_scl[2];
-	byte videoterm_scr_size[2];
-	const byte*videoterm_font;
+	struct APPLE_INFO ainf;
+	struct PAL_INFO pal;
+	struct VTERM_INFO vinf;
 };
 
 enum {
@@ -81,7 +99,7 @@ __inline struct VIDEO_STATE*get_video_state(struct SYS_RUN_STATE*sr)
 void video_set_mode(struct VIDEO_STATE*vs, int md);
 void video_update_mode(struct VIDEO_STATE*vs);
 void video_set_palette(struct VIDEO_STATE*vs, int mode);
-int video_set_pal(struct VIDEO_STATE*vs, int mode); // explicit variant for internal use
+int video_set_pal(struct PAL_INFO*pi, int mode); // explicit variant for internal use
 int video_set_mono(struct VIDEO_STATE*vs, int a, int x); // and with a then xor with x
 
 void videosel_7(struct VIDEO_STATE*vs, int mode);

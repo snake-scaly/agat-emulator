@@ -42,7 +42,7 @@ static int videoterm_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	WRITE_FIELD(out, vts->cur_reg);
 	WRITE_ARRAY(out, vts->ram);
 	WRITE_FIELD(out, vts->ram_offset);
-	WRITE_FIELD(out, vs->videoterm);
+	WRITE_FIELD(out, vs->ainf.videoterm);
 
 	return 0;
 }
@@ -57,10 +57,10 @@ static int videoterm_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	READ_FIELD(in, vts->cur_reg);
 	READ_ARRAY(in, vts->ram);
 	READ_FIELD(in, vts->ram_offset);
-	READ_FIELD(in, vs->videoterm);
+	READ_FIELD(in, vs->ainf.videoterm);
 
-	vs->videoterm_ram = vts->ram;
-	vs->videoterm_ram_size = VIDEOTERM_RAM_SIZE;
+	vs->vinf.ram = vts->ram;
+	vs->vinf.ram_size = VIDEOTERM_RAM_SIZE;
 	for (i = 0; i < VIDEOTERM_NUM_REGS; ++i) {
 		vterm_update_reg(i, vts);
 	}
@@ -86,18 +86,18 @@ static int videoterm_command(struct SLOT_RUN_STATE*st, int cmd, int data, long p
 		return 0;
 	case SYS_COMMAND_INIT_DONE:
 		vts->vs = vs;
-		vs->videoterm_ram = vts->ram;
-		vs->videoterm_ram_size = VIDEOTERM_RAM_SIZE;
-		vs->videoterm_font = vts->font;
-		vs->videoterm_char_size[0] = 8;
-		vs->videoterm_char_size[1] = 9;
-		vs->videoterm_scr_size[0] = 80;
-		vs->videoterm_scr_size[1] = 24;
-		vs->videoterm_char_scl[0] = 1;
+		vs->vinf.ram = vts->ram;
+		vs->vinf.ram_size = VIDEOTERM_RAM_SIZE;
+		vs->vinf.font = vts->font;
+		vs->vinf.char_size[0] = 8;
+		vs->vinf.char_size[1] = 9;
+		vs->vinf.scr_size[0] = 80;
+		vs->vinf.scr_size[1] = 24;
+		vs->vinf.char_scl[0] = 1;
 #ifdef DOUBLE_Y
-		vs->videoterm_char_scl[1] = 2;
+		vs->vinf.char_scl[1] = 2;
 #else
-		vs->videoterm_char_scl[1] = 1;
+		vs->vinf.char_scl[1] = 1;
 #endif
 		return 0;
 	}
@@ -158,8 +158,8 @@ static void vtermsel_io_touch(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 
 static void videoterm_update(struct VIDEOTERM_STATE*vts, struct VIDEO_STATE*vs)
 {
-	if (vs->videoterm && vs->text_mode) {
-		set_video_size(vs->sr, vs->videoterm_scr_size[0]*vs->videoterm_char_size[0], vs->videoterm_scr_size[1]*vs->videoterm_char_size[1]);
+	if (vs->ainf.videoterm && vs->ainf.text_mode) {
+		set_video_size(vs->sr, vs->vinf.scr_size[0]*vs->vinf.char_size[0], vs->vinf.scr_size[1]*vs->vinf.char_size[1]);
 	}
 }
 
@@ -167,31 +167,31 @@ static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 {
 	struct VIDEO_STATE*vs = vts->vs;
 	byte data = vts->regs[rno];
-	word lofs = vs->videoterm_ram_ofs & (vs->videoterm_ram_size - 1);
-	word lcur = vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1);
-	byte*cofs = (byte*)&vs->videoterm_cur_ofs;
-	byte*bofs = (byte*)&vs->videoterm_ram_ofs;
+	word lofs = vs->vinf.ram_ofs & (vs->vinf.ram_size - 1);
+	word lcur = vs->vinf.cur_ofs & (vs->vinf.ram_size - 1);
+	byte*cofs = (byte*)&vs->vinf.cur_ofs;
+	byte*bofs = (byte*)&vs->vinf.ram_ofs;
 
 
 	switch (rno) {
 	case 1:
-		vs->videoterm_scr_size[0] = data;
+		vs->vinf.scr_size[0] = data;
 		videoterm_update(vts, vs);
 		break;
 	case 6:
-		vs->videoterm_scr_size[1] = data;
+		vs->vinf.scr_size[1] = data;
 		videoterm_update(vts, vs);
 		break;
 	case 9:
-		vs->videoterm_char_size[1] = (data & 0x0F) + 1;
+		vs->vinf.char_size[1] = (data & 0x0F) + 1;
 		videoterm_update(vts, vs);
 		break;
 	case 10:
-		vs->videoterm_cur_size[0] = data;
+		vs->vinf.cur_size[0] = data;
 		videoterm_update(vts, vs);
 		break;
 	case 11:
-		vs->videoterm_cur_size[1] = data;
+		vs->vinf.cur_size[1] = data;
 		video_repaint_screen(vs);
 		break;
 	case 12:
@@ -205,16 +205,16 @@ static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 	case 14:
 		cofs[1] = data;
 		vid_invalidate_addr(vts->st->sr, 0x10000 + lcur);
-		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1));
+		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->vinf.cur_ofs & (vs->vinf.ram_size - 1));
 		break;
 	case 15:
 		cofs[0] = data;
 		vid_invalidate_addr(vts->st->sr, 0x10000 + lcur);
-		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->videoterm_cur_ofs & (vs->videoterm_ram_size - 1));
+		vid_invalidate_addr(vts->st->sr, 0x10000 + vs->vinf.cur_ofs & (vs->vinf.ram_size - 1));
 		break;
 	}
 //	printf("videoterm: reg[%i] = %x; ofs = %x; cofs = %x; csize = %i,%i\n", 
-//		rno, data, vs->videoterm_ram_ofs, vs->videoterm_cur_ofs, vs->videoterm_cur_size[0], vs->videoterm_cur_size[1]);
+//		rno, data, vs->vinf.ram_ofs, vs->vinf.cur_ofs, vs->vinf.cur_size[0], vs->vinf.cur_size[1]);
 }
 
 static void vterm_write_reg(int rno, byte data, struct VIDEOTERM_STATE*vts)

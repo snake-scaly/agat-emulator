@@ -3,8 +3,8 @@
 static void video_repaint_screen_comb(struct VIDEO_STATE*vs)
 {
 	dword addr, n;
-	dword badr = (vs->page+1)*0x400;
-	if (vs->text_mode||!vs->combined) return;
+	dword badr = (vs->ainf.page+1)*0x400;
+	if (vs->ainf.text_mode||!vs->ainf.combined) return;
 	for (addr=badr,n=0x400;n;n--,addr++) {
 		RECT r;
 		apaint_t40_addr_mix(vs, addr,&r);

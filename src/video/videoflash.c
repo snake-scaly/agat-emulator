@@ -11,7 +11,7 @@ void video_flash_text(struct VIDEO_STATE*vs)
 		ZeroMemory(&vs->inv_area, sizeof(vs->inv_area));
 	}
 #endif
-	vs->flash_mode=!vs->flash_mode;
+	vs->pal.flash_mode=!vs->pal.flash_mode;
 	video_repaint_screen(vs);
 }
 

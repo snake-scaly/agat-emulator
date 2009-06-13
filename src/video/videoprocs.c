@@ -228,7 +228,7 @@ void paint_t32_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte ch=mem[addr&~1];
 	byte atr=mem[addr|1];
-	int  tc, bc=vs->c1_palette[0]; // text and back colors
+	int  tc, bc=vs->pal.c1_palette[0]; // text and back colors
 	byte*fnt=vs->font[ch];
 	int mask;
 	int xi, yi, xn, yn;
@@ -239,8 +239,8 @@ void paint_t32_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	tc=atr&7;
 	if (atr&16) tc|=8;
 	switch (atr&(8+32)) {
-	case 8: if (!vs->flash_mode) break; //flash
-	case 0: bc=tc; tc=vs->c1_palette[0]; break; // inverse
+	case 8: if (!vs->pal.flash_mode) break; //flash
+	case 0: bc=tc; tc=vs->pal.c1_palette[0]; break; // inverse
 	}
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
@@ -277,7 +277,7 @@ void paint_hgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int x=(addr<<3)&255;
 	int y=(addr>>5)&255;
 	int sx=8, sy=1;
-	int clr[2]={vs->c2_palette[0], vs->c2_palette[1]};
+	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
 	int i;
 	const byte*mem = ramptr(vs->sr);
 	byte b=mem[addr];
@@ -330,7 +330,7 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
 	const byte*mem = ramptr(vs->sr);
 	byte ch=mem[addr];
-	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
+	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	byte*fnt=vs->font[ch];
 	int mask;
 	int xi, yi, xn, yn;
@@ -380,7 +380,10 @@ void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
-	int pixels[4]={vs->c4_palette[0],vs->c4_palette[1],vs->c4_palette[2],vs->c4_palette[3]};
+	int pixels[4]={vs->pal.c4_palette[0],
+		vs->pal.c4_palette[1],
+		vs->pal.c4_palette[2],
+		vs->pal.c4_palette[3]};
 	int x,y;
 	int sx=4,sy=1;
 	const byte*mem = ramptr(vs->sr);
@@ -427,7 +430,7 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
-	int pixels[2]={vs->c2_palette[0],vs->c2_palette[1]};
+	int pixels[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
 	int x,y;
 	int sx=8, sy=1;
 	int clr[2]={0,15};
@@ -483,19 +486,19 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	dword saddr = addr;
-	dword caddr = vs->videoterm_cur_ofs;
+	dword caddr = vs->vinf.cur_ofs;
 	div_t d;
 	int x, y;
-	int cx = vs->videoterm_char_size[0] * vs->videoterm_char_scl[0];
-	int cy = vs->videoterm_char_size[1] * vs->videoterm_char_scl[1];
-	addr -= vs->videoterm_ram_ofs;
-	addr &= (vs->videoterm_ram_size - 1);
-	saddr &= (vs->videoterm_ram_size - 1);
-	caddr &= (vs->videoterm_ram_size - 1);
-	d = div(addr, vs->videoterm_scr_size[0]);
+	int cx = vs->vinf.char_size[0] * vs->vinf.char_scl[0];
+	int cy = vs->vinf.char_size[1] * vs->vinf.char_scl[1];
+	addr -= vs->vinf.ram_ofs;
+	addr &= (vs->vinf.ram_size - 1);
+	saddr &= (vs->vinf.ram_size - 1);
+	caddr &= (vs->vinf.ram_size - 1);
+	d = div(addr, vs->vinf.scr_size[0]);
 	x = d.rem;
 	y = d.quot;
-	if (y >= vs->videoterm_scr_size[1]) {
+	if (y >= vs->vinf.scr_size[1]) {
 		SetRectEmpty(r);
 		return;
 	}
@@ -504,28 +507,28 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
 	byte*ptr=(byte*)bmp_bits+(y*bmp_pitch*cy+x*cx/2);
-	byte ch=vs->videoterm_ram[saddr];
-	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
-	const byte*fnt = vs->videoterm_font + ch * 16;
+	byte ch=vs->vinf.ram[saddr];
+	int  tc=15, bc=0; // text and back colors
+	const byte*fnt = vs->vinf.font + ch * 16;
 	int mask;
 	int fl0 = 0;
 	int xi, yi, xn, yn;
-	int ys = vs->videoterm_cur_size[0] & 0x0F, ye = vs->videoterm_cur_size[1] & 0x0F;
+	int ys = vs->vinf.cur_size[0] & 0x0F, ye = vs->vinf.cur_size[1] & 0x0F;
 //	printf("addr = %x; x = %i; y = %i\n", addr, x, y);
 	r->left=x*cx;
 	r->top=y*cy;
 	r->right=r->left+cx;
 	r->bottom=r->top+cy;
-//	printf("addr = %x, cur = %x\n", saddr, vs->videoterm_cur_ofs);
+//	printf("addr = %x, cur = %x\n", saddr, vs->vinf.cur_ofs);
 	if (saddr == caddr) {
-		if (vs->flash_mode || !(vs->videoterm_cur_size[0]&0x40))
+		if (vs->pal.flash_mode || !(vs->vinf.cur_size[0]&0x40))
 			fl0 = 1;
 	}
-	for (yn = 0;yn < vs->videoterm_char_size[1]; yn++,fnt++) {
+	for (yn = 0;yn < vs->vinf.char_size[1]; yn++,fnt++) {
 		int fl = 0;
 		byte*p=ptr;
 		if (yn >= ys && yn <= ye) fl = fl0;
-		for (xn=vs->videoterm_char_size[0],mask=0x80;xn;xn--,mask>>=1,p++) {
+		for (xn=vs->vinf.char_size[0],mask=0x80;xn;xn--,mask>>=1,p++) {
 			byte c1, c2, cl;
 			c1=((((*fnt)&mask)==0)==fl)?tc:bc;
 			mask>>=1;
@@ -533,12 +536,12 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 			c2=((((*fnt)&mask)==0)==fl)?tc:bc;
 			cl=c2|(c1<<4);
 			p[0]=cl;
-			if (vs->videoterm_char_scl[1] > 1) {
+			if (vs->vinf.char_scl[1] > 1) {
 				p[bmp_pitch]=cl;
 			}
 		}
 		ptr+=bmp_pitch;
-		if (vs->videoterm_char_scl[1] > 1) {
+		if (vs->vinf.char_scl[1] > 1) {
 			ptr+=bmp_pitch;
 		}
 	}
@@ -559,7 +562,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*PIX_W*7/2));
 	byte ch = mem[addr];
 	byte atr = ch>>6;
-	int  tc=vs->c2_palette[1], bc=vs->c2_palette[0]; // text and back colors
+	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
@@ -575,8 +578,8 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	r->right=r->left+PIX_W*7;
 	r->bottom=r->top+CHAR_H;
 	switch(atr) {
-	case 1: if (!vs->flash_mode) break; //flash
-	case 0: bc=vs->c2_palette[1]; tc=vs->c2_palette[0]; break; // inverse
+	case 1: if (!vs->pal.flash_mode) break; //flash
+	case 0: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
 	}
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
@@ -634,7 +637,7 @@ void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte d = mem[addr], c1, c2, c;
 	int xn, yn;
 	static const byte gr_pal[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
-	if (vs->combined&&y>=40) {
+	if (vs->ainf.combined&&y>=40) {
 		return;
 	}
 	c1=gr_pal[d>>4];
@@ -686,10 +689,10 @@ void apaint_hgr_addr_mono(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int i;
 	const byte*mem = ramptr(vs->sr);
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
-	int clr[2]={vs->c2_palette[0],vs->c2_palette[1]};
+	int clr[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
 	byte b=mem[addr];
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);
-	if (vs->combined&&y>=160) {
+	if (vs->ainf.combined&&y>=160) {
 		return;
 	}
 	r->left=x*HGR_W;
@@ -727,17 +730,17 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte fl;
 
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);
-	if (vs->combined&&y>=160) {
+	if (vs->ainf.combined&&y>=160) {
 		return;
 	}
 	if (b&0x80) i1 = 1; else i1 = 0;
 	b&=0x7F;
 	if (x) {
-		firstc = vs->hgr_flags[x7-1][y]&0x0F;
+		firstc = vs->ainf.hgr_flags[x7-1][y]&0x0F;
 	} else firstc = clr1[0];
 	wasc = firstc;
 	if (x<273) {
-		lastc = vs->hgr_flags[x7+1][y]>>4;
+		lastc = vs->ainf.hgr_flags[x7+1][y]>>4;
 	} else lastc = clr1[0];
 	if (lastc) b|=0x80;
 	i2 = x&1;
@@ -781,7 +784,7 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 		ptr[bmp_pitch]=c;
 	}
 	fl |= wasc;
-	vs->hgr_flags[x7][y] = fl;
+	vs->ainf.hgr_flags[x7][y] = fl;
 	if (x<273) {
 		if (lastc&&wasc) {
 			byte c;
@@ -802,7 +805,7 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 
 void apaint_hgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
-	if (vs->cur_mono) apaint_hgr_addr_mono(vs, addr, r);
+	if (vs->pal.cur_mono) apaint_hgr_addr_mono(vs, addr, r);
 	else apaint_hgr_addr_color(vs, addr, r);
 }
 

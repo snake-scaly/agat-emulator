@@ -2,20 +2,21 @@
 
 void update_video_ap(struct VIDEO_STATE*vs)
 {
-	if (vs->text_mode) {
-		if (vs->videoterm) {
-			set_video_active_range(vs, 0x10000, vs->videoterm_ram_size, 1);
+	struct APPLE_INFO*ai = &vs->ainf;
+	if (ai->text_mode) {
+		if (ai->videoterm) {
+			set_video_active_range(vs, 0x10000, vs->vinf.ram_size, 1);
 			set_video_type(vs, 11);
 		} else {
-			set_video_active_range(vs, (vs->page+1)*0x400, 0x400, 1);
+			set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
 			set_video_type(vs, 7);
 		}
-	} else if (vs->hgr) {
-		if (basemem_n_blocks(vs->sr) < (vs->page+2) * 4) return;
-		set_video_active_range(vs, (vs->page+1)*0x2000, 0x2000, 1);
+	} else if (ai->hgr) {
+		if (basemem_n_blocks(vs->sr) < (ai->page+2) * 4) return;
+		set_video_active_range(vs, (ai->page+1)*0x2000, 0x2000, 1);
 		set_video_type(vs, 9);
 	} else {
-		set_video_active_range(vs, (vs->page+1)*0x400, 0x400, 1);
+		set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
 	}
 }
@@ -23,16 +24,18 @@ void update_video_ap(struct VIDEO_STATE*vs)
 
 void vsel_ap(struct VIDEO_STATE*vs, word adr)
 {
+	struct APPLE_INFO*ai = &vs->ainf;
+	struct VTERM_INFO*vi = &vs->vinf;
 	if (adr&8) {
-		if (vs->videoterm_ram) {
+		if (vi->ram) {
 			switch (adr&0x0F) {
 			case 8:
-				if (vs->videoterm) puts("videoterm disabled");
-				vs->videoterm = 0;
+				if (ai->videoterm) puts("videoterm disabled");
+				ai->videoterm = 0;
 				break;
 			case 9:
-				if (!vs->videoterm) puts("videoterm enabled");
-				vs->videoterm = 1;
+				if (!ai->videoterm) puts("videoterm enabled");
+				ai->videoterm = 1;
 				break;
 			}
 			video_update_mode(vs);
@@ -48,26 +51,26 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 	adr&=7;
 //	printf("vs->page = %i\n", vs->page);
 	switch(adr) {
-	case 0: vs->text_mode = 0; 
+	case 0: ai->text_mode = 0; 
 		break;
-	case 1: vs->text_mode = 1; 
+	case 1: ai->text_mode = 1; 
 		break;
-	case 2: vs->combined = 0; 
+	case 2: ai->combined = 0; 
 		break;
-	case 3: vs->combined  = 1; 
+	case 3: ai->combined  = 1; 
 		break;
-	case 4: vs->page = 0; 
+	case 4: ai->page = 0; 
 		break;
-	case 5: vs->page = 1; 
+	case 5: ai->page = 1; 
 		break;
 	case 6: 
 		if (vs->sr->cursystype == SYSTEM_A) {
-			vs->hgr = 0;
+			ai->hgr = 0;
 		} else {
-			vs->hgr = 1; // low-res emulation was not implemented in Agat
+			ai->hgr = 1; // low-res emulation was not implemented in Agat
 		}
 		break;
-	case 7: vs->hgr = 1; 
+	case 7: ai->hgr = 1; 
 		break;
 	}
 	update_video_ap(vs);
