@@ -16,26 +16,19 @@ static int video_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	struct VIDEO_STATE*vs = st->data;
 
 	WRITE_FIELD(out, vs->video_mode);
-	WRITE_FIELD(out, vs->video_base_addr);
-	WRITE_FIELD(out, vs->prev_base);
-	WRITE_FIELD(out, vs->video_mem_size);
-	WRITE_FIELD(out, vs->video_el_size);
 
-	WRITE_FIELD(out, vs->vid_mode);
-	WRITE_FIELD(out, vs->vid_type);
-	WRITE_FIELD(out, vs->pal.flash_mode);
-	WRITE_FIELD(out, vs->pal.cur_mono);
-	WRITE_ARRAY(out, vs->pal.c1_palette);
-	WRITE_ARRAY(out, vs->pal.c2_palette);
-	WRITE_ARRAY(out, vs->pal.c4_palette);
+	WRITE_ARRAY(out, vs->rb);
+	WRITE_FIELD(out, vs->n_rb);
+	WRITE_FIELD(out, vs->rbi);
+	WRITE_FIELD(out, vs->rb_enabled);
+	WRITE_FIELD(out, vs->rb_cur);
+
+	WRITE_FIELD(out, vs->pal);
 
 	WRITE_FIELD(out, vs->ainf.text_mode);
 	WRITE_FIELD(out, vs->ainf.combined);
 	WRITE_FIELD(out, vs->ainf.page);
 	WRITE_FIELD(out, vs->ainf.hgr);
-
-	WRITE_FIELD(out, vs->pal.prev_pal);
-
 
 	return 0;
 }
@@ -45,28 +38,22 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	struct VIDEO_STATE*vs = st->data;
 
 	READ_FIELD(in, vs->video_mode);
-	READ_FIELD(in, vs->video_base_addr);
-	READ_FIELD(in, vs->prev_base);
-	READ_FIELD(in, vs->video_mem_size);
-	READ_FIELD(in, vs->video_el_size);
 
-	READ_FIELD(in, vs->vid_mode);
-	READ_FIELD(in, vs->vid_type);
-	READ_FIELD(in, vs->pal.flash_mode);
-	READ_FIELD(in, vs->pal.cur_mono);
-	READ_ARRAY(in, vs->pal.c1_palette);
-	READ_ARRAY(in, vs->pal.c2_palette);
-	READ_ARRAY(in, vs->pal.c4_palette);
+	READ_ARRAY(in, vs->rb);
+	READ_FIELD(in, vs->n_rb);
+	READ_FIELD(in, vs->rbi);
+	READ_FIELD(in, vs->rb_enabled);
+	READ_FIELD(in, vs->rb_cur);
+
+	READ_FIELD(in, vs->pal);
 
 	READ_FIELD(in, vs->ainf.text_mode);
 	READ_FIELD(in, vs->ainf.combined);
 	READ_FIELD(in, vs->ainf.page);
 	READ_FIELD(in, vs->ainf.hgr);
 
-	READ_FIELD(in, vs->pal.prev_pal);
-
 	video_update_mode(vs);
-	video_repaint_screen(vs);
+	video_first_rb(vs);
 	return 0;
 }
 
@@ -91,6 +78,13 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 	case SYS_COMMAND_TOGGLE_MONO:
 		video_set_mono(vs, 1, 1);
 		return 0;
+	case SYS_COMMAND_CPUTIMER:
+		if ((param|1) == (((long)vs)|1)) {
+			video_timer(vs, param & 1);
+			return 1;
+		}
+		break;
+		
 	}
 	return 0;
 }
@@ -177,6 +171,24 @@ static byte set_palette_r(word adr, struct VIDEO_STATE*vs) // C050-C05F, agat 9
 }
 
 
+int set_rb_count(struct VIDEO_STATE*vs, int n)
+{
+	struct RASTER_BLOCK*rb;
+	int i;
+
+	vs->n_rb = n;
+	for (i = n, rb = vs->rb; i; --i, ++rb) {
+		rb->vmode = -1;
+		rb->vtype = -1;
+		rb->prev_base = -1;
+	}
+	if (vs->rb_enabled) {
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000, ((long)vs) & ~1);
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000 / n, ((long)vs) | 1);
+	}
+	return 0;
+}
+
 int  video_init(struct SYS_RUN_STATE*sr)
 {
 	int i;
@@ -192,11 +204,9 @@ int  video_init(struct SYS_RUN_STATE*sr)
 
 	vs->sr = sr;
 	vs->video_mode = VIDEO_MODE_INVALID;
-	vs->prev_base = -1;
-	vs->vid_mode = -1;
-	vs->vid_type = -1;
 	vs->ainf.hgr = 1;
 	vs->pal.prev_pal = -1;
+	vs->rb_enabled = 0;
 
 	puts(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
 	s=isfopen(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
@@ -218,6 +228,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	video_set_pal(&vs->pal, 0);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
+		set_rb_count(vs, vs->rb_enabled?N_RB_7:1);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -226,6 +237,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		fill_rw_proc(sr->baseio_sel + 5, 1, disable_ints_r, disable_ints_w, vs);
 		break;
 	case SYSTEM_9:
+		set_rb_count(vs, vs->rb_enabled?N_RB_9:1);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -236,6 +248,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		goto l1;
 		break;
 	case SYSTEM_A:
+		set_rb_count(vs, 1);
 		video_set_mode(vs, VIDEO_MODE_APPLE);
 		update_video_ap(vs);
 		fill_read_proc(sr->baseio_sel + 5, 1, vsel_ap_r, vs);

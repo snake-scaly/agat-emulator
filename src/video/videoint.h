@@ -23,10 +23,18 @@
 #define MCGR_W (CHAR_W/8)
 #define MCGR_H (CHAR_H/8)
 
+
+#define MAX_RASTER_BLOCKS 256
+
+
+#define N_RB_7 16
+#define N_RB_9 32
+
 struct RASTER_BLOCK
 {
-	int mode, vtype, base_addr, mem_size, el_size, prev_base;
+	int vmode, vtype, base_addr, mem_size, el_size, prev_base;
 	int dirty;
+	RECT r;
 };
 
 struct APPLE_INFO
@@ -67,17 +75,13 @@ struct VIDEO_STATE
 {
 	struct SYS_RUN_STATE*sr;
 	int video_mode; //= VIDEO_MODE_INVALID;
-	int video_base_addr; //=0x7800;
-	int prev_base; // = -1
-	int video_mem_size; //=0x800;
-	int video_el_size; //=1;
+
+	struct RASTER_BLOCK rb[MAX_RASTER_BLOCKS], rb_cur;
+	int n_rb, rbi;
+	int rb_enabled;
 
 	RECT inv_area;
-
 	byte font[256][8];
-
-	int vid_mode;
-	int vid_type;
 
 	struct APPLE_INFO ainf;
 	struct PAL_INFO pal;
@@ -109,12 +113,19 @@ int  videosel(struct VIDEO_STATE*vs, int mode);
 void update_video_ap(struct VIDEO_STATE*vs);
 void vsel_ap(struct VIDEO_STATE*vs, word adr);
 
-void video_switch_screen_pages(struct VIDEO_STATE*vs);
+void video_switch_block_pages(struct VIDEO_STATE*vs, int rbi);
 
+void video_repaint_block(struct VIDEO_STATE*vs, int rbi);
 void video_repaint_screen(struct VIDEO_STATE*vs);
 
 void set_video_active_range(struct VIDEO_STATE*vs, dword adr, word len, int el);
 void set_video_type(struct VIDEO_STATE*vs, int t);
+
+void video_first_rb(struct VIDEO_STATE*vs);
+void video_next_rb(struct VIDEO_STATE*vs);
+void video_update_rb(struct VIDEO_STATE*vs, int rbi);
+
+void video_timer(struct VIDEO_STATE*vs, int t);
 
 void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r);
 

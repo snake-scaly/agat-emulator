@@ -20,14 +20,18 @@ static void vid_invalidate_addr_comb(struct VIDEO_STATE*vs, dword adr)
 void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 {
 	struct VIDEO_STATE*vs = get_video_state(sr);
-	if (adr>=vs->video_base_addr&&adr<vs->video_base_addr+vs->video_mem_size) {
-		RECT r;
-		paint_addr[vs->vid_type](vs, adr,&r);
+	struct RASTER_BLOCK*rb;
+	int i;
+	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
+		if (adr>=rb->base_addr&&adr<rb->base_addr+rb->mem_size) {
+			RECT r;
+			paint_addr[rb->vtype](vs, adr, &r);
 #ifdef SYNC_SCREEN_UPDATE
-		invalidate_video_window(sr, &r);
+			invalidate_video_window(sr, &r);
 #else
-		UnionRect(&vs->inv_area,&vs->inv_area,&r);
+			UnionRect(&vs->inv_area, &vs->inv_area, &r);
 #endif //SYNC_SCREEN_UPDATE
+		}
 	}
 	if (vs->video_mode==VIDEO_MODE_APPLE)
 		vid_invalidate_addr_comb(vs, adr);

@@ -321,7 +321,8 @@ void paint_hgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 #endif //DOUBLE_X
 }
 
-void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+
+void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r, int tc, int bc)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
@@ -330,7 +331,6 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
 	const byte*mem = ramptr(vs->sr);
 	byte ch=mem[addr];
-	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	byte*fnt=vs->font[ch];
 	int mask;
 	int xi, yi, xn, yn;
@@ -338,12 +338,6 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	r->top=y*CHAR_H;
 	r->right=r->left+CHAR_W2;
 	r->bottom=r->top+CHAR_H;
-	if (vs->sr->cursystype==SYSTEM_7) {
-		if (!(vs->vid_mode&4)) {
-			tc=0;
-			bc=15;
-		}
-	}
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
 		byte*p=ptr;
@@ -376,6 +370,18 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	}
 }
 
+
+void paint_t64_addr_n(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	paint_t64_addr(vs, addr, r, vs->pal.c2_palette[1], vs->pal.c2_palette[0]);
+}
+
+void paint_t64_addr_i(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	paint_t64_addr(vs, addr, r, 0, 15);
+}
+
+
 void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
@@ -389,7 +395,7 @@ void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte b = mem[addr], *ptr;
 	int n;
-	addr&=(vs->video_mem_size-1);
+	addr&=0x3FFF;
 	x=(addr&63)<<2;
 	y=(addr>>5)&~1;
 	if (y&0x100) y-=0xFF;
@@ -426,6 +432,7 @@ void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	}
 }
 
+
 void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
@@ -437,7 +444,7 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte b=mem[addr],*ptr;
 	int i;
-	addr&=(vs->video_mem_size-1);
+	addr&=0x3FFF;
 	x=(addr&63)<<3;
 	y=(addr>>5)&~1;
 	if (y&0x100) y-=0xFF;
@@ -815,12 +822,12 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 	paint_mgr_addr, //1
 	paint_t32_addr, //2
 	paint_hgr_addr, //3
-	paint_t64_addr, //4
+	paint_t64_addr_n, //4
 	paint_mcgr_addr,//5
 	paint_dgr_addr, //6
 	apaint_t40_addr, // 7
 	apaint_gr_addr, // 8
 	apaint_hgr_addr, // 9
-	paint_t64_addr, //10 inverse
+	paint_t64_addr_i, //10 inverse
 	apaint_t80_addr, //11
 };

@@ -19,6 +19,7 @@ void update_video_ap(struct VIDEO_STATE*vs)
 		set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
 	}
+	video_first_rb(vs);
 }
 
 

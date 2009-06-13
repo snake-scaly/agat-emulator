@@ -10,34 +10,34 @@ void videosel_7(struct VIDEO_STATE*vs, int mode)
 	type=(mode&3);
 	printf("video page = %i, subpage = %i, type = %i\n",
 		page, subpage, type);
-	vs->vid_mode=mode;
-	vs->vid_type=type;
+	vs->rb_cur.vmode=mode;
+	vs->rb_cur.vtype=type;
 	switch (type) {
 	case 0:
-		vs->video_base_addr=(page<<0x0D)+(subpage<<0x0B);
-		vs->video_mem_size=0x800;
-		vs->video_el_size=1;
+		vs->rb_cur.base_addr=(page<<0x0D)+(subpage<<0x0B);
+		vs->rb_cur.mem_size=0x800;
+		vs->rb_cur.el_size=1;
 		break;
 	case 1:
-		vs->video_base_addr=(page<<0x0D);
-		vs->video_mem_size=0x2000;
-		vs->video_el_size=1;
+		vs->rb_cur.base_addr=(page<<0x0D);
+		vs->rb_cur.mem_size=0x2000;
+		vs->rb_cur.el_size=1;
 		break;
 	case 2:
 		page&=7;
-		vs->video_base_addr=(page<<0x0D)+(subpage<<0x0B);
-		vs->video_mem_size=0x800;
-		vs->video_el_size=2;
+		vs->rb_cur.base_addr=(page<<0x0D)+(subpage<<0x0B);
+		vs->rb_cur.mem_size=0x800;
+		vs->rb_cur.el_size=2;
 		if (mode&0x80) {
-			vs->vid_type=4;
-			if (mode&4) { vs->vid_type = 10; }
-			vs->video_el_size=1;
+			vs->rb_cur.vtype=4;
+			if (mode&4) { vs->rb_cur.vtype = 10; }
+			vs->rb_cur.el_size=1;
 		}
 		break;
 	case 3:
-		vs->video_base_addr=(page<<0x0D);
-		vs->video_mem_size=0x2000;
-		vs->video_el_size=1;
+		vs->rb_cur.base_addr=(page<<0x0D);
+		vs->rb_cur.mem_size=0x2000;
+		vs->rb_cur.el_size=1;
 		break;
 	}
 }
