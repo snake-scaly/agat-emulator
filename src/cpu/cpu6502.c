@@ -1181,18 +1181,18 @@ static int exec_6502(struct CPU_STATE*cs)
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
 		st->pc=mem_read_word(st, ADDR_NMI);
-		st->ints_req&=~INT_NMI;
+//		st->ints_req&=~INT_NMI;
 //		puts("nmi");
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
-		puts("reset");
+//		puts("reset");
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
 		st->f|=FLAG_I;
 		st->pc=mem_read_word(st, ADDR_IRQ);
-		st->ints_req&=~INT_IRQ;
+//		st->ints_req&=~INT_IRQ;
 //		puts("irq");
 	}
 

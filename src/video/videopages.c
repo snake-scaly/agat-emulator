@@ -6,25 +6,31 @@ void video_switch_block_pages(struct VIDEO_STATE*vs, int rbi)
 	dword sa, da, n;
 	byte*mem = ramptr(vs->sr);
 	int upd=0;
-//	printf("video_switch_screen_pages: type = %i, base = %x, prev_base = %x, size = %x\n", vs->vid_type, vs->video_base_addr, vs->prev_base, vs->video_mem_size);
+	int j;
+//	printf("video_switch_block_pages[%i]: type = %i, base = %x, prev_base = %x, size = %x\n", 
+//		rbi, vs->rb[rbi].vtype, vs->rb[rbi].base_addr[0], vs->rb[rbi].prev_base[0], vs->rb[rbi].mem_size[0]);
 	switch (vs->rb[rbi].el_size) {
 	case 1:
-		for (sa=vs->rb[rbi].prev_base,da=vs->rb[rbi].base_addr,n=vs->rb[rbi].mem_size;n;n--,sa++,da++) {
-			if (mem[sa]!=mem[da]) {
-				RECT r;
-				paint_addr[vs->rb[rbi].vtype](vs,da,&r);
-				upd=1;
-				UnionRect(&inv,&inv,&r);
+		for (j = vs->rb[rbi].n_ranges-1; j>=0; --j) {
+			for (sa=vs->rb[rbi].prev_base[j],da=vs->rb[rbi].base_addr[j],n=vs->rb[rbi].mem_size[j];n;n--,sa++,da++) {
+				if (mem[sa]!=mem[da]) {
+					RECT r;
+					paint_addr[vs->rb[rbi].vtype](vs,da,&r);
+					upd=1;
+					UnionRect(&inv,&inv,&r);
+				}
 			}
 		}
 		break;
 	case 2:
-		for (sa=vs->rb[rbi].prev_base,da=vs->rb[rbi].base_addr,n=vs->rb[rbi].mem_size;n;n-=2,sa+=2,da+=2) {
-			if (mem[sa]!=mem[da]||mem[sa+1]!=mem[da+1]) {
-				RECT r;
-				paint_addr[vs->rb[rbi].vtype](vs,da,&r);
-				upd=1;
-				UnionRect(&inv,&inv,&r);
+		for (j = vs->rb[rbi].n_ranges-1; j>=0; --j) {
+			for (sa=vs->rb[rbi].prev_base[j],da=vs->rb[rbi].base_addr[j],n=vs->rb[rbi].mem_size[j];n;n-=2,sa+=2,da+=2) {
+				if (mem[sa]!=mem[da]||mem[sa+1]!=mem[da+1]) {
+					RECT r;
+					paint_addr[vs->rb[rbi].vtype](vs,da,&r);
+					upd=1;
+					UnionRect(&inv,&inv,&r);
+				}
 			}
 		}
 		break;

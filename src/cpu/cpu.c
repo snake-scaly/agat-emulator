@@ -43,15 +43,15 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_HRESET:
 		return cpu_hreset(cs);
 	case SYS_COMMAND_RESET:
-		return cpu_intr(cs, CPU_INTR_HRESET);
+		return cpu_intr(cs, CPU_INTR_HRESET, 0);
 	case SYS_COMMAND_IRQ:
-		return cpu_intr(cs, CPU_INTR_IRQ);
+		return cpu_intr(cs, CPU_INTR_IRQ, data);
 	case SYS_COMMAND_NMI:
-		return cpu_intr(cs, CPU_INTR_NMI);
+		return cpu_intr(cs, CPU_INTR_NMI, data);
 	case SYS_COMMAND_NOIRQ:
-		return cpu_intr(cs, CPU_INTR_NOIRQ);
+		return cpu_intr(cs, CPU_INTR_NOIRQ, 0);
 	case SYS_COMMAND_NONMI:
-		return cpu_intr(cs, CPU_INTR_NONMI);
+		return cpu_intr(cs, CPU_INTR_NONMI, 0);
 	case SYS_COMMAND_START:
 		cpu_pause(cs, 0);
 		return 0;
@@ -104,6 +104,8 @@ int  cpu_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	WRITE_FIELD(out, cs->tsc_6502);
 	WRITE_FIELD(out, cs->min_msleep);
 	WRITE_FIELD(out, cs->lim_fetches);
+	WRITE_ARRAY(out, cs->int_ticks);
+	WRITE_ARRAY(out, cs->timers);
 	if (cs->save) return cs->save(cs, out);
 	return 0;
 }
@@ -117,6 +119,8 @@ int  cpu_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	READ_FIELD(in, cs->tsc_6502);
 	READ_FIELD(in, cs->min_msleep);
 	READ_FIELD(in, cs->lim_fetches);
+	READ_ARRAY(in, cs->int_ticks);
+	READ_ARRAY(in, cs->timers);
 	if (cs->load) return cs->load(cs, in);
 	return 0;
 }
@@ -179,8 +183,26 @@ int cpu_hreset(struct CPU_STATE*st)
 	return 0;
 }
 
-int cpu_intr(struct CPU_STATE*st, int t)
+int cpu_intr(struct CPU_STATE*st, int t, int nticks)
 {
+	switch (t) {
+	case CPU_INTR_IRQ:
+		st->int_ticks[0] = nticks;
+		break;
+	case CPU_INTR_NMI:
+		st->int_ticks[1] = nticks;
+		break;
+	case CPU_INTR_NOIRQ:
+		st->int_ticks[0] = 0;
+		break;
+	case CPU_INTR_NONMI:
+		st->int_ticks[1] = 0;
+		break;
+	case CPU_INTR_RESET:
+		st->int_ticks[0] = 0;
+		st->int_ticks[1] = 0;
+		break;
+	}
 	st->intr(st, t);
 	return 0;
 }
@@ -213,11 +235,29 @@ int cpu_step(struct CPU_STATE*st, int ncmd)
 	return 0;
 }
 
+
+static void decrement_int(struct CPU_STATE*cs, int n, int id, int cmd)
+{
+	if (cs->int_ticks[id]) {
+		if (cs->int_ticks[id] > n) cs->int_ticks[id] -= n;
+		else {
+			cpu_intr(cs, cmd, 0);
+		}
+	}
+}
+
 static void decrement_timers(struct CPU_STATE*cs, int n)
 {
 	struct CPU_TIMER*r;
 	int i;
+
+//	printf("decrement_timers: %i\n", n);
+
+	decrement_int(cs, n, 0, CPU_INTR_NOIRQ);
+	decrement_int(cs, n, 1, CPU_INTR_NONMI);
+
 	for (r = cs->timers, i = MAX_CPU_TIMERS; i; --i, ++r)
+//		printf("timer[%i]: used = %i; delay = %i; remains = %i\n", i, r->used, r->delay, r->remains);
 		if (r->used && r->delay) {
 			if (r->remains<=0) r->remains += r->delay;
 			r->remains -= n;

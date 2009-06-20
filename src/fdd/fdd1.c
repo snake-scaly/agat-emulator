@@ -815,7 +815,7 @@ static void fdd_select_phase(struct FDD_DATA*data, int p)
 			d->Phase++;
 			if (d->Track!=d->Phase/2) {
         			d->Track=d->Phase/2;
-        			printf("fdd1: track = %i\n",d->Track);
+//        			printf("fdd1: track = %i\n",d->Track);
 				sound_phase();
 				fdd_load_track(data);
 			}	
@@ -827,7 +827,7 @@ static void fdd_select_phase(struct FDD_DATA*data, int p)
 			d->Phase--;
 			if (d->Track!=d->Phase/2) {
         			d->Track=d->Phase/2;
-        			printf("fdd1: track = %i\n",d->Track);
+//        			printf("fdd1: track = %i\n",d->Track);
 				sound_phase();
 				fdd_load_track(data);
 			}	

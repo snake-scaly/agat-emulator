@@ -53,6 +53,9 @@ struct SLOT_RUN_STATE
 	struct MEM_PROC *io_sel;
 };
 
+#define CPU_TIMER_DEV_BASE 1024
+#define DEF_CPU_TIMER_ID(st) ((long)(CPU_TIMER_DEV_BASE + (((st)->sc->slot_no<<8) | (st->sc->dev_type<<2))))
+
 
 struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name);
 int free_system_state(struct SYS_RUN_STATE*sr);

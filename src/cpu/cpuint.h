@@ -18,6 +18,18 @@ struct CPU_TIMER
 
 #define MAX_CPU_TIMERS	32
 
+
+enum {
+	CPU_INTR_RESET,
+	CPU_INTR_IRQ,
+	CPU_INTR_NMI,
+	CPU_INTR_HRESET,
+	CPU_INTR_NOIRQ,
+	CPU_INTR_NONMI,
+
+	CPU_INTR_MAX
+};
+
 struct CPU_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -38,10 +50,9 @@ struct CPU_STATE
 	int sleep_req;
 	HANDLE wakeup, response;
 
-	struct CPU_TIMER timers[MAX_CPU_TIMERS];
+	int int_ticks[2];
 
-	int cpu_timer_delay, cpu_timer_remains;
-	long cpu_timer_id;
+	struct CPU_TIMER timers[MAX_CPU_TIMERS];
 
 
 	int  (*hook_proc)(void*p);
@@ -56,19 +67,10 @@ struct CPU_STATE
 };
 
 
-enum {
-	CPU_INTR_RESET,
-	CPU_INTR_IRQ,
-	CPU_INTR_NMI,
-	CPU_INTR_HRESET,
-	CPU_INTR_NOIRQ,
-	CPU_INTR_NONMI,
-};
-
 int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*sc);
 
 int cpu_hreset(struct CPU_STATE*st);
-int cpu_intr(struct CPU_STATE*st, int t);
+int cpu_intr(struct CPU_STATE*st, int t, int nticks); // nticks = 0 -> no auto disable interrupt
 int cpu_pause(struct CPU_STATE*st, int p);
 int cpu_step(struct CPU_STATE*st, int ncmd);
 int cpu_cmd(struct CPU_STATE*cs, int cmd, int data, long param);

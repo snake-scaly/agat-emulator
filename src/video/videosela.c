@@ -1,5 +1,16 @@
 #include "videoint.h"
 
+static int get_apple_mode_id(struct APPLE_INFO*ai)
+{
+	int res = 0;
+	if (ai->text_mode) res |= 1;
+	if (ai->combined) res |= 2;
+	if (ai->page) res |= 4;
+	if (ai->hgr) res |= 8;
+	if (ai->videoterm) res |= 16;
+	return res;
+}
+
 void update_video_ap(struct VIDEO_STATE*vs)
 {
 	struct APPLE_INFO*ai = &vs->ainf;
@@ -19,7 +30,9 @@ void update_video_ap(struct VIDEO_STATE*vs)
 		set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
 	}
-	video_first_rb(vs);
+	vs->rb_cur.vmode = (vs->rb_cur.vmode & 0xFF) | (get_apple_mode_id(ai) << 8);
+	video_update_rb(vs, 0);
+//	video_repaint_screen(vs);
 }
 
 

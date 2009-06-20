@@ -15,11 +15,14 @@ static void video_repaint_screen_comb(struct VIDEO_STATE*vs)
 void video_repaint_block(struct VIDEO_STATE*vs, int rbi)
 {
 	dword addr, n;
+	int j;
 //	printf("video_repaint_screen: type = %i, base = %x, size = %x\n", vs->vid_type, vs->video_base_addr, vs->video_mem_size);
-	for (addr=vs->rb[rbi].base_addr,n=vs->rb[rbi].mem_size;n;
-		n-=vs->rb[rbi].el_size,addr+=vs->rb[rbi].el_size) {
-		RECT r;
-		paint_addr[vs->rb[rbi].vtype](vs, addr, &r);
+	for (j = vs->rb[rbi].n_ranges-1; j>=0; --j) {
+		for (addr=vs->rb[rbi].base_addr[j],n=vs->rb[rbi].mem_size[j];n;
+			n-=vs->rb[rbi].el_size,addr+=vs->rb[rbi].el_size) {
+			RECT r;
+			paint_addr[vs->rb[rbi].vtype](vs, addr, &r);
+		}
 	}
 	if (vs->video_mode==VIDEO_MODE_APPLE) video_repaint_screen_comb(vs);
 	else invalidate_video_window(vs->sr, &vs->rb[rbi].r);
@@ -29,8 +32,9 @@ void video_repaint_screen(struct VIDEO_STATE*vs)
 {
 	struct RASTER_BLOCK*rb;
 	int i;
-	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
+	for (i = vs->n_rb - 1, rb = vs->rb; i >= 0; --i, ++rb) {
 		rb->dirty = 1;
 		video_update_rb(vs, i);
 	}
+	invalidate_video_window(vs->sr, NULL);
 }

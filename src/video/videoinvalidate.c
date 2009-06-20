@@ -21,16 +21,26 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 {
 	struct VIDEO_STATE*vs = get_video_state(sr);
 	struct RASTER_BLOCK*rb;
-	int i;
+	int i, j;
+//	printf("video_invalidate: adr = %x; n_rb = %i\n", adr, vs->n_rb);
 	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
-		if (adr>=rb->base_addr&&adr<rb->base_addr+rb->mem_size) {
-			RECT r;
-			paint_addr[rb->vtype](vs, adr, &r);
+//		printf("i = %i; n_ranges = %i\n", i, rb->n_ranges);
+		for (j = rb->n_ranges - 1; j >= 0; --j) {
+//			printf("j = %i; base_addr = %x; mem_size = %x\n", j, rb->base_addr[j], rb->mem_size[j]);
+			if (adr>=rb->base_addr[j]&&adr<rb->base_addr[j]+rb->mem_size[j]) {
+				RECT r;
+				if (vs->video_mode != VIDEO_MODE_APPLE && rb->vmode != vs->rb_cur.vmode) {
+					rb->dirty = 1;
+				} else {
+//					printf("paint_addr[%i]: %x\n", rb->vtype, adr);
+					paint_addr[rb->vtype](vs, adr, &r);
 #ifdef SYNC_SCREEN_UPDATE
-			invalidate_video_window(sr, &r);
+					invalidate_video_window(sr, &r);
 #else
-			UnionRect(&vs->inv_area, &vs->inv_area, &r);
+					UnionRect(&vs->inv_area, &vs->inv_area, &r);
 #endif //SYNC_SCREEN_UPDATE
+				}
+			}
 		}
 	}
 	if (vs->video_mode==VIDEO_MODE_APPLE)

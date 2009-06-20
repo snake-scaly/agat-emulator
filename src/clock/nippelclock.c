@@ -86,10 +86,10 @@ static int nippelclock_command(struct SLOT_RUN_STATE*st, int cmd, int data, long
 		ncs->regs[REG_C] = 0;
 		return 0;
 	case SYS_COMMAND_INIT_DONE:
-		system_command(st->sr, SYS_COMMAND_SET_CPUTIMER, 1000000/8192, (long)ncs);
+		system_command(st->sr, SYS_COMMAND_SET_CPUTIMER, 1000000/8192, DEF_CPU_TIMER_ID(ncs->st));
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if (param == (long)ncs) {
+		if (param == DEF_CPU_TIMER_ID(ncs->st)) {
 			ncs_callback(NULL, 0, ncs, 0);
 			return 1;
 		}

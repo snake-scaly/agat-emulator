@@ -275,7 +275,7 @@ static int mb_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	}
 	start_timer(0, 0, ss);
 	start_timer(1, 0, ss);
-	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, ((long)ss) | 2);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, DEF_CPU_TIMER_ID(ss->st) | 2);
 	return 0;
 }
 
@@ -289,16 +289,16 @@ static int mb_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_RESET:
 		return 0;
 	case SYS_COMMAND_HRESET:
-		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, (long)ss);
+		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID(ss->st));
 		psg_reset(0, ss);
 		psg_reset(1, ss);
 		return 0;
 	case SYS_COMMAND_INIT_DONE:
 		ss->cpu_freq_khz = cpu_get_freq(st->sr);
-		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, ((long)ss) | 2);
+		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, ENVELOPE_PERIOD, DEF_CPU_TIMER_ID(ss->st) | 2);
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if ((param&~3L) == (long)ss) {
+		if ((param&~3L) == DEF_CPU_TIMER_ID(ss->st)) {
 			mb_callback(ss, param & 3);
 			return 1;
 		}
@@ -514,13 +514,13 @@ static void start_timer(int channel, int no, struct SOUND_STATE*ss)
 	div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
 //	printf("T1 latch: %02X%02X; div = %i\n", ss->psg_data[channel][MB_LATCH1H], ss->psg_data[channel][MB_LATCH1L], div);
 //	div /= 4;
-	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, ((long)ss) | channel);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, DEF_CPU_TIMER_ID(ss->st) | channel);
 }
 
 static void stop_timer(int channel, int no, struct SOUND_STATE*ss)
 {
 	if (no) return;
-	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, ((long)ss) | channel);
+	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID(ss->st) | channel);
 }
 
 
@@ -530,6 +530,8 @@ static void psg_ifr(int channel, byte data, struct SOUND_STATE*ss)
 	data = (~data) | 0x80;
 	ss->psg_data[channel][MB_IFR] &= data;
 	fix_ifr(channel, ss);
+	//if (!(data&0x80)) 
+//	system_command(ss->st->sr, SYS_COMMAND_NOIRQ, 0, 0);
 }
 
 static void psg_ier(int channel, byte data, struct SOUND_STATE*ss)
@@ -600,14 +602,15 @@ static void mb_callback(struct SOUND_STATE*ss, int channel)
 //	printf("mockingboard interrupt (%i, %i)\n", GetTickCount(), channel);
 	ss->psg_data[channel][MB_IFR] |= 0x40;
 	fix_ifr(channel, ss);
-	system_command(ss->st->sr, SYS_COMMAND_IRQ, 0, 0);
+//	printf("mockingboard irq\n");
+	system_command(ss->st->sr, SYS_COMMAND_IRQ, 10, 0);
 	ss->psg_data[channel][MB_CNT1L] = ss->psg_data[channel][MB_LATCH1L];
 	ss->psg_data[channel][MB_CNT1H] = ss->psg_data[channel][MB_LATCH1H];
 	if (ss->psg_data[channel][MB_ACR]&0x40) { // free running
 //		int div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
-//		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, (long)ss);
+//		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, DEF_CPU_TIMER_ID(ss->st));
 	} else { // one shot
-		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, (long)ss);
+		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID(ss->st));
 	}
 }
 
@@ -616,6 +619,7 @@ static void mb_rom_w(word adr, byte data, struct SOUND_STATE*ss) // CX00-CXFF
 	int chan = 0;
 	if (adr & 0x80) chan = 1;
 
+//	printf("mockingboard: rom write %x, %02x\n", adr, data);
 	switch (adr & 0x0F) {
 	case MB_IFR: psg_ifr(chan, data, ss); break;
 	case MB_IER: psg_ier(chan, data, ss); break;

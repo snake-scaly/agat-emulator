@@ -90,11 +90,10 @@ static int thunderclock_command(struct SLOT_RUN_STATE*st, int cmd, int data, lon
 	case SYS_COMMAND_TOGGLE_MONO:
 		return 0;
 	case SYS_COMMAND_INIT_DONE:
-		system_command(st->sr, SYS_COMMAND_SET_CPUTIMER, 1000000/64, (long)tcs);
-//		SetTimer(tcs->st->sr->video_w, (UINT)tcs, 1000 / 64, (TIMERPROC)tcs_callback);
+		system_command(st->sr, SYS_COMMAND_SET_CPUTIMER, 1000000/64, DEF_CPU_TIMER_ID(tcs->st));
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if (param == (long)tcs) {
+		if (param == DEF_CPU_TIMER_ID(tcs->st)) {
 //			puts("timer!");
 			tcs_callback(NULL, 0, tcs, 0);
 			return 1;

@@ -30,9 +30,20 @@
 #define N_RB_7 16
 #define N_RB_9 32
 
+#define N_RBINT_7 20
+#define N_RBINT_9 40
+
+#define N_RBINT_DELAY_7 700
+#define N_RBINT_DELAY_9 100
+
+#define MAX_RASTER_RANGES 2
+
 struct RASTER_BLOCK
 {
-	int vmode, vtype, base_addr, mem_size, el_size, prev_base;
+	int vmode, vtype;
+	int n_ranges;
+	int base_addr[MAX_RASTER_RANGES], mem_size[MAX_RASTER_RANGES];
+	int el_size, prev_base[MAX_RASTER_RANGES];
 	int dirty;
 	RECT r;
 };

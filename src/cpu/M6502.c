@@ -268,8 +268,8 @@ static int exec_M6502(struct CPU_STATE*cs)
 {
 	M6502*st = cs->state;
 	if (st->IR&1) { Reset6502(st); st->IR&=~1; }
-	else if (st->IR&2) { Int6502(st, INT_NMI); st->IR&=~2; }
-	else if (st->IR&4) { Int6502(st, INT_IRQ); st->IR&=~4; }
+	else if (st->IR&2) { Int6502(st, INT_NMI); }
+	else if (st->IR&4) { Int6502(st, INT_IRQ); }
 	return Exec6502(st);
 }
 

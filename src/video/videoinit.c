@@ -53,7 +53,7 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	READ_FIELD(in, vs->ainf.hgr);
 
 	video_update_mode(vs);
-	video_first_rb(vs);
+	video_repaint_screen(vs);
 	return 0;
 }
 
@@ -79,7 +79,7 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 		video_set_mono(vs, 1, 1);
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if ((param|1) == (((long)vs)|1)) {
+		if ((param|1) == (DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET))|1)) {
 			video_timer(vs, param & 1);
 			return 1;
 		}
@@ -171,7 +171,7 @@ static byte set_palette_r(word adr, struct VIDEO_STATE*vs) // C050-C05F, agat 9
 }
 
 
-int set_rb_count(struct VIDEO_STATE*vs, int n)
+int set_rb_count(struct VIDEO_STATE*vs, int n, int nint)
 {
 	struct RASTER_BLOCK*rb;
 	int i;
@@ -180,11 +180,12 @@ int set_rb_count(struct VIDEO_STATE*vs, int n)
 	for (i = n, rb = vs->rb; i; --i, ++rb) {
 		rb->vmode = -1;
 		rb->vtype = -1;
-		rb->prev_base = -1;
+		rb->prev_base[0] = -1;
+		rb->prev_base[1] = -1;
 	}
-	if (vs->rb_enabled) {
-		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000, ((long)vs) & ~1);
-		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000 / n, ((long)vs) | 1);
+	if (nint) {
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000 / nint, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
 	}
 	return 0;
 }
@@ -206,7 +207,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	vs->video_mode = VIDEO_MODE_INVALID;
 	vs->ainf.hgr = 1;
 	vs->pal.prev_pal = -1;
-	vs->rb_enabled = 0;
+	vs->rb_enabled = 1;
 
 	puts(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
 	s=isfopen(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
@@ -228,7 +229,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	video_set_pal(&vs->pal, 0);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
-		set_rb_count(vs, vs->rb_enabled?N_RB_7:1);
+		set_rb_count(vs, vs->rb_enabled?N_RB_7:1, N_RBINT_7);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -237,7 +238,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		fill_rw_proc(sr->baseio_sel + 5, 1, disable_ints_r, disable_ints_w, vs);
 		break;
 	case SYSTEM_9:
-		set_rb_count(vs, vs->rb_enabled?N_RB_9:1);
+		set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -248,7 +249,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		goto l1;
 		break;
 	case SYSTEM_A:
-		set_rb_count(vs, 1);
+		set_rb_count(vs, 1, 0);
 		video_set_mode(vs, VIDEO_MODE_APPLE);
 		update_video_ap(vs);
 		fill_read_proc(sr->baseio_sel + 5, 1, vsel_ap_r, vs);
