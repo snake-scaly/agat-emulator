@@ -250,6 +250,33 @@ static void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
 	InvalidateRect(sr->video_w, NULL, TRUE);
 }
 
+
+static void scr_to_full(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
+{
+	RECT rw;
+	double k1, k2;
+	GetClientRect(sr->video_w, &rw);
+	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
+	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
+	d->left = s->left * k1;
+	d->top = s->top * k2;
+	d->right = (s->right + 1) * k1 - 1;
+	d->bottom = (s->bottom + 1) * k2 - 1;
+}
+
+static void full_to_scr(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
+{
+	RECT rw;
+	double k1, k2;
+	GetClientRect(sr->video_w, &rw);
+	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
+	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
+	d->left = s->left / k1;
+	d->top = s->top / k2;
+	d->right = (s->right + 1) / k1 - 1;
+	d->bottom = (s->bottom + 1) / k2 - 1;
+}
+
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
 	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
@@ -314,6 +341,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				RECT r;
 				GetClientRect(w, &r);
 				SetStretchBltMode(dc, COLORONCOLOR);
+//				printf("paint rect %i,%i -> %i,%i\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+//				full_to_scr(sr, &ps.rcPaint, &r);
+//				StretchBlt(dc,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right-ps.rcPaint.left,ps.rcPaint.bottom-ps.rcPaint.top,
+//					sr->mem_dc,r.left,r.top,r.right-r.left,r.bottom-r.top,SRCCOPY);
 				StretchBlt(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,
 					sr->mem_dc,0,0,sr->v_size.cx,sr->v_size.cy,SRCCOPY);
 			} else {
@@ -471,18 +502,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r)
 {
 	if (sr->fullscreen && r) {
-		RECT rw, r1;
-		double k1, k2;
-		GetClientRect(sr->video_w, &rw);
-		k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
-		k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
-//		printf("rw = %i,%i,%i,%i; v_size = %i,%i\n", rw.left, rw.top, rw.right, rw.bottom, sr->v_size.cx, sr->v_size.cy);
-//		printf("k1 = %g; k2 = %g\n", k1, k2);
-		r1.left = r->left * k1;
-		r1.top = r->top * k2;
-		r1.right = (r->right + 1) * k1 - 1;
-		r1.bottom = (r->bottom + 1) * k2 - 1;
-//		printf("%i,%i,%i,%i -> %i,%i,%i,%i\n", r->left, r->top, r->right, r->bottom, r1.left, r1.top, r1.right, r1.bottom);
+		RECT r1;
+		scr_to_full(sr, r, &r1);
 		InvalidateRect(sr->video_w, &r1, FALSE);
 	} else {
 		InvalidateRect(sr->video_w, r, FALSE);
