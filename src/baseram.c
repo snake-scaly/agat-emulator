@@ -22,16 +22,15 @@
 void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st);
 void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st);
 
-static const int startup_ram9_mapping[8]={0,1,2,3,4,5,6,7};
+static const int startup_ram9_mapping[16]={0,1,2,3,4,5,6,7,0,0,0,0,0,0,0,0};
 
 struct BASERAM_STATE
 {
 	struct SYS_RUN_STATE*sr;
 	dword ram_size;
 	dword basemem7_mapping[3];
-	int   ram9_mapping[8];
+	int   ram9_mapping[16];
 	int   apple_emu;
-	int   applerom_mapping[2];
 	byte  psrom9_mode;
 	int   psrom9_ofs;
 	byte *ram;
@@ -371,6 +370,7 @@ static void baseram9_restore_segment(struct BASERAM_STATE*st, int ind)
 void baseram9_write_psrom_mode(word adr,byte d, struct BASERAM_STATE*st)
 {
 	st->psrom9_mode=(adr&0x0F);
+//	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, st->psrom9_mode);
 	if (st->psrom9_mode&8) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 	else st->psrom9_ofs=0;
 	switch (st->psrom9_mode&3) {
@@ -390,8 +390,6 @@ static int ram9_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		clear_block(st->ram, st->ram_size);
 		system9_cancel_apple_mode(0, 0, st);
 		memcpy(st->ram9_mapping, startup_ram9_mapping, sizeof(st->ram9_mapping));
-		st->applerom_mapping[0] = 6;
-		st->applerom_mapping[1] = 7;
 		st->apple_rom_mode = 0xC0;
 		baseram9_write_psrom_mode(1, 0, st);
 		break;
@@ -439,13 +437,13 @@ void baseram9_write_psrom(word adr,byte d, struct BASERAM_STATE*st)
 
 byte apple_read_psrom_d(word adr, struct BASERAM_STATE*st)
 {
-	return st->ram[get_addr_bank9(st, adr, st->applerom_mapping[1]) + 
+	return st->ram[get_addr_bank9(st, adr, 15) + 
 			st->psrom9_ofs - RAM9_BANK_SIZE/2];
 }
 
 byte apple_read_psrom_e(word adr, struct BASERAM_STATE*st)
 {
-	return st->ram[get_addr_bank9(st, adr, st->applerom_mapping[0])];
+	return st->ram[get_addr_bank9(st, adr, 14)];
 }
 
 byte apple_read_lang_d(word adr, struct BASERAM_STATE*st)
@@ -471,49 +469,36 @@ void apple_write_lang_e(word adr, byte d, struct BASERAM_STATE*st)
 
 void apple_write_psrom_d(word adr, byte d, struct BASERAM_STATE*st)
 {
-	st->ram[get_addr_bank9(st, adr, st->applerom_mapping[1]) + 
+	st->ram[get_addr_bank9(st, adr, 15) + 
 			st->psrom9_ofs - RAM9_BANK_SIZE/2] = d;
 }
 
 void apple_write_psrom_e(word adr, byte d, struct BASERAM_STATE*st)
 {
-	st->ram[get_addr_bank9(st, adr, st->applerom_mapping[0])] = d;
+	st->ram[get_addr_bank9(st, adr, 14)] = d;
 }
 
 
 byte baseram9_read_mapping(word adr, struct BASERAM_STATE*st)
 {
-	if (adr&0x80) {
-		int b=(adr&0xF0)>>4;
-		if (b>=0x0E) {
-			return st->applerom_mapping[b-0x0E]|(adr&0xF0);
-		} else return adr&0xFF;
-	} else {
-		int ind=(adr&0x70)>>4;
-		return (adr&0xF0)|st->ram9_mapping[ind];
-	}
+	int ind=(adr&0xF0)>>4;
+//	printf("baseram9_read_mapping[%x] = %i\n", adr, st->ram9_mapping[ind]);
+	return (adr&0xF0)|st->ram9_mapping[ind];
 }
 
 void baseram9_write_mapping(word adr, byte d, struct BASERAM_STATE*st)
 {
-	if (adr&0x80) {
-		int b=(adr&0xF0)>>4;
-		if (b>=0x0E) {
-			int m=adr&0x0F;
-//			printf("applerom_mapping[%i]=%i\n",b-0x0E,m);
-			st->applerom_mapping[b-0x0E]=m;
-		}
-	} else {
-		int ind=(adr&0x70)>>4;
-//		printf("ram9_mapping[%i]=%x\n",ind, adr&0x0F);
-		st->ram9_mapping[ind]=adr&0x0F;
-	}
+	int ind=(adr&0xF0)>>4;
+//	printf("ram9_mapping[%i]=%x (%x)\n",ind, adr&0x0F, adr);
+	st->ram9_mapping[ind]=adr&0x0F;
 }
 
 byte baseram9_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 {
-//	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, psrom_mode|(adr&0xF0)|4);
-	return st->psrom9_mode|((adr>>8)&0xF0);
+	byte res = st->psrom9_mode|0xF0;
+	if (!(res & 3)) res |= 2;
+//	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, st->psrom9_mode|(adr&0xF0)|4);
+	return res;
 }
 
 void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st)
@@ -620,8 +605,6 @@ int ram9_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 
 	clear_block(st->ram, st->ram_size);
 	memcpy(st->ram9_mapping, startup_ram9_mapping, sizeof(st->ram9_mapping));
-	st->applerom_mapping[0] = 6;
-	st->applerom_mapping[1] = 7;
 	baseram9_write_psrom_mode(1, 0, st);
 
 	fill_rw_proc(sr->base_mem, 24, baseram9_read, baseram9_write, st);

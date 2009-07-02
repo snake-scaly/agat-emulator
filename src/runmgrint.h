@@ -35,5 +35,7 @@ struct SYS_RUN_STATE
 	int cur_key;
 
 	int ints_enabled;
+
+	int pause_inactive;
 };
 

@@ -362,6 +362,17 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		free_system_state(sr);
 		break;
 	case WM_ACTIVATE:
+		if (sr->pause_inactive) {
+			switch (wp) {
+			case WA_ACTIVE:
+			case WA_CLICKACTIVE:
+				system_command(sr, SYS_COMMAND_START, 0, 0);
+				break;
+			case WA_INACTIVE:
+				system_command(sr, SYS_COMMAND_STOP, 0, 0);
+				break;
+			}
+		}
 		if (wp == WA_INACTIVE && sr->fullscreen) {
 			set_fullscreen(sr, 0);
 		}

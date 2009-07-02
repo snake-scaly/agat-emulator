@@ -281,11 +281,33 @@ static int mb_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 
 static void psg_reset(int channel, struct SOUND_STATE*ss);
 
+static void mb_pause(struct SOUND_STATE*ss, int stop)
+{
+	int i, j;
+	for (i = 0; i < NBUFS; ++i) {
+		if (ss->buffers[i]) {
+			if (stop) IDirectSoundBuffer_Stop(ss->buffers[i]);
+		}
+	}
+	if (!stop) {
+		for (j = 0; j < NCHANS; ++j) {
+			for (i = 0; i < NREGS; ++i) {
+				psg_write_reg(j, i, ss->psg_regs[j][i], ss);
+			}
+		}
+	}
+}
 
 static int mb_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct SOUND_STATE*ss = st->data;
 	switch (cmd) {
+	case SYS_COMMAND_STOP:
+		mb_pause(ss, 1);
+		return 0;
+	case SYS_COMMAND_START:
+		mb_pause(ss, 0);
+		return 0;
 	case SYS_COMMAND_RESET:
 		return 0;
 	case SYS_COMMAND_HRESET:

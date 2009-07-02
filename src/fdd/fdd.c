@@ -445,7 +445,7 @@ static void load_raw_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	}
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
 	isseek(drv->disk,drv->start_ofs+(t0 * RAW_TRACK_SIZE),SSEEK_SET);
-	logprint(0,TEXT("reading raw track %i"), t0);
+//	logprint(0,TEXT("reading raw track %i"), t0);
 	if (isread(drv->disk,drv->raw_track_data,RAW_TRACK_SIZE)!=RAW_TRACK_SIZE) {
 		errprint(TEXT("can't read raw track"));
 		drv->error=1;
@@ -696,9 +696,12 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 		}
 	}
 	if (data->use_fast && (b&0x80)) { // enable
+		extern int cpu_debug;
 		if (rk&0x80) {
+//			cpu_debug = 0;
 			system_command(data->st->sr, SYS_COMMAND_FAST, 1, 0);
 		} else {
+//			cpu_debug = 1;
 			system_command(data->st->sr, SYS_COMMAND_FAST, 0, 0);
 		}
 	}

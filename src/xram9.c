@@ -196,7 +196,7 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st)
 {
 	int ind=(adr&0x70)>>4;
 	st->ram9_mapping[ind]=adr&0x8F;
-//	printf("%x: setting xram mapping %i to %i\n",adr,ind,adr&0x0F);
+	printf("%x: setting xram mapping %i to %i\n",adr,ind,adr&0x0F);
 	if (adr&0x80) {
 		st->ram9_enabled[ind] = 1;
 		xram_restore_segment(st, ind);
@@ -209,8 +209,9 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st)
 
 static byte xram9_read_psrom_mode(word adr,struct XRAM_STATE*st)
 {
-	return st->psrom9_mode|(adr&0xF0);
-	
+	byte res = st->psrom9_mode | (adr & 0xF0);
+	if (!(res & 3)) res |= 2;
+	return res;
 }
 
 static void xram9_write_psrom_mode(word adr,byte d,struct XRAM_STATE*st)
