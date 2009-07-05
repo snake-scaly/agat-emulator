@@ -24,7 +24,7 @@ static int dialog_init(HWND hwnd, void*p)
 	HWND hlist;
 	int i;
 	unsigned long mp = (unsigned long)p, mask = 1;
-	int def = mp >> 16;
+	int def = mp >> NMEMSIZES;
 
 	hlist = GetDlgItem(hwnd, IDC_MEMLIST);
 
@@ -64,5 +64,5 @@ static struct DIALOG_DATA dialog =
 
 int memdlg_run(HWND hpar, unsigned mask, int def)
 {
-	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_MEMORY), hpar, (void*)(mask&((1L<<16)-1) | (def<<16)));
+	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_MEMORY), hpar, (void*)(mask&((1L<<NMEMSIZES)-1) | (def<<NMEMSIZES)));
 }

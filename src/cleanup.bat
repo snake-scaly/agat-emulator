@@ -19,6 +19,7 @@ rmdir /s /q video\.obj
 rmdir /s /q softcard\.obj
 rmdir /s /q clock\.obj
 rmdir /s /q printer\.obj
+rmdir /s /q ramcard\.obj
 del /q installio\*.obj
 rmdir /s /q langsel\.obj
 

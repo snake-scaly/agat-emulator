@@ -79,6 +79,10 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_PRINTERA:
 		puts("printera_init");
 		return printera_init(sr, st, sc);
+	case DEV_A2RAMCARD:
+	case DEV_RAMFACTOR:
+		puts("a2ramcard_init");
+		return a2ramcard_init(sr, st, sc);
 	}
 	return 0;
 }
@@ -161,7 +165,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	for (i = 0; i < NCONFTYPES; i++ ) {
 		sr->slots[i].sc = c->slots + i;
 		sr->slots[i].sr = sr;
-		if (i <= CONF_SLOT6) {
+		if (i <= CONF_SLOT7) {
 			sr->slots[i].baseio_sel = sr->baseio_sel + i + 8;
 			sr->slots[i].io_sel = sr->io_sel + i;
 		}
@@ -263,6 +267,7 @@ int save_system_state(struct SYS_RUN_STATE*sr, OSTREAM*out)
 		if (r0 != sizeof(bb)) return -1;
 		r0 = save_slot_state(sr->slots + i, out);
 		if (r0 < 0) return r;
+		WRITE_FIELD(out, sr->slots[i].xio_en);
 	}
 	WRITE_FIELD(out, sr->ints_enabled);
 	return r;
@@ -276,7 +281,7 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 	for (i = 0; i < NCONFTYPES; i++) {
 		int r0;
 		DWORD bb = MAKEDWORD(i, ~i), bb1;
-		printf("loading conf %i\n", i);
+//		printf("loading conf %i\n", i);
 		r0 = isread(in, &bb1, sizeof(bb1));
 		if (r0 != sizeof(bb1)) {
 			return -1;
@@ -287,6 +292,7 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 		}
 		r0 = load_slot_state(sr->slots + i, in);
 		if (r0 < 0) return r;
+		READ_FIELD(in, sr->slots[i].xio_en);
 	}
 	READ_FIELD(in, sr->ints_enabled);
 	switch (sr->cursystype) {
@@ -298,6 +304,7 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 			system_command(sr, SYS_COMMAND_BASEMEM9_RESTORE, CONF_SLOT6 + 1, i);
 		break;
 	}
+	update_xio_status(sr);
 	system_command(sr, SYS_COMMAND_INITMENU, 0, (long)sr->popup_menu);
 	return r;
 }
@@ -383,4 +390,28 @@ byte mem_read(word adr, struct SYS_RUN_STATE*sr)
 	r = mem_proc_read(adr, sr->base_mem + ind);
 //	printf("mem_read(%04X) = %02X\n", adr, r);
 	return r;
+}
+
+int update_xio_status(struct SYS_RUN_STATE*sr)
+{
+	int i;
+	for (i = 0; i < NCONFTYPES; ++i) {
+		if (sr->slots[i].xio_en) {
+			sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT] = sr->slots[i].xio_sel;
+//			printf("selected xrom#%i\n", i);
+			return i;
+		}
+	}
+//	printf("disabled all xrom\n");
+	sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].read = empty_read;
+	sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].write = empty_write;
+	return -1;
+}
+
+int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en)
+{
+	if (ss->xio_en == en) return 0;
+	ss->xio_en = en;
+//	printf("%sabled xrom#%i\n", en?"en":"dis", ss->sc->slot_no);
+	return update_xio_status(ss->sr);
 }

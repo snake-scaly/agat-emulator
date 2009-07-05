@@ -54,6 +54,33 @@ int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 	return TRUE;
 }
 
+
+int select_ram(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 18, buf[0], sizeof(buf[0])); //TEXT("Ôאיכû ÏÇÓ (*.rom)\0*.rom\0Âסו פאיכû\0*.*\0");
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 19, buf[1], sizeof(buf[1])); //TEXT("Âûבמנ פאיכא ÏÇÓ");
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	ofn.lpstrInitialDir = path;
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetOpenFileName(&ofn)) return FALSE;
+	{
+		TCHAR buf[MAX_PATH];
+		if (PathRelativePathTo(buf, path, FILE_ATTRIBUTE_DIRECTORY, fname, 0))
+			lstrcpy(fname, buf);
+	}
+	return TRUE;
+}
+
 int select_save_config(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;
@@ -350,6 +377,16 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		if (r) {
 			slot->cfgint[CFG_INT_MEM_SIZE] = r;
 		} else return FALSE;
+		return TRUE; }
+	case DEV_A2RAMCARD:
+	case DEV_RAMFACTOR: {
+		int r;
+		r = memdlg_run(hwnd, slot->cfgint[CFG_INT_MEM_MASK], 
+				slot->cfgint[CFG_INT_MEM_SIZE]);
+		if (r) {
+			slot->cfgint[CFG_INT_MEM_SIZE] = r;
+		} else return FALSE;
+		select_ram(hwnd, slot->cfgstr[CFG_STR_RAM]);
 		return TRUE; }
 	
 	case DEV_VIDEOTERM:

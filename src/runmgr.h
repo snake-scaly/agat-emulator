@@ -3,6 +3,7 @@
 
 #include "sysconf.h"
 #include "streams.h"
+#include "memory.h"
 
 enum {
 	SYS_COMMAND_NOP,
@@ -49,8 +50,10 @@ struct SLOT_RUN_STATE
 	int (*save) (struct SLOT_RUN_STATE*st, OSTREAM*out);
 	int (*load) (struct SLOT_RUN_STATE*st, ISTREAM*in);
 	int (*free) (struct SLOT_RUN_STATE*st);
-	struct MEM_PROC *baseio_sel;
-	struct MEM_PROC *io_sel;
+	struct MEM_PROC *baseio_sel; //c0y0
+	struct MEM_PROC *io_sel;  //cx00
+	struct MEM_PROC xio_sel; //c800
+	int	xio_en;
 };
 
 #define CPU_TIMER_DEV_BASE 1024
@@ -63,5 +66,7 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param);
 int save_system_state(struct SYS_RUN_STATE*sr, OSTREAM*out);
 int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in);
 
+int update_xio_status(struct SYS_RUN_STATE*sr);
+int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en);
 
 #endif //RUNMGR_H

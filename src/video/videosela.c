@@ -40,6 +40,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 {
 	struct APPLE_INFO*ai = &vs->ainf;
 	struct VTERM_INFO*vi = &vs->vinf;
+//	printf("apple video select: %x\n", adr);
 	if (adr&8) {
 		if (vi->ram) {
 			switch (adr&0x0F) {
@@ -61,7 +62,6 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		}
 	}
 	video_set_mode(vs, VIDEO_MODE_APPLE);
-//	printf("apple video select: %x\n", adr);
 	adr&=7;
 //	printf("vs->page = %i\n", vs->page);
 	switch(adr) {
@@ -78,6 +78,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 	case 5: ai->page = 1; 
 		break;
 	case 6: 
+		ai->videoterm = 0;
 		if (vs->sr->cursystype == SYSTEM_A) {
 			ai->hgr = 0;
 		} else {
@@ -85,6 +86,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		}
 		break;
 	case 7: ai->hgr = 1; 
+		ai->videoterm = 0;
 		break;
 	}
 	update_video_ap(vs);

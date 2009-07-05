@@ -140,20 +140,28 @@ int init_video_window(struct SYS_RUN_STATE*sr)
 
 void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
 {
-	WINDOWPLACEMENT pl;
 	RECT r={0,0,w,h};
 	if (sr->v_size.cx == w && sr->v_size.cy == h) return;
 	sr->v_size.cx = w;
 	sr->v_size.cy = h;
-	printf("set_video_size: %i %i\n", w, h);
-	pl.length = sizeof(pl);
-	GetWindowPlacement(sr->video_w, &pl);
-	AdjustWindowRectEx(&r,GetWindowLong(sr->video_w,GWL_STYLE),
-		GetMenu(sr->video_w)?TRUE:FALSE,
-		GetWindowLong(sr->video_w,GWL_EXSTYLE));
-	pl.rcNormalPosition.right = pl.rcNormalPosition.left + r.right - r.left;
-	pl.rcNormalPosition.bottom = pl.rcNormalPosition.top + r.bottom - r.top;
-	SetWindowPlacement(sr->video_w, &pl);
+//	printf("set_video_size: %i %i\n", w, h);
+	if (sr->fullscreen) {
+		AdjustWindowRectEx(&r, sr->old_style,
+			GetMenu(sr->video_w)?TRUE:FALSE,
+			GetWindowLong(sr->video_w,GWL_EXSTYLE));
+		sr->old_pl.rcNormalPosition.right = sr->old_pl.rcNormalPosition.left + r.right - r.left;
+		sr->old_pl.rcNormalPosition.bottom = sr->old_pl.rcNormalPosition.top + r.bottom - r.top;
+	} else {
+		WINDOWPLACEMENT pl;
+		pl.length = sizeof(pl);
+		GetWindowPlacement(sr->video_w, &pl);
+		AdjustWindowRectEx(&r,GetWindowLong(sr->video_w,GWL_STYLE),
+			GetMenu(sr->video_w)?TRUE:FALSE,
+			GetWindowLong(sr->video_w,GWL_EXSTYLE));
+		pl.rcNormalPosition.right = pl.rcNormalPosition.left + r.right - r.left;
+		pl.rcNormalPosition.bottom = pl.rcNormalPosition.top + r.bottom - r.top;
+		SetWindowPlacement(sr->video_w, &pl);
+	}
 }
 
 int term_video_window(struct SYS_RUN_STATE*sr)

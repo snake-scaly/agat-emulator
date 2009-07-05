@@ -110,13 +110,19 @@ static byte videoterm_xrom_r(word adr, struct VIDEOTERM_STATE*vts); // C800-CFFF
 static void videoterm_rom_select(struct VIDEOTERM_STATE*vts)
 {
 //	printf("videoterm_rom_select %i\n", (0xC800 >> BASEMEM_BLOCK_SHIFT));
-	fill_rw_proc(vts->st->sr->base_mem + (0xC800 >> BASEMEM_BLOCK_SHIFT), 
-		1, videoterm_xrom_r, videoterm_xrom_w, vts);
+	enable_slot_xio(vts->st, 1);
+}
+
+static void videoterm_rom_unselect(struct VIDEOTERM_STATE*vts)
+{
+//	printf("videoterm_rom_select %i\n", (0xC800 >> BASEMEM_BLOCK_SHIFT));
+	enable_slot_xio(vts->st, 0);
 }
 
 static void videoterm_xrom_w(word adr, byte data, struct VIDEOTERM_STATE*vts) // C800-CFFF
 {
 	adr &= 0x7FF;
+	if (adr == 0x7FF) videoterm_rom_unselect(vts);
 	if (adr >= vts->rom_size) {
 		adr -= vts->rom_size;
 		if (adr < VIDEOTERM_PAGE_SIZE) {
@@ -130,6 +136,7 @@ static void videoterm_xrom_w(word adr, byte data, struct VIDEOTERM_STATE*vts) //
 static byte videoterm_xrom_r(word adr, struct VIDEOTERM_STATE*vts) // C800-CFFF
 {
 	adr &= 0x7FF;
+	if (adr == 0x7FF) videoterm_rom_unselect(vts);
 	if (adr >= vts->rom_size) {
 		adr -= vts->rom_size;
 		if (adr < VIDEOTERM_PAGE_SIZE) {
@@ -159,7 +166,8 @@ static void vtermsel_io_touch(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 static void videoterm_update(struct VIDEOTERM_STATE*vts, struct VIDEO_STATE*vs)
 {
 	if (vs->ainf.videoterm && vs->ainf.text_mode) {
-		set_video_size(vs->sr, vs->vinf.scr_size[0]*vs->vinf.char_size[0], vs->vinf.scr_size[1]*vs->vinf.char_size[1]);
+//		printf("set video size: %ix%i\n", vs->vinf.scr_size[0]*vs->vinf.char_size[0], vs->vinf.scr_size[1]*vs->vinf.char_size[1]);
+		set_video_size(vs->sr, vs->vinf.scr_size[0]*vs->vinf.char_size[0]*vs->vinf.char_scl[0], vs->vinf.scr_size[1]*vs->vinf.char_size[1]*vs->vinf.char_scl[1]);
 	}
 }
 
@@ -175,14 +183,17 @@ static void vterm_update_reg(int rno, struct VIDEOTERM_STATE*vts)
 
 	switch (rno) {
 	case 1:
+//		printf("scr_size[0] = %i\n", data);
 		vs->vinf.scr_size[0] = data;
 		videoterm_update(vts, vs);
 		break;
 	case 6:
+//		printf("scr_size[1] = %i\n", data);
 		vs->vinf.scr_size[1] = data;
 		videoterm_update(vts, vs);
 		break;
 	case 9:
+//		printf("char_height[1] = %i\n", data);
 		vs->vinf.char_size[1] = (data & 0x0F) + 1;
 		videoterm_update(vts, vs);
 		break;
@@ -295,6 +306,7 @@ int  videoterm_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 
 	fill_rw_proc(st->io_sel, 1, videoterm_rom_r, videoterm_rom_w, vts);
 	fill_rw_proc(st->baseio_sel, 1, vtermsel_io_r, vtermsel_io_w, vts);
+	fill_rw_proc(&st->xio_sel, 1, videoterm_xrom_r, videoterm_xrom_w, vts);
 
 	return 0;
 }

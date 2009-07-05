@@ -387,7 +387,7 @@ BEGIN
 	10003	"Select configuration file"
 	10004	"Font files (*.fnt)@*.fnt@All files@*.*@"
 	10005	"Select font file"
-	10006	"Disk image files (*.dsk)@*.dsk@RAW image files (*.nib)@*.nib@All files@*.*@"
+	10006	"All disk image files (*.dsk, *.img, *.nib)@*.dsk;*.img;*.nib@Disk image files (*.dsk)@*.dsk@RAW image files (*.nib)@*.nib@All files@*.*@"
 	10007	"Select disk image file"
 	10008	"Tape audio files (*.wav)@*.wav@All files@*.*@"
 	10009	"Select tape file for reading"
@@ -399,6 +399,8 @@ BEGIN
 	10015	"Select raw binary file for output"
 	10016	"Tiff images (*.tiff)@*.tiff@All files@*.*@"
 	10017	"Select image file for output"
+	10018	"Memory contents (*.ram)@*.ram@All files@*.*@"
+	10019	"Select memory contents file"
 
 	10020	"Resource"
 	10021	"Device"
@@ -447,6 +449,12 @@ BEGIN
 	12009	"20 Kbytes"  // 512
 	12010	"24 Kbytes" // 1024
 	12011	"36 Kbytes"  // 2048
+	12012	"256 Kbytes"  // 4096
+	12013	"512 Kbytes"  // 8192
+	12014	"768 Kbytes"  // 16384
+	12015	"1 Mbyte"  // 32768
+	12016	"2 Mbytes"  // 65536
+	12017	"4 Mbytes"  // 131072
 
 
 
@@ -480,6 +488,8 @@ BEGIN
 	12126   "Mockingboard Sound Card"
 	12127   "Nippel Clock Card"
 	12128	"Parallel Printer Interface Card"
+	12129   "Apple ][ Memory Expansion Card"
+	12130   "RamFactor Memory Card"
 
 	12200	"Slot #0"
 	12201	"Slot #1"

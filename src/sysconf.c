@@ -25,7 +25,13 @@ const unsigned memsizes_b[NMEMSIZES] = {
 	12 * 1024,
 	20 * 1024,
 	24 * 1024,
-	36 * 1024
+	36 * 1024,
+	256 * 1024,
+	512 * 1024,
+	768 * 1024,
+	1024 * 1024,
+	2 * 1024 * 1024,
+	4 * 1024 * 1024,
 };
 
 
@@ -135,6 +141,18 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_PRINTERA:
 		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CENTRONI.ROM"));
+		return 0;
+	case DEV_A2RAMCARD:
+		c->cfgint[CFG_INT_MEM_SIZE] = 15;
+		c->cfgint[CFG_INT_MEM_MASK] = 4096 | 8192 | 16384 | 32768;
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\aii_memory_expansion\\AII Memory Expansion.bin"));
+		c->cfgstr[CFG_STR_RAM][0] = 0;
+		return 0;
+	case DEV_RAMFACTOR:
+		c->cfgint[CFG_INT_MEM_SIZE] = 15;
+		c->cfgint[CFG_INT_MEM_MASK] = 4096 | 8192 | 16384 | 32768 | 65536 | 131072;
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\ramfactor\\RAMFactor v1.4.bin"));
+		c->cfgstr[CFG_STR_RAM][0] = 0;
 		return 0;
 	case DEV_MOCKINGBOARD:
 		return 0;
@@ -298,6 +316,16 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_MEMORY_XRAMA:
 		_tcscpy(buf, get_memsizes_s(c->cfgint[CFG_INT_MEM_SIZE]));
 		return 0;
+	case DEV_A2RAMCARD:
+	case DEV_RAMFACTOR:
+		_tcscpy(buf, get_memsizes_s(c->cfgint[CFG_INT_MEM_SIZE]));
+		_tcscat(buf, TEXT("; "));
+		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
+		if (c->cfgstr[CFG_STR_RAM][0]) {
+			_tcscat(buf, TEXT("; "));
+			_tcscat(buf, c->cfgstr[CFG_STR_RAM]);
+		}
+		return 0;
 	case DEV_6502:
 	case DEV_M6502:
 		wsprintf(buf, 
@@ -362,7 +390,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_FDD_SHUGART:
 		switch (c->cfgint[CFG_INT_DRV_COUNT]) {
 		case 0:
-			localize_str(LOC_SYSCONF, 510, buf, sizeof(buf));
+			localize_str(LOC_SYSCONF, 510, buf, sizeof(lbuf));
 //			_tcscpy(buf, TEXT("Устройства отсутствуют"));
 			break;
 		case 1:

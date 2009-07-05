@@ -145,15 +145,7 @@ static byte printer_xrom_r(word adr, struct PRINTER_STATE*pcs); // C800-CFFF
 
 static void enable_printer_rom(struct PRINTER_STATE*pcs, int en)
 {
-	int ind = (0xC800 >> BASEMEM_BLOCK_SHIFT);
-	if (en) {
-		fill_rw_proc(pcs->st->sr->base_mem + ind, 
-			1, printer_xrom_r, empty_write, pcs);
-	} else {
-		if (pcs->st->sr->base_mem[ind].read == printer_xrom_r)
-			fill_rw_proc(pcs->st->sr->base_mem + ind, 
-				1, empty_read_addr, empty_write, pcs);
-	}	
+	enable_slot_xio(pcs->st, en);
 }
 
 static byte printer_xrom_r(word adr, struct PRINTER_STATE*pcs) // C800-CFFF
@@ -300,6 +292,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 
 	fill_rw_proc(st->io_sel, 1, printer_rom_r, empty_write, pcs);
 	fill_rw_proc(st->baseio_sel, 1, printer_io_r, printer_io_w, pcs);
+	fill_rw_proc(&st->xio_sel, 1, printer_xrom_r, empty_write, pcs);
 
 	return 0;
 }

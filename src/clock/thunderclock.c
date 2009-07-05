@@ -43,9 +43,13 @@ struct THUNDERCLOCK_STATE
 
 
 	byte rom[THUNDERCLOCK_ROM_SIZE];
+	int  romsel;
 };
 
 static VOID CALLBACK tcs_callback(HWND wnd, UINT msg, struct THUNDERCLOCK_STATE*tcs, DWORD time);
+
+static void thunderclock_rom_unselect(struct THUNDERCLOCK_STATE*tcs);
+static void thunderclock_rom_select(struct THUNDERCLOCK_STATE*tcs);
 
 static int thunderclock_term(struct SLOT_RUN_STATE*st)
 {
@@ -60,6 +64,7 @@ static int thunderclock_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	struct THUNDERCLOCK_STATE*tcs = st->data;
 	WRITE_FIELD(out, tcs->adjust);
 	WRITE_FIELD(out, tcs->ints);
+	WRITE_FIELD(out, tcs->romsel);
 
 	return 0;
 }
@@ -69,6 +74,8 @@ static int thunderclock_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	struct THUNDERCLOCK_STATE*tcs = st->data;
 	READ_FIELD(in, tcs->adjust);
 	READ_FIELD(in, tcs->ints);
+	READ_FIELD(in, tcs->romsel);
+	if (tcs->romsel) thunderclock_rom_select(tcs);
 
 	return 0;
 }
@@ -107,14 +114,14 @@ static byte thunderclock_xrom_r(word adr, struct THUNDERCLOCK_STATE*tcs); // C80
 
 static void thunderclock_rom_select(struct THUNDERCLOCK_STATE*tcs)
 {
-	fill_rw_proc(tcs->st->sr->base_mem + (0xC800 >> BASEMEM_BLOCK_SHIFT), 
-		1, thunderclock_xrom_r, empty_write, tcs);
+//	puts("thunderclock rom select");
+	enable_slot_xio(tcs->st, 1);
 }
 
 static void thunderclock_rom_unselect(struct THUNDERCLOCK_STATE*tcs)
 {
-	fill_rw_proc(tcs->st->sr->base_mem + (0xC800 >> BASEMEM_BLOCK_SHIFT), 
-		1, empty_read, empty_write, tcs);
+//	puts("thunderclock rom unselect");
+	enable_slot_xio(tcs->st, 0);
 }
 
 static byte thunderclock_xrom_r(word adr, struct THUNDERCLOCK_STATE*tcs) // C800-CFFF
@@ -350,6 +357,7 @@ int  thunderclock_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct
 
 	fill_rw_proc(st->io_sel, 1, thunderclock_rom_r, thunderclock_rom_w, tcs);
 	fill_rw_proc(st->baseio_sel, 1, thunderclock_io_r, thunderclock_io_w, tcs);
+	fill_rw_proc(&st->xio_sel, 1, thunderclock_xrom_r, empty_write, tcs);
 
 	return 0;
 }

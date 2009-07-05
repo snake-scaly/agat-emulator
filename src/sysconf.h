@@ -66,6 +66,9 @@ enum {
 	DEV_NIPPELCLOCK,
 	DEV_PRINTERA,
 
+	DEV_A2RAMCARD,
+	DEV_RAMFACTOR,
+
 	NDEVTYPES
 };
 
@@ -125,7 +128,7 @@ struct SYSCONFIG
 };
 
 
-#define NMEMSIZES 12
+#define NMEMSIZES 18
 LPCTSTR get_memsizes_s(int n);
 const unsigned memsizes_b[];
 
@@ -196,6 +199,7 @@ enum {
 	CFG_STR_ROM,
 	CFG_STR_ROM2,
 	CFG_STR_ROM3,
+	CFG_STR_RAM
 };
 
 enum {
