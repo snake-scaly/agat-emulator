@@ -35,7 +35,6 @@ struct BASERAM_STATE
 	int   psrom9_ofs;
 	byte *ram;
 	byte  apple_rom_mode;
-	word  last_addr;
 };
 
 
@@ -523,40 +522,30 @@ void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st)
 
 byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 {
-	int dr = 0;
 	int hi = adr & 8;
 	int mde = adr & 3;
 	byte last_mode = st->apple_rom_mode;
 //	printf("apple_read_psrom_mode(%x)\n", adr);
-	if (adr&3==st->last_addr) { // double reading
-		dr = 1;
-	} else st->last_addr = adr&3;
 	if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 	else st->psrom9_ofs=0;
 	switch (mde) {
 	case 0:
 		st->apple_rom_mode = 0xC2 | hi;
 		apple_set_ext_rom_mode(1, 0, st);
-//		xram_apple_enable(1, 0);
 		break;
 	case 1:
-//		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
 		st->apple_rom_mode = 0xC1 | hi;
 		apple_set_ext_rom_mode(0, 1, st);
-//		xram_apple_enable(0, 1);
 		break;
 	case 2:
 		st->apple_rom_mode = 0xC0 | hi;
 		apple_set_ext_rom_mode(0, 0, st);
-//		xram_apple_enable(0, 0);
 		break;
-	case 3:
-//		if (st->apple_emu && !dr) break; // --- this is unnecessary because of bugs in some soft
-		if ((st->apple_rom_mode&3)==1) dr = 1;
+	case 3: { int dr;
+		dr = (((st->apple_rom_mode&3)==1) || ((st->apple_rom_mode&3)==3));
 		st->apple_rom_mode = 0xC3 | hi;
 		apple_set_ext_rom_mode(1, dr, st);
-//		xram_apple_enable(1, 1);
-		break;
+		break; }
 	}
 	return last_mode;
 }
@@ -570,20 +559,20 @@ void apple_write_psrom_mode(word adr, byte d, struct BASERAM_STATE*st)
 void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 {
 	puts("apple mode");
-	st->apple_emu = 1;
+	st->sr->apple_emu = st->apple_emu = 1;
 	fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
 	fill_rw_proc(st->sr->io_sel+1, 1, empty_read_addr, empty_write, st);
 	fill_read_proc(st->sr->base_mem,24,baseram9_read, st);
 	fill_write_proc(st->sr->base_mem,24,baseram9_write, st);
 	st->apple_rom_mode = 0xC1;
 	apple_set_ext_rom_mode(0, 1, st);
-	system_command(st->sr, SYS_COMMAND_APPLEMODE, 0, 0);
+	system_command(st->sr, SYS_COMMAND_APPLEMODE, 1, 0);
 }
 
 void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 {
 	puts("cancel apple mode");
-	st->apple_emu = 0;
+	st->sr->apple_emu = st->apple_emu = 0;
 	fill_rw_proc(st->sr->base_mem, 24, baseram9_read, baseram9_write, st);
 	fill_read_proc(st->sr->base_mem+26, 5, empty_read_addr, NULL);
 	fill_write_proc(st->sr->base_mem+26, 2, baseram9_write_psrom, st);
@@ -591,6 +580,7 @@ void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 	fill_rw_proc(st->sr->baseio_sel+8, 1, baseram9_read_psrom_mode, baseram9_write_psrom_mode, st);
 	fill_rw_proc(st->sr->io_sel+1, 1, baseram9_read_mapping, baseram9_write_mapping, st);
 	fill_write_proc(st->sr->baseio_sel + 15, 1, system9_apple_mode, st);
+	system_command(st->sr, SYS_COMMAND_APPLEMODE, 0, 0);
 }
 
 int ram9_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCONFIG*sc)

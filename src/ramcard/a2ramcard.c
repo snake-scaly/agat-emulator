@@ -1,7 +1,7 @@
 /*
 	Agat Emulator version 1.8
 	Copyright (c) NOP, nnop@newmail.ru
-	nippelclock - emulation of Apple ][ Memory Expansion Card / RamFactor
+	a2ramcard - emulation of Apple ][ Memory Expansion Card / RamFactor
 */
 
 #include "types.h"

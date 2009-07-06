@@ -40,6 +40,9 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st);
 static byte xram9_read_psrom_mode(word adr,struct XRAM_STATE*st);
 static void xram9_write_psrom_mode(word adr,byte d,struct XRAM_STATE*st);
 
+static byte xram9_apple_read_psrom_mode(word adr,struct XRAM_STATE*st);
+static void xram9_apple_write_psrom_mode(word adr,byte d,struct XRAM_STATE*st);
+
 static byte xram9_read(word adr,struct XRAM_STATE*st);
 static void xram9_write(word adr,byte d,struct XRAM_STATE*st);
 
@@ -109,6 +112,7 @@ static void xram_restore_segment(struct XRAM_STATE*st, int ind)
 				fill_read_proc(st->sr->base_mem+26,2,xram9_read_psrom, st);
 			} else {
 				fill_read_proc(st->sr->base_mem+26,2,empty_read_addr, st);
+				system_command(st->sr, SYS_COMMAND_PSROM_RELEASE, st->nslot, 6);
 			}
 			break;
 		case 7: // e000
@@ -121,7 +125,7 @@ static void xram_restore_segment(struct XRAM_STATE*st, int ind)
 				fill_read_proc(st->sr->base_mem+28,4,xram9_read, st);
 			} else {
 				fill_read_proc(st->sr->base_mem+28,3,empty_read_addr, st);
-				system_command(st->sr, SYS_COMMAND_PSROM_RELEASE, st->nslot, 0);
+				system_command(st->sr, SYS_COMMAND_PSROM_RELEASE, st->nslot, 7);
 			}
 			break;
 		}
@@ -147,6 +151,12 @@ static int xram_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 			return 1;
 		}
 		break;
+	case SYS_COMMAND_APPLEMODE:
+		if (data) {
+			fill_rw_proc(ss->baseio_sel, 1, xram9_apple_read_psrom_mode, xram9_apple_write_psrom_mode, st);
+		} else {
+			fill_rw_proc(ss->baseio_sel, 1, xram9_read_psrom_mode, xram9_write_psrom_mode, st);
+		}
 	}
 	return 0;
 }
@@ -204,6 +214,43 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st)
 		st->ram9_enabled[ind] = 0;
 		system_command(st->sr, SYS_COMMAND_BASEMEM9_RESTORE, st->nslot, ind);
 	}
+}
+
+static byte xram9_select_apple_psrom_mode(word adr,struct XRAM_STATE*st)
+{
+	int hi = adr & 8;
+	int mde = adr & 3;
+	byte last_mode = st->psrom9_mode;
+	if (hi) st->psrom9_ofs=0;
+	else st->psrom9_ofs=-RAM9_BANK_SIZE/2;
+	switch (mde) {
+	case 0:
+		st->psrom9_mode = 2 | hi | (adr & 0xF0);
+		break;
+	case 1:
+		st->psrom9_mode = 1 | hi | (adr & 0xF0);
+		break;
+	case 2:
+		st->psrom9_mode = 0 | hi | (adr & 0xF0);
+		break;
+	case 3: { int dr;
+		dr = (((st->psrom9_mode&3)==1) || ((st->psrom9_mode&3)==3));
+		st->psrom9_mode = 3 | hi | (adr & 0xF0);
+		break; }
+	}
+	if (st->ram9_enabled[6]) xram_restore_segment(st, 6);
+	if (st->ram9_enabled[7]) xram_restore_segment(st, 7);
+	return last_mode;
+}
+
+static byte xram9_apple_read_psrom_mode(word adr,struct XRAM_STATE*st)
+{
+	return xram9_select_apple_psrom_mode(adr, st);
+}
+
+static void xram9_apple_write_psrom_mode(word adr,byte d,struct XRAM_STATE*st)
+{
+	xram9_select_apple_psrom_mode(adr, st);
 }
 
 

@@ -98,6 +98,12 @@ static int xram_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		clear_block(st->ram, st->ram_size);
 		set_xram_procs(st);
 		break;
+	case SYS_COMMAND_PSROM_RELEASE:
+		if (data > st->nslot) {
+			set_xram_procs(st);
+			return 1;
+		}
+		break;
 	}
 	return 0;
 }

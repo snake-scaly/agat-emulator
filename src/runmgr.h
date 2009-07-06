@@ -35,6 +35,7 @@ enum {
 	SYS_COMMAND_NONMI,
 	SYS_COMMAND_SET_CPUTIMER, // data = delay in cpu ticks, param = timer id
 	SYS_COMMAND_CPUTIMER,     // param = timer id
+	SYS_COMMAND_LOAD_DONE,     // do some work after all modules are loaded
 
 	SYS_N_COMMANDS
 };

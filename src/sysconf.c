@@ -154,6 +154,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\ramfactor\\RAMFactor v1.4.bin"));
 		c->cfgstr[CFG_STR_RAM][0] = 0;
 		return 0;
+	case DEV_MEMORY_SATURN:
+		c->cfgint[CFG_INT_MEM_SIZE] = 7;
+		c->cfgint[CFG_INT_MEM_MASK] = 8 | 16 | 64 | 128;
+		return 0;
 	case DEV_MOCKINGBOARD:
 		return 0;
 	case DEV_NIPPELCLOCK:
@@ -314,6 +318,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_MEMORY_XRAM7:
 	case DEV_MEMORY_XRAM9:
 	case DEV_MEMORY_XRAMA:
+	case DEV_MEMORY_SATURN:
 		_tcscpy(buf, get_memsizes_s(c->cfgint[CFG_INT_MEM_SIZE]));
 		return 0;
 	case DEV_A2RAMCARD:

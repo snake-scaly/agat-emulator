@@ -83,6 +83,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_RAMFACTOR:
 		puts("a2ramcard_init");
 		return a2ramcard_init(sr, st, sc);
+	case DEV_MEMORY_SATURN:
+		puts("saturnmem_init");
+		return saturnmem_init(sr, st, sc);
 	}
 	return 0;
 }
@@ -306,6 +309,7 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 	}
 	update_xio_status(sr);
 	system_command(sr, SYS_COMMAND_INITMENU, 0, (long)sr->popup_menu);
+	system_command(sr, SYS_COMMAND_LOAD_DONE, 0, 0);
 	return r;
 }
 

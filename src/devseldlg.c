@@ -55,6 +55,7 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_MOCKINGBOARD);
 		DevList_AddItem(hlist, DEV_A2RAMCARD);
 		DevList_AddItem(hlist, DEV_RAMFACTOR);
+		DevList_AddItem(hlist, DEV_MEMORY_SATURN);
 		return 0;
 	}
 	return -1;

@@ -36,6 +36,7 @@ struct SYS_RUN_STATE
 
 	int ints_enabled;
 
-	int pause_inactive;
+	int pause_inactive; // pause execution when window is inactive
+	int apple_emu;
 };
 

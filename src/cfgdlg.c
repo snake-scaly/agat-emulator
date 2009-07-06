@@ -370,7 +370,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 	case DEV_MEMORY_PSROM7:
 	case DEV_MEMORY_XRAM7:
 	case DEV_MEMORY_XRAM9:
-	case DEV_MEMORY_XRAMA: {
+	case DEV_MEMORY_XRAMA:
+	case DEV_MEMORY_SATURN: {
 		int r;
 		r = memdlg_run(hwnd, slot->cfgint[CFG_INT_MEM_MASK], 
 				slot->cfgint[CFG_INT_MEM_SIZE]);

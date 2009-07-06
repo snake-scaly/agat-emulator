@@ -151,7 +151,7 @@ static void xram_write_state(word adr, byte d, struct XRAM_STATE*st)
 	if (st->ram_state & 0x08) { // module selected
 		set_xram_procs(st);
 	} else {
-		system_command(st->sr, SYS_COMMAND_XRAM_RELEASE, st->nslot, 0);
+		system_command(st->sr, SYS_COMMAND_XRAM_RELEASE, st->nslot, (0x8000>>BASEMEM_BLOCK_SHIFT));
 	}
 }
 
