@@ -409,8 +409,12 @@ static void update_regs(struct FDD_DATA*data)
 		if (!drv->error) x|=0x80;
 		if (drv->rawfmt) {
 			int n;
+			byte v = 0x40;
 			n = drv->raw_index % RAW_SECTOR_SIZE;
-			if (n != 0x0C && n != 0x15) x |= 0x40;
+//			if (n == 12 || n == 0x15) v = 0;
+			if (n >= 0x03 && n < 15 && drv->raw_track_data[drv->raw_index + 1] == 0x95) v = 0;
+			if (n >= 16 && n < 0x17 && drv->raw_track_data[drv->raw_index + 1] == 0x6A) v = 0;
+			x |= v;
 		} else {
 			if (drv->use_prolog) {
 				if (drv->disk_index!=12) x|=0x40;
