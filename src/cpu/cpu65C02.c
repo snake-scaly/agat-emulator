@@ -25,6 +25,7 @@ struct STATE_65C02
 };
 
 #define CMD_ILL		1
+#define CMD_NEW		2
 
 #include <stdio.h>
 
@@ -908,15 +909,15 @@ static void op_trb(struct STATE_65C02 *st)
 
 #define MAKE_COMMAND(cmd,addr,ticks) { #addr, #cmd, ea_get_##addr, ea_show_##addr, op_##cmd,ticks, 0 }
 #define MAKE_COMMAND_ILL() { "ill", "ill", NULL, NULL, NULL, 0, CMD_ILL }
-#define MAKE_COMMAND_NEW MAKE_COMMAND
+#define MAKE_COMMAND_NEW(cmd,addr,ticks) { #addr, #cmd, ea_get_##addr, ea_show_##addr, op_##cmd,ticks, CMD_NEW }
 
 static struct CMD_65C02 cmds[256]=
 {
-  MAKE_COMMAND(brk,impl,8),       //00
+  MAKE_COMMAND(brk,impl,7),       //00
   MAKE_COMMAND(ora,indx,6),       //01
   MAKE_COMMAND_ILL(),             //02
   MAKE_COMMAND_ILL(),             //03
-  MAKE_COMMAND_NEW(tsb,zp,3),     //04
+  MAKE_COMMAND_NEW(tsb,zp,5),     //04
   MAKE_COMMAND(ora,zp,3),         //05
   MAKE_COMMAND(asl_mem,zp,5),     //06
   MAKE_COMMAND_NEW(rmb0,zp,2),    //07
@@ -924,16 +925,16 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(ora,imm,2),        //09
   MAKE_COMMAND(asl_acc,_acc,2),   //0A
   MAKE_COMMAND_ILL(),             //0B
-  MAKE_COMMAND_NEW(tsb,abs,4),    //0C
+  MAKE_COMMAND_NEW(tsb,abs,6),    //0C
   MAKE_COMMAND(ora,abs,4),        //0D
   MAKE_COMMAND(asl_mem,abs,6),    //0E
-  MAKE_COMMAND_NEW(bbr0,rel,6),   //0F
+  MAKE_COMMAND_NEW(bbr0,rel,2),   //0F
 
   MAKE_COMMAND(bpl,rel,2),        //10
   MAKE_COMMAND(ora,indy,5),       //11
-  MAKE_COMMAND_NEW(ora,ind_zp,6), //12
+  MAKE_COMMAND_NEW(ora,ind_zp,5), //12
   MAKE_COMMAND_ILL(),             //13
-  MAKE_COMMAND_NEW(trb,zp,3),     //14
+  MAKE_COMMAND_NEW(trb,zp,5),     //14
   MAKE_COMMAND(ora,zpx,4),        //15
   MAKE_COMMAND(asl_mem,zpx,6),    //16
   MAKE_COMMAND_NEW(rmb1,zp,2),    //17
@@ -941,10 +942,10 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(ora,absy,4),       //19
   MAKE_COMMAND_NEW(inc_acc,_acc,2),//1A
   MAKE_COMMAND_ILL(),             //1B
-  MAKE_COMMAND_NEW(trb,abs,4),    //1C
+  MAKE_COMMAND_NEW(trb,abs,6),    //1C
   MAKE_COMMAND(ora,absx,4),       //1D
   MAKE_COMMAND(asl_mem,absx,7),   //1E
-  MAKE_COMMAND_NEW(bbr1,rel,6),   //1F
+  MAKE_COMMAND_NEW(bbr1,rel,2),   //1F
 
   MAKE_COMMAND(jsr,abs,6),        //20
   MAKE_COMMAND(and,indx,6),       //21
@@ -961,11 +962,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(bit,abs,4),        //2C
   MAKE_COMMAND(and,abs,4),        //2D
   MAKE_COMMAND(rol_mem,abs,6),    //2E
-  MAKE_COMMAND_NEW(bbr2,rel,5),   //2F
+  MAKE_COMMAND_NEW(bbr2,rel,2),   //2F
 
   MAKE_COMMAND(bmi,rel,2),        //30
   MAKE_COMMAND(and,indy,5),       //31
-  MAKE_COMMAND_NEW(and,ind_zp,6), //32
+  MAKE_COMMAND_NEW(and,ind_zp,5), //32
   MAKE_COMMAND_ILL(),             //33
   MAKE_COMMAND_NEW(bit,zpx,4),    //34
   MAKE_COMMAND(and,zpx,4),        //35
@@ -978,7 +979,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_NEW(bit,absx,4),   //3C
   MAKE_COMMAND(and,absx,3),       //3D
   MAKE_COMMAND(rol_mem,absx,7),   //3E
-  MAKE_COMMAND_NEW(bbr3,rel,5),   //3F
+  MAKE_COMMAND_NEW(bbr3,rel,2),   //3F
 
   MAKE_COMMAND(rti,impl,6),       //40
   MAKE_COMMAND(eor,indx,6),       //41
@@ -995,11 +996,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(jmp,abs,3),        //4C
   MAKE_COMMAND(eor,abs,4),        //4D
   MAKE_COMMAND(lsr_mem,abs,6),    //4E
-  MAKE_COMMAND_NEW(bbr4,rel,5),   //4F
+  MAKE_COMMAND_NEW(bbr4,rel,2),   //4F
 
   MAKE_COMMAND(bvc,rel,2),        //50
   MAKE_COMMAND(eor,indy,5),       //51
-  MAKE_COMMAND_NEW(eor,ind_zp,6), //52
+  MAKE_COMMAND_NEW(eor,ind_zp,5), //52
   MAKE_COMMAND_ILL(),             //53
   MAKE_COMMAND_ILL(),             //54
   MAKE_COMMAND(eor,zpx,4),        //55
@@ -1007,12 +1008,12 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_NEW(rmb5,zp,2),    //57
   MAKE_COMMAND(cli,impl,2),       //58
   MAKE_COMMAND(eor,absy,4),       //59
-  MAKE_COMMAND_NEW(phy,impl,4),   //5A
+  MAKE_COMMAND_NEW(phy,impl,3),   //5A
   MAKE_COMMAND_ILL(),             //5B
   MAKE_COMMAND_ILL(),             //5C
   MAKE_COMMAND(eor,absx,4),       //5D
   MAKE_COMMAND(lsr_mem,absx,7),   //5E
-  MAKE_COMMAND_NEW(bbr5,rel,5),   //5F
+  MAKE_COMMAND_NEW(bbr5,rel,2),   //5F
 
   MAKE_COMMAND(rts,impl,6),       //60
   MAKE_COMMAND(adc,indx,6),       //61
@@ -1029,11 +1030,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(jmp,ind,5),        //6C
   MAKE_COMMAND(adc,abs,4),        //6D
   MAKE_COMMAND(ror_mem,abs,6),    //6E
-  MAKE_COMMAND_NEW(bbr6,rel,5),   //6F
+  MAKE_COMMAND_NEW(bbr6,rel,2),   //6F
 
   MAKE_COMMAND(bvs,rel,2),        //70
   MAKE_COMMAND(adc,indy,5),       //71
-  MAKE_COMMAND_NEW(adc,ind_zp,6), //72
+  MAKE_COMMAND_NEW(adc,ind_zp,5), //72
   MAKE_COMMAND_ILL(),             //73
   MAKE_COMMAND_NEW(stz,zpx,4),    //74
   MAKE_COMMAND(adc,zpx,4),        //75
@@ -1046,7 +1047,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_NEW(jmp,ind16x,4), //7C
   MAKE_COMMAND(adc,absx,4),       //7D
   MAKE_COMMAND(ror_mem,absx,7),   //7E
-  MAKE_COMMAND_NEW(bbr7,rel,5),   //7F
+  MAKE_COMMAND_NEW(bbr7,rel,2),   //7F
 
   MAKE_COMMAND_NEW(bra,rel,2),    //80
   MAKE_COMMAND(sta,indx,6),       //81
@@ -1067,7 +1068,7 @@ static struct CMD_65C02 cmds[256]=
 
   MAKE_COMMAND(bcc,rel,2),        //90
   MAKE_COMMAND(sta,indy,6),       //91
-  MAKE_COMMAND_NEW(sta,ind_zp,6), //92
+  MAKE_COMMAND_NEW(sta,ind_zp,5), //92
   MAKE_COMMAND_ILL(),             //93
   MAKE_COMMAND(sty,zpx,4),        //94
   MAKE_COMMAND(sta,zpx,4),        //95
@@ -1077,10 +1078,10 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(sta,absy,5),       //99
   MAKE_COMMAND(txs,impl,2),       //9A
   MAKE_COMMAND_ILL(),             //9B
-  MAKE_COMMAND_NEW(stz,abs,5),    //9C
+  MAKE_COMMAND_NEW(stz,abs,4),    //9C
   MAKE_COMMAND(sta,absx,5),       //9D
   MAKE_COMMAND_NEW(stz,absx,5),   //9E
-  MAKE_COMMAND_NEW(bbs1,rel,5),   //9F
+  MAKE_COMMAND_NEW(bbs1,rel,2),   //9F
 
   MAKE_COMMAND(ldy,imm,2),        //A0
   MAKE_COMMAND(lda,indx,6),       //A1
@@ -1097,11 +1098,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(ldy,abs,4),        //AC
   MAKE_COMMAND(lda,abs,4),        //AD
   MAKE_COMMAND(ldx,abs,4),        //AE
-  MAKE_COMMAND_NEW(bbs2,rel,5),   //AF
+  MAKE_COMMAND_NEW(bbs2,rel,2),   //AF
 
   MAKE_COMMAND(bcs,rel,2),        //B0
   MAKE_COMMAND(lda,indy,5),       //B1
-  MAKE_COMMAND_NEW(lda,ind_zp,6), //B2
+  MAKE_COMMAND_NEW(lda,ind_zp,5), //B2
   MAKE_COMMAND_ILL(),             //B3
   MAKE_COMMAND(ldy,zpx,4),        //B4
   MAKE_COMMAND(lda,zpx,4),        //B5
@@ -1114,7 +1115,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(ldy,absx,4),       //BC
   MAKE_COMMAND(lda,absx,4),       //BD
   MAKE_COMMAND(ldx,absy,4),       //BE
-  MAKE_COMMAND_NEW(bbs3,rel,5),   //BF
+  MAKE_COMMAND_NEW(bbs3,rel,2),   //BF
 
   MAKE_COMMAND(cpy,imm,2),        //C0
   MAKE_COMMAND(cmp,indx,6),       //C1
@@ -1131,11 +1132,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(cpy,abs,4),        //CC
   MAKE_COMMAND(cmp,abs,4),        //CD
   MAKE_COMMAND(dec,abs,4),        //CE
-  MAKE_COMMAND_NEW(bbs4,rel,5),   //CF
+  MAKE_COMMAND_NEW(bbs4,rel,2),   //CF
 
   MAKE_COMMAND(bne,rel,2),        //D0
   MAKE_COMMAND(cmp,indy,5),       //D1
-  MAKE_COMMAND_NEW(cmp,ind_zp,6), //D2
+  MAKE_COMMAND_NEW(cmp,ind_zp,5), //D2
   MAKE_COMMAND_ILL(),             //D3
   MAKE_COMMAND_ILL(),             //D4
   MAKE_COMMAND(cmp,zpx,4),        //D5
@@ -1143,15 +1144,15 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_NEW(smb5,zp,2),    //D7
   MAKE_COMMAND(cld,impl,2),       //D8
   MAKE_COMMAND(cmp,absy,4),       //D9
-  MAKE_COMMAND_NEW(phx,impl,4),   //DA
+  MAKE_COMMAND_NEW(phx,impl,3),   //DA
   MAKE_COMMAND_NEW(stp,impl,7),   //DB
   MAKE_COMMAND_ILL(),             //DC
   MAKE_COMMAND(cmp,absx,4),       //DD
   MAKE_COMMAND(dec,absx,7),       //DE
-  MAKE_COMMAND_NEW(bbs5,rel,5),   //DF
+  MAKE_COMMAND_NEW(bbs5,rel,2),   //DF
 
   MAKE_COMMAND(cpx,imm,2),        //E0
-  MAKE_COMMAND(sbc,indx,4),       //E1
+  MAKE_COMMAND(sbc,indx,6),       //E1
   MAKE_COMMAND_ILL(),             //E2
   MAKE_COMMAND_ILL(),             //E3
   MAKE_COMMAND(cpx,zp,3),         //E4
@@ -1165,11 +1166,11 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND(cpx,abs,4),        //EC
   MAKE_COMMAND(sbc,abs,4),        //ED
   MAKE_COMMAND(inc,abs,6),        //EE
-  MAKE_COMMAND_NEW(bbs6,rel,5),   //EF
+  MAKE_COMMAND_NEW(bbs6,rel,2),   //EF
 
   MAKE_COMMAND(beq,rel,2),        //F0
   MAKE_COMMAND(sbc,indy,5),       //F1
-  MAKE_COMMAND_NEW(sbc,ind_zp,6), //F2
+  MAKE_COMMAND_NEW(sbc,ind_zp,5), //F2
   MAKE_COMMAND_ILL(),             //F3
   MAKE_COMMAND_ILL(),             //F4
   MAKE_COMMAND(sbc,zpx,4),        //F5
@@ -1182,7 +1183,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_ILL(),             //FC
   MAKE_COMMAND(sbc,absx,4),       //FD
   MAKE_COMMAND(inc,absx,7),       //FE
-  MAKE_COMMAND_NEW(bbs7,rel,5)    //FF
+  MAKE_COMMAND_NEW(bbs7,rel,2)    //FF
 };
 
 extern int cpu_debug;
@@ -1191,7 +1192,7 @@ extern int cpu_debug;
 static void op_disassemble(struct STATE_65C02*st, struct CMD_65C02*c)
 {
 	fprintf(stderr, "%04X\t%s\t", st->pc - 1, c->cmd_name);
-	c->printadr(st, stderr);
+	if (c->printadr) c->printadr(st, stderr);
 	fprintf(stderr, "\n");
 }
 
@@ -1228,13 +1229,13 @@ static int exec_65c02(struct CPU_STATE*cs)
 
 	b=fetch_cmd_byte(st);
 	c=cmds+b;
-	if (!c->cmd) {
-		return -1;
-	}
-	if (cpu_debug) op_disassemble(st, c);
-	if (c->flags & CMD_ILL) {
+	if (!c->cmd || (c->flags & CMD_ILL)) {
+		op_disassemble(st, c);
 		printf("undocumented command: %02X (%s %s)\n", b, c->cmd_name, c->adr_name);
 		return -1;
+	}
+	if (cpu_debug || (c->flags & CMD_NEW)) {
+		op_disassemble(st, c);
 	}
 	if (c->adr) c->adr(st); else n++;
 	if (c->cmd) c->cmd(st); else n++;

@@ -7,6 +7,7 @@ void videosel_9(struct VIDEO_STATE*vs, int mode)
 	subpage=(mode>>2)&3;
 	type=(mode&3);
 //	printf("select video mode: %x (last %x)\n", mode, vs->rb_cur.vmode);
+//	system_command(vs->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	vs->rb_cur.vmode=mode;
 	vs->rb_cur.vtype=type;
 	vs->rb_cur.n_ranges = 1;

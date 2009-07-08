@@ -58,7 +58,7 @@ static byte std_sig[]="Agathe emulator virtual disk\x0D\x0A\x1A""AD";
 static const byte def_prolog[FDD_PROLOG_SIZE]={
 	0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,0xAA,
 	0xFF,0xAA,0xA4,0x95,0x6A,
-	1,//254, //volume
+	255,//254, //volume
 	00, // track
 	00, // sector
 	0x5A, 0xAA, 0xAA
@@ -523,7 +523,9 @@ static void write_sector(struct FDD_DATA*data)
 	ls=get_sector_num(drv->prolog[FDD_PROLOG_TRACK],
 		drv->prolog[FDD_PROLOG_SECTOR]);
 	osseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
-	logprint(0,TEXT("write: (%i,%i): %x %x"),drv->prolog[FDD_PROLOG_TRACK],drv->prolog[FDD_PROLOG_SECTOR],ls,ls<<8);
+	logprint(0,TEXT("write: (%i,%i): %x %x: %02X %02X %02X"),
+		drv->prolog[FDD_PROLOG_TRACK],drv->prolog[FDD_PROLOG_SECTOR],ls,ls<<8,
+		drv->sector_data[FDD_DATA_OFFSET], drv->sector_data[FDD_DATA_OFFSET + 1], drv->sector_data[FDD_DATA_OFFSET + 2]);
 	if (oswrite(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 		errprint(TEXT("can't write sector"));
 		drv->error=1;
@@ -632,6 +634,13 @@ static void fdd_write_data(struct FDD_DATA*data,byte d)
 	if (!data->initialized) return;
 	data->time=0;
 	if (!(data->state.rk&0x40)) return;
+	logprint(0,TEXT("write_data: mode = %i; prolog=%i; index = %i; data = %02X"), drv->write_mode, drv->use_prolog, drv->disk_index, d);
+	if (!drv->use_prolog && !drv->write_mode && !drv->disk_index) {
+		if (d == 0xA4) drv->write_mode = 1;
+	}
+	if (!drv->use_prolog && drv->write_mode && drv->disk_index == 1) {
+		if (d == 0x95) { drv->use_prolog = 1; drv->disk_index = 13; }
+	}
 	if (!drv->write_mode) return;
 	if (drv->use_prolog) {
 		drv->prolog[drv->disk_index]=d;

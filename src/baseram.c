@@ -489,6 +489,7 @@ void baseram9_write_mapping(word adr, byte d, struct BASERAM_STATE*st)
 {
 	int ind=(adr&0xF0)>>4;
 //	printf("ram9_mapping[%i]=%x (%x)\n",ind, adr&0x0F, adr);
+//	system_command(st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	st->ram9_mapping[ind]=adr&0x0F;
 }
 
