@@ -500,7 +500,7 @@ static void prepare_sector_to_write(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
 	drv->write_mode=1;
-	logprint(0,TEXT("prepare_sector_to_write"));
+//	logprint(0,TEXT("prepare_sector_to_write"));
 	if (drv->use_prolog) drv->disk_index=13;
 	else drv->disk_index=1;
 	update_regs(data);
@@ -527,10 +527,10 @@ static void write_sector(struct FDD_DATA*data)
 	ls=get_sector_num(drv->prolog[FDD_PROLOG_TRACK],
 		drv->prolog[FDD_PROLOG_SECTOR]);
 	osseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
-	logprint(0,TEXT("write: (%i,%i): %x %x: %02X %02X %02X"),
+/*	logprint(0,TEXT("write: (%i,%i): %x %x: %02X %02X %02X"),
 		drv->prolog[FDD_PROLOG_TRACK],drv->prolog[FDD_PROLOG_SECTOR],ls,ls<<8,
 		drv->sector_data[FDD_DATA_OFFSET], drv->sector_data[FDD_DATA_OFFSET + 1], drv->sector_data[FDD_DATA_OFFSET + 2]);
-	if (oswrite(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+*/	if (oswrite(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 		errprint(TEXT("can't write sector"));
 		drv->error=1;
 	}
@@ -638,7 +638,7 @@ static void fdd_write_data(struct FDD_DATA*data,byte d)
 	if (!data->initialized) return;
 	data->time=0;
 	if (!(data->state.rk&0x40)) return;
-	logprint(0,TEXT("write_data: mode = %i; prolog=%i; index = %i; data = %02X"), drv->write_mode, drv->use_prolog, drv->disk_index, d);
+//	logprint(0,TEXT("write_data: mode = %i; prolog=%i; index = %i; data = %02X"), drv->write_mode, drv->use_prolog, drv->disk_index, d);
 	if (!drv->use_prolog && !drv->write_mode && !drv->disk_index) {
 		if (d == 0xA4) drv->write_mode = 1;
 	}
@@ -803,7 +803,7 @@ static byte fdd_read10(struct FDD_DATA*data)
 static void fdd_write_syncro(struct FDD_DATA*data,byte d)
 {
 	if (data->state.rd&0x40) {
-		logprint(0,TEXT("syncro"));
+//		logprint(0,TEXT("syncro"));
 		prepare_sector_to_write(data);
 	}
 }

@@ -389,6 +389,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		return TRUE;
 	case WM_SYSKEYDOWN:
 		switch (wp) {
+		case VK_F12: { extern int cpu_debug; cpu_debug = !cpu_debug; } break;
 		case VK_RETURN:
 			if (GetKeyState(VK_MENU)&0x8000) {
 				set_fullscreen(sr, !sr->fullscreen);
