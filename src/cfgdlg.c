@@ -284,6 +284,54 @@ int select_tape(HWND hpar, TCHAR fname[CFGSTRLEN], int load)
 
 
 
+int select_keyb(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 20, buf[0], sizeof(buf[0]));
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 21, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+	ofn.lpstrInitialDir = path;
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetOpenFileName(&ofn)) return FALSE;
+	{
+		TCHAR buf[MAX_PATH];
+		if (PathRelativePathTo(buf, path, FILE_ATTRIBUTE_DIRECTORY, fname, 0))
+			lstrcpy(fname, buf);
+	}
+	return TRUE;
+}
+
+int select_pal(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 22, buf[0], sizeof(buf[0]));
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 23, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+	ofn.lpstrInitialDir = path;
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetOpenFileName(&ofn)) return FALSE;
+	{
+		TCHAR buf[MAX_PATH];
+		if (PathRelativePathTo(buf, path, FILE_ATTRIBUTE_DIRECTORY, fname, 0))
+			lstrcpy(fname, buf);
+	}
+	return TRUE;
+}
+
 static int set_per_cfg(HWND hlist, int id, int type, LPTSTR comment)
 {
 	LVITEM item;
@@ -423,6 +471,10 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 			return mondlg_run(hwnd, slot);
 		case CONF_TAPE:
 			return tapedlg_run(hwnd, slot);
+		case CONF_KEYBOARD:
+			return select_keyb(hwnd, slot->cfgstr[CFG_STR_ROM]);
+		case CONF_PALETTE:
+			return select_pal(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	}
 	return TRUE;
 }
@@ -472,13 +524,13 @@ static int dialog_init(HWND hwnd, struct SYSCONFIG*conf)
 		TCHAR buf[256];
 		memset(&col,0,sizeof(col));
 		col.mask=LVCF_TEXT|LVCF_WIDTH;
-		col.pszText=(LPTSTR)localize_str(LOC_CFG, 20, buf, sizeof(buf)); //TEXT("Ресурс");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 100, buf, sizeof(buf)); //TEXT("Ресурс");
 		col.cx=100;
 		ListView_InsertColumn(hlist,0,&col);
-		col.pszText=(LPTSTR)localize_str(LOC_CFG, 21, buf, sizeof(buf)); //TEXT("Устройство");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 101, buf, sizeof(buf)); //TEXT("Устройство");
 		col.cx=300;
 		ListView_InsertColumn(hlist,1,&col);
-		col.pszText=(LPTSTR)localize_str(LOC_CFG, 22, buf, sizeof(buf)); //TEXT("Информация");
+		col.pszText=(LPTSTR)localize_str(LOC_CFG, 102, buf, sizeof(buf)); //TEXT("Информация");
 		col.cx=300;
 		ListView_InsertColumn(hlist,2,&col);
 	}

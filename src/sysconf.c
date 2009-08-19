@@ -7,9 +7,9 @@
 #include "localize.h"
 
 char conf_present[NSYSTYPES][NCONFTYPES] = {
-	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1},
-	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1}
+	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 };
 
 
@@ -293,6 +293,12 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			}
 			break;
+		case CONF_KEYBOARD:
+			_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("KEYB\\DEFAULT.BIN"));
+			return 0;
+		case CONF_PALETTE:
+			_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("PALETTE\\DEFAULT.PAL"));
+			return 0;
 		}
 	}
 	return 0;
@@ -355,6 +361,12 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 			_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 			return 0;
 		case CONF_CHARSET:
+			_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+			return 0;
+		case CONF_KEYBOARD:
+			_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+			return 0;
+		case CONF_PALETTE:
 			_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 			return 0;
 		}
@@ -427,7 +439,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 int save_config(struct SYSCONFIG*c, OSTREAM*out)
 {
 	int r;
-	DWORD h = MAKELONG(sizeof(*c), MAKEWORD(0,8));
+	DWORD h = MAKELONG(sizeof(*c), MAKEWORD(1,0));
 	r = oswrite(out, &h, sizeof(h));
 	if (r != sizeof(h)) return -1;
 	r = oswrite(out, c, sizeof(*c));
@@ -442,13 +454,29 @@ int save_config(struct SYSCONFIG*c, OSTREAM*out)
 
 int load_config(struct SYSCONFIG*c, ISTREAM*in)
 {
-	int r;
-	DWORD h = MAKELONG(sizeof(*c), MAKEWORD(0,8)), h1;
+	int r, nconf = NCONFTYPES;
+	DWORD h = MAKELONG(sizeof(*c), MAKEWORD(1,0)), h1;
 	r = isread(in, &h1, sizeof(h1));
 	if (r != sizeof(h1)) return -1;
-	if (h != h1) return -2; // invalid version
-	r = isread(in, c, sizeof(*c));
-	if (r!=sizeof(*c)) return -1;
+	if (h != h1) {
+		if (HIWORD(h1) == MAKEWORD(0,8)) { // previous version
+			nconf = CONF_KEYBOARD;
+		} else return -2; // invalid version
+	}
+	if (LOWORD(h1) > sizeof(*c)) return -2; // invalid config size
+	isread(in, &c->systype, sizeof(c->systype));
+	if (r != sizeof(c->systype)) return -1;
+	r = isread(in, c->slots, LOWORD(h1) - sizeof(c->systype) - sizeof(c->icon));
+	if (r != LOWORD(h1) - sizeof(c->systype) - sizeof(c->icon)) return -1;
+	r = isread(in, &c->icon, sizeof(c->icon));
+	if (r != sizeof(c->icon)) return -1;
+	if (nconf != NCONFTYPES) {
+		int i;
+		for (i = nconf; i < NCONFTYPES; ++i) {
+			c->slots[i].slot_no = i;
+			reset_slot_config(c->slots + i, DEV_SYSTEM, c->systype);
+		}
+	}
 	if (c->icon.image && c->icon.imglen) {
 		c->icon.image = malloc(c->icon.imglen);
 		if (!c->icon.image) return -1;

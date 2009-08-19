@@ -5,10 +5,10 @@
 #include "memory.h"
 #include "runmgrint.h"
 #include "videow.h"
-#include "keyb.h"
 #include "runstate.h"
 
 #include "localize.h"
+#include <stdio.h>
 
 #define VIDEO_CLASS TEXT("agat_video")
 
@@ -35,13 +35,38 @@ int register_video_window()
 	return 0;
 }
 
+int load_video_palette(struct SYS_RUN_STATE*sr, RGBQUAD colors[16])
+{
+	int cl;
+	FILE*in;
+	for (cl=0;cl<16;cl++) {
+		int v=(cl&8)?255:128;
+		colors[cl].rgbRed=(cl&1)?v:0;
+		colors[cl].rgbGreen=(cl&2)?v:0;
+		colors[cl].rgbBlue=(cl&4)?v:0;
+	}
+	in = fopen(sr->config->slots[CONF_PALETTE].cfgstr[CFG_STR_ROM], "rt");
+	if (!in) return 1;
+	for (cl=0;cl<16;cl++) {
+		char buf[1024];
+		int n, r, g, b;
+		fgets(buf, sizeof(buf), in);
+		if (sscanf(buf, "%i %i %i", &r, &g, &b) == 3) {
+			colors[cl].rgbRed = r;
+			colors[cl].rgbGreen = g;
+			colors[cl].rgbBlue = b;
+		}
+	}
+	fclose(in);
+	return 0;
+}
+
 int create_video_buffer(struct SYS_RUN_STATE*sr)
 {
 	struct {
 		BITMAPINFOHEADER h;
 		RGBQUAD colors[16];
 	} bi;
-	int cl;
 	ZeroMemory(&bi,sizeof(bi));
 	bi.h.biSize=sizeof(bi.h);
 	bi.h.biWidth=MAX_VIDEO_W;
@@ -51,12 +76,7 @@ int create_video_buffer(struct SYS_RUN_STATE*sr)
 	bi.h.biCompression=BI_RGB;
 	bi.h.biSizeImage=0;
 	sr->bmp_pitch=bi.h.biWidth>>1;
-	for (cl=0;cl<16;cl++) {
-	int v=(cl&8)?255:128;
-		bi.colors[cl].rgbRed=(cl&1)?v:0;
-		bi.colors[cl].rgbGreen=(cl&2)?v:0;
-		bi.colors[cl].rgbBlue=(cl&4)?v:0;
-	}
+	load_video_palette(sr, bi.colors);
 	sr->mem_dc=CreateCompatibleDC(NULL);
 	if (!sr->mem_dc) return -3;
 	sr->mem_bmp=CreateDIBSection(NULL,(BITMAPINFO*)&bi,DIB_RGB_COLORS,&sr->bmp_bits,NULL,0);
@@ -114,6 +134,8 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 int init_video_window(struct SYS_RUN_STATE*sr)
 {
 	int r;
+	sr->keymap = keymap_default;
+	keymap_load(sr->config->slots[CONF_KEYBOARD].cfgstr[CFG_STR_ROM], &sr->keymap);
 	r = create_video_buffer(sr);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
@@ -402,9 +424,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		{
 			int d;
 #ifdef KEY_SCANCODES
-			d=decode_key(lp);
+			d=decode_key(lp, &sr->keymap);
 #else
-			d=decode_key(wp);
+			d=decode_key(wp, &sr->keymap);
 #endif
 
 		switch (wp) {

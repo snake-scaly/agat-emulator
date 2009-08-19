@@ -401,10 +401,14 @@ BEGIN
 	10017	"Select image file for output"
 	10018	"Memory contents (*.ram)@*.ram@All files@*.*@"
 	10019	"Select memory contents file"
+	10020	"Keyboard layout (*.bin)@*.bin@All files@*.*@"
+	10021	"Select keyboard layout"
+	10022	"Screen palette (*.pal)@*.pal@All files@*.*@"
+	10023	"Select screen palette"
 
-	10020	"Resource"
-	10021	"Device"
-	10022	"Information"
+	10100	"Resource"
+	10101	"Device"
+	10102	"Information"
 
 // Main module: 11000
 	11000	"System already started. Switch to it?\n(No \x97 restart system)"
@@ -510,6 +514,8 @@ BEGIN
 	12215	"(Joystick)"
 	12216	"(Monitor)"
 	12217	"(Tape)"
+	12218	"(Keyboard)"
+	12219	"(Palette)"
 
 	12300	"Agat-7"
 	12301	"Agat-9"

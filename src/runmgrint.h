@@ -1,4 +1,5 @@
 #include "memory.h"
+#include "keyb.h"
 
 #define BASEMEM_BLOCK_SIZE	0x800
 #define BASEMEM_BLOCK_SHIFT	11
@@ -18,6 +19,7 @@ struct SYS_RUN_STATE
 
 	HWND base_w;
 	SIZE v_size;
+	struct KEYMAP keymap;
 	int  fullscreen;
 	HWND video_w;
 	WINDOWPLACEMENT old_pl;
