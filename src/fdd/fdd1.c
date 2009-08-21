@@ -1,7 +1,7 @@
 /*
 	Agat Emulator version 1.0
 	Copyright (c) NOP, nnop@newmail.ru
-	fdd - emulation of TEAC floppy drive
+	fdd - emulation of Shugart floppy drive
 */
 
 #include "types.h"
