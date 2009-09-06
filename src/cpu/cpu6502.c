@@ -1195,7 +1195,7 @@ static int exec_6502(struct CPU_STATE*cs)
 	int n = 0;
 
 
-//	if (st->pc == 0x801) cpu_debug = 1;
+//	if (st->pc == 0x36EB) cpu_debug = 1;
 	if (cpu_debug) dumpregs(cs);
 
 	if (st->ints_req&INT_NMI) {

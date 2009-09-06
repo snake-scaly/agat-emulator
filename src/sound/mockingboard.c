@@ -534,7 +534,7 @@ static void start_timer(int channel, int no, struct SOUND_STATE*ss)
 	if (no) return;
 	if (!(ss->psg_data[channel][MB_IER] & 0x40)) return;
 	div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
-//	printf("T1 latch: %02X%02X; div = %i\n", ss->psg_data[channel][MB_LATCH1H], ss->psg_data[channel][MB_LATCH1L], div);
+	printf("T1 latch: %02X%02X; div = %i\n", ss->psg_data[channel][MB_LATCH1H], ss->psg_data[channel][MB_LATCH1L], div);
 //	div /= 4;
 	system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, DEF_CPU_TIMER_ID(ss->st) | channel);
 }
@@ -629,8 +629,8 @@ static void mb_callback(struct SOUND_STATE*ss, int channel)
 	ss->psg_data[channel][MB_CNT1L] = ss->psg_data[channel][MB_LATCH1L];
 	ss->psg_data[channel][MB_CNT1H] = ss->psg_data[channel][MB_LATCH1H];
 	if (ss->psg_data[channel][MB_ACR]&0x40) { // free running
-//		int div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
-//		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, DEF_CPU_TIMER_ID(ss->st));
+		int div = ss->psg_data[channel][MB_LATCH1L] | (ss->psg_data[channel][MB_LATCH1H]<<8);
+		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, div, DEF_CPU_TIMER_ID(ss->st));
 	} else { // one shot
 		system_command(ss->st->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID(ss->st));
 	}
@@ -658,6 +658,9 @@ static void mb_rom_w(word adr, byte data, struct SOUND_STATE*ss) // CX00-CXFF
 	case MB_ORA: psg_data(chan, data & ss->psg_data[chan][MB_DDRA], ss); break;
 	case MB_DDRB: break;
 	case MB_DDRA: break;
+	case MB_CNT1L:
+		ss->psg_data[chan][MB_LATCH1L] = data;
+		break;
 	case MB_CNT1H: // timer 1 counter h
 		ss->psg_data[chan][MB_CNT1L] = ss->psg_data[chan][MB_LATCH1L];
 		ss->psg_data[chan][MB_LATCH1H] = data;

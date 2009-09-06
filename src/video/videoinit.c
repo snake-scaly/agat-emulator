@@ -113,13 +113,13 @@ static byte vsel_ap_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 
 void enable_ints_w(word adr,byte data, struct VIDEO_STATE*vs) // C040-C04F
 {
-	printf("enable ints_w: %x\n",adr);
+//	printf("enable ints_w: %x\n",adr);
 	enable_ints(vs->sr);
 }
 
 byte enable_ints_r(word adr, struct VIDEO_STATE*vs) // C040-C04F
 {
-	printf("enable ints_r: %x\n",adr);
+//	printf("enable ints_r: %x\n",adr);
 	enable_ints(vs->sr);
 	return empty_read_addr(adr, vs);
 }
