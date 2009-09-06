@@ -13,13 +13,20 @@ enum {
 	N_KEYMAPS
 };
 
+enum {
+	LAYOUT_LAT,
+	LAYOUT_RUS,
+
+	N_LAYOUTS
+};
+
 struct KEYMAP
 {
-	unsigned char data[N_KEYMAPS][0x80];
+	unsigned char data[N_LAYOUTS][N_KEYMAPS][0x80];
 };
 
 extern struct KEYMAP keymap_default;
 
-int decode_key(unsigned long keydata, struct KEYMAP*map);
+int decode_key(unsigned long keydata, struct KEYMAP*map, int layout);
 
 int keymap_load(const char*fname, struct KEYMAP*map);

@@ -153,7 +153,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 
 	set_run_state_ptr(sr->name, sr);
 
-	sr->keyreg = 0xFF;
+	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
 
 	r = init_video_window(sr);
 	if (r < 0) goto fail;

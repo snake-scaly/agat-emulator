@@ -20,6 +20,10 @@ static LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp);
 
 static ATOM at;
 
+WORD get_keyb_language()
+{
+	return PRIMARYLANGID(LOWORD(GetKeyboardLayout(0)));
+}
 
 int register_video_window()
 {
@@ -424,9 +428,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		{
 			int d;
 #ifdef KEY_SCANCODES
-			d=decode_key(lp, &sr->keymap);
+			d=decode_key(lp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
 #else
-			d=decode_key(wp, &sr->keymap);
+			d=decode_key(wp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
 #endif
 
 		switch (wp) {
@@ -533,9 +537,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_INPUTLANGCHANGE:
 //		printf("%x\n",lp);
-		if ((lp&0xFFFF)==0x419) {
-			sr->keyreg=0x7F;
-		} else sr->keyreg=0xFF;
+		sr->keyreg = (PRIMARYLANGID(LOWORD(lp))==LANG_RUSSIAN) ? 0x7F: 0xFF;
 		break;
 	}
 	return DefWindowProc(w,msg,wp,lp);
@@ -581,3 +583,4 @@ void toggle_ints(struct SYS_RUN_STATE*sr)
 	else
 		enable_ints(sr);
 }
+

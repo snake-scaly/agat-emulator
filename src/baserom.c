@@ -75,7 +75,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 		return -1;
 	}
 
-	puts(sc->cfgstr[CFG_STR_ROM]);
+//	puts(sc->cfgstr[CFG_STR_ROM]);
 	in=isfopen(sc->cfgstr[CFG_STR_ROM]);
 	if (!in) {
 		int r;
@@ -99,6 +99,10 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 	ss->data = st;
 	ss->free = rom_free;
 	ss->command = rom_command;
+
+	if (sr->config->systype == SYSTEM_9) {
+		st->rom_size <<= 1;
+	}
 
 	rom_reset_procs(ss);
 	return 0;
