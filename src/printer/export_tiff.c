@@ -38,7 +38,11 @@ struct FONT_INFO
 	int italic;
 	int underlined;
 	int condensed, dwidth, dheight, cpi, proport;
+	int subscript, superscript;
 };
+
+
+#define LINE_SIZE 256
 
 
 struct EXPORT_TIFF
@@ -61,7 +65,7 @@ struct EXPORT_TIFF
 	int	pos_x, pos_y;
 	int	char_w, char_h;
 	int	line_h;
-	int	page_cur_h;
+	int	page_cur_h, page_cur_lines;
 
 	int	page_w, page_h;
 	int	page_dirty;
@@ -69,12 +73,18 @@ struct EXPORT_TIFF
 	int	opened;
 
 	int	res_x, res_y;
-	int	x0, y0;
+	int	x0, y0, y_set;
+
+	double	margin[2];
 
 	int	prev_char;
 	int	was_cr, was_lf;
 	int	auto_lf;
 	int	auto_cr;
+
+	int	vert_pos[LINE_SIZE];
+	int	n_vert;
+
 
 	void (*open_out)(struct EXPORT_TIFF*et);
 	void (*close_out)(struct EXPORT_TIFF*et);
@@ -124,6 +134,8 @@ static void tiff_open_out(struct EXPORT_TIFF*et)
 
 	et->fnt_dirty = 1;
 	et->page_dirty = 0;
+	et->x0 = et->margin[0] * et->res_x;
+	et->y0 = et->margin[1] * et->res_y;
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	if (!et->line_h) {
@@ -178,6 +190,8 @@ static void print_open_out(struct EXPORT_TIFF*et)
 	et->page_cur_h = et->page_h;
 	et->fnt_dirty = 1;
 	et->page_dirty = 0;
+	et->x0 = et->margin[0] * et->res_x;
+	et->y0 = et->margin[1] * et->res_y;
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	if (!et->line_h) {
@@ -201,24 +215,34 @@ static void print_close_out(struct EXPORT_TIFF*et)
 
 static void create_font(struct EXPORT_TIFF*et)
 {
+	int cw, ch;
 	et->fnt_dirty = 0;
 	et->char_w = et->res_x * SRC_FONT_W / SRC_DPI;
 	et->char_h = et->res_y * SRC_FONT_H / SRC_VERT_DPI;
 	if (et->fi.condensed) et->char_w /= 2;
 	if (et->fi.dwidth) et->char_w *= 2;
 	if (et->fi.dheight) et->char_h *= 2;
+	cw = et->char_w;
+	ch = et->char_h;
+	if (et->fi.subscript || et->fi.superscript) {
+		cw = cw * 2 / 3;
+		ch = ch * 2 / 3;
+	}
 /*	if (!et->fi.cpi) et->fi.cpi = 10;
 	et->char_w = (et->char_w * 10) / et->fi.cpi;*/
 	Tprintf(("char_w = %i; char_h = %i; condensed = %i\n", et->char_w, et->char_h, et->fi.condensed));
-	et->fnt = CreateFont(-et->char_h, et->char_w-1, 0, 0, et->fi.bold?FW_HEAVY:(et->fi.dstrike?FW_SEMIBOLD:FW_NORMAL), 
+	et->fnt = CreateFont(-ch, cw-1, 0, 0, et->fi.bold?FW_HEAVY:(et->fi.dstrike?FW_SEMIBOLD:FW_NORMAL), 
 		et->fi.italic, et->fi.underlined, 0, RUSSIAN_CHARSET, OUT_TT_PRECIS,
 		0, PROOF_QUALITY, FIXED_PITCH, TEXT("Courier New"));
 	DeleteObject(SelectObject(et->dc, et->fnt));
 }
 
 
+static void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char*data);
+
 static void printch(struct EXPORT_TIFF*et, int ch)
 {
+	int y;
 	if (et->fnt_dirty) {
 		create_font(et);
 	}
@@ -228,11 +252,32 @@ static void printch(struct EXPORT_TIFF*et, int ch)
 	}
 //	Tprintf(("text out at %i,%i\n", et->pos_x, et->pos_y));
 	Tprintf(("%c", ch));
+	y = et->pos_y;
+	if (et->fi.subscript) y += et->char_h / 3;
 /*	SelectObject(et->dc, GetStockObject(BLACK_PEN));
 	Rectangle(et->dc, et->pos_x, et->pos_y, et->pos_x + et->char_w, et->pos_y + et->char_h);
 */
-	if (ch != ' ') TextOut(et->dc, et->pos_x, et->pos_y, (LPCTSTR)&ch, 1);
-	et->pos_x += et->char_w;
+/*	if (ch == '|') {
+		unsigned char bar_data[] = { 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
+		int nh = et->line_h  * SRC_VERT_DPI / et->res_y;
+		unsigned char b = ~ ((1L << (8-nh)) - 1);
+		printf("nh = %i, b = %x\n", nh, b);
+		bar_data[6] = bar_data[7] = b;
+		graphout(et, 120, 12, bar_data);
+	} else*/ {
+		if (ch != ' ') {
+//			RECT r = { et->pos_x, et->pos_y, et->pos_x + et->char_w, et->pos_y + et->line_h };
+//			DrawText(et->dc, (LPCTSTR)&ch, 1, &r, DT_LEFT | DT_TOP | DT_SINGLELINE);
+			if (ch == '|') {
+				if (et->n_vert < LINE_SIZE) {
+					et->vert_pos[et->n_vert++] = et->pos_x;
+				}
+			} else {
+				TextOut(et->dc, et->pos_x, y, (LPCTSTR)&ch, 1);
+			}	
+		}
+		et->pos_x += et->char_w;
+	}
 }
 
 static void page_cr(struct EXPORT_TIFF*et)
@@ -245,14 +290,29 @@ static void new_page(struct EXPORT_TIFF*et);
 
 static void page_lf(struct EXPORT_TIFF*et)
 {
+	{
+		int i;
+		for (i = 0; i < et->n_vert; ++i) {
+			RECT r = {et->vert_pos[i] + 6*et->res_x/SRC_DPI, et->pos_y, et->vert_pos[i] + 8*et->res_x/SRC_DPI, et->pos_y + et->line_h};
+			FillRect(et->dc, &r, GetStockObject(BLACK_BRUSH));
+		}
+	}
+//	printch(et, 0xB6);
+
 	et->pos_y += et->line_h;
-	Tprintf(("line feed: pos_y = %i (line_h = %i); page_h = %i\n",et->pos_y, et->line_h, et->page_cur_h));
+	if (et->page_cur_lines) {
+		et->page_cur_h = et->page_cur_lines * 12 * et->res_y / SRC_VERT_DPI;
+		et->page_cur_lines = 0;
+	}
+
+	Tprintf(("line feed: new pos_y = %i (line_h = %i); page_h = %i\n",et->pos_y, et->line_h, et->page_cur_h));
 	if (et->fi.dwidth || et->fi.dheight || et->fi.condensed) et->fnt_dirty = 1;
 	et->fi.dwidth = 0;
 	et->fi.dheight = 0;
 	et->fi.condensed = 0;
 	et->was_lf = 1;
-	if (et->pos_y - et->y0 > et->page_cur_h) new_page(et);
+	et->n_vert = 0;
+	if (et->pos_y - et->y0 + 2 * et->res_y / SRC_VERT_DPI - et->y_set > et->page_cur_h) new_page(et);
 }
 
 static void page_bs(struct EXPORT_TIFF*et)
@@ -420,6 +480,7 @@ static void new_page(struct EXPORT_TIFF*et)
 	}
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
+	et->y_set = 0;
 	et->page_dirty = 0;
 	et->prev_char = 0;
 	et->was_cr = et->was_lf = 1;
@@ -560,6 +621,11 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 			}
 		}
 		break;
+	case '+':
+		if (nparams == 1) {
+			et->line_h = *params * et->res_y / 360;
+		}
+		break;
 	case 'w':
 		if (nparams == 1) {
 			switch (*params) {
@@ -625,6 +691,11 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 	case '2':
 		et->line_h = et->res_y / 6;
 		break;
+	case '3':
+		if (nparams == 1) {
+			et->line_h = *params * et->res_y / 216;
+		}
+		break;
 	case '4':
 		if (!et->fi.italic) et->fnt_dirty = 1;
 		et->fi.italic = 1;
@@ -634,17 +705,20 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 		et->fi.italic = 0;
 		break;
 	case 'A':
+//		printch(et, 0xA4);
 		if (nparams == 1) {
 			et->line_h = (*params) * et->res_y / 72;
 		}
 		break;
 	case 'C':
+//		et->y_set = et->pos_y - et->y0;
+//		printch(et, 0xA7);
 		switch (nparams) {
 		case 1:
-			et->page_cur_h = (*params)*et->res_y/6;
+			et->page_cur_lines = params[0];
 			break;
 		case 2:
-			et->page_cur_h = (*params)*et->res_y;
+			et->page_cur_h = (params[1])*et->res_y;
 			break;
 		}
 		Tprintf(("et->page_cur_h = %i\n", et->page_cur_h));
@@ -664,6 +738,11 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 	case 'H':
 		if (et->fi.dstrike) et->fnt_dirty = 1;
 		et->fi.dstrike = 0;
+		break;
+	case 'J':
+		if (nparams == 1) {
+			et->pos_y += (*params) * et->res_y / 216;
+		}
 		break;
 	case 'M':
 		et->fnt_dirty = 1;
@@ -692,11 +771,32 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 	case 'K':
 		graphout(et, 60, nparams, params);
 		break;
+	case 'S':
+		if (nparams == 1) {
+		switch (*params) {
+		case 0: case 48:
+			if (et->fi.subscript || !et->fi.superscript) et->fnt_dirty = 1;
+			et->fi.subscript = 0;
+			et->fi.superscript = 1;
+			break;
+		case 1: case 49:
+			if (!et->fi.subscript || et->fi.superscript) et->fnt_dirty = 1;
+			et->fi.subscript = 1;
+			et->fi.superscript = 0;
+			break;
+		} }
+		break;
+	case 'T':
+		if (et->fi.subscript || et->fi.superscript) et->fnt_dirty = 1;
+		et->fi.subscript = et->fi.superscript = 0;
+		break;
 	case 'Z':
 		graphout(et, 240, nparams, params);
 		break;
 	case '*': // unsupported yet
 		break;
+	default:
+		Tprintf(("Tiff: unsupported command %c (%i args)\n", cmd, nparams));
 	}
 }
 
@@ -727,6 +827,13 @@ static int tiff_opened(struct EXPORT_TIFF*et)
 }
 
 
+int export_comm_init(struct EXPORT_TIFF*et)
+{
+	et->margin[0] = 0;
+	et->margin[1] = 0.3; // inches
+	return 0;
+}
+
 
 int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 {
@@ -734,6 +841,8 @@ int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 
 	et = calloc(sizeof(*et), 1);
 	if (!et) return -1;
+
+	export_comm_init(et);
 
 	et->flags = flags;
 	et->wnd = wnd;
@@ -746,6 +855,8 @@ int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	et->auto_lf = et->auto_cr = 1;
+	et->y_set = 0;
+	et->page_cur_lines = 0;
 
 	et->page_finish = tiff_finish_page;
 	et->page_start = tiff_start_page;
@@ -782,16 +893,20 @@ int  export_print_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et = calloc(sizeof(*et), 1);
 	if (!et) return -1;
 
+	export_comm_init(et);
+
 	et->flags = flags;
 	et->wnd = wnd;
 	et->res_x = et->res_y = 300; // dpi
 	et->page_w = 8.25 * et->res_x;
 	et->page_w = (et->page_w + 31) & ~31;
+	et->page_cur_h = et->page_h;
 	et->page_h = 11.75 * et->res_y;
 	et->x0 = et->y0 = 40;
 	et->auto_lf = et->auto_cr = 1;
+	et->y_set = 0;
+	et->page_cur_lines = 0;
 
-	et->page_cur_h = et->page_h;
 	et->page_finish = print_finish_page;
 	et->page_start = print_start_page;
 	et->open_out = print_open_out;

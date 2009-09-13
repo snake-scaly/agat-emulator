@@ -119,6 +119,9 @@ int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
 	case '`':
 		Pputs("Unknown Esc ` command");
 		break;
+	case '@':
+		Pputs("Initialize printer");
+		break;
 	case '0':
 		Pputs("Set line spacing to 1/8 inch");
 		break;
