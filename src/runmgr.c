@@ -253,6 +253,10 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 		ShowWindow(sr->video_w, SW_SHOWNORMAL);
 		SetActiveWindow(sr->video_w);
 		break;
+	case SYS_COMMAND_SET_PARENT:
+		if (sr->video_w) SetParent(sr->video_w, (HWND)param);
+		else r = -1;
+		break;
 	}
 	return r;
 }

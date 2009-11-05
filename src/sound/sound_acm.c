@@ -199,6 +199,7 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 		p->pending += sz;
 		if (p->curofs == p->maxlen) post_cur_buffer(p);
 	}
+	Sprintf(("acm: end sound_write\n"));
 }
 
 static int sound_data(struct ACM_DATA*p, int val, long t, long f)
@@ -236,12 +237,15 @@ static void CALLBACK out_proc(HWAVEOUT hwo,UINT uMsg,DWORD dwInstance,
 	case WOM_DONE:
 		{
 			Sprintf(("acm: buffer done\n"));
-			EnterCriticalSection(&p->crit);
-			if (p->pending) post_cur_buffer(p);
-			LeaveCriticalSection(&p->crit);
+			
+			if (TryEnterCriticalSection(&p->crit)) {
+				if (p->pending) post_cur_buffer(p);
+				LeaveCriticalSection(&p->crit);
+			}	
 		}
 		break;
 	}
+	Sprintf(("acm: end callback\n"));
 }
 
 void sound_timer(struct ACM_DATA*p)
@@ -249,8 +253,11 @@ void sound_timer(struct ACM_DATA*p)
 	if (!p->out) return;
 	Sprintf(("acm: timer\n"));
 	EnterCriticalSection(&p->crit);
-	if (p->pending && (GetTickCount() - p->last_append) > TIMEOUT_MSEC) post_cur_buffer(p);
+		if (p->pending && (GetTickCount() - p->last_append) > TIMEOUT_MSEC) {
+			post_cur_buffer(p);
+		}
 	LeaveCriticalSection(&p->crit);
+	Sprintf(("acm: end timer\n"));
 }
 
 

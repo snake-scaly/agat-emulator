@@ -123,7 +123,7 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 	puts("cr_thread");
 	sr->video_w=CreateWindowEx(sex,(LPCTSTR)at,get_system_name(sr),s,
 		CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,
-		sr->base_w,NULL,NULL,sr);
+		NULL/*sr->base_w*/,NULL,NULL,sr);
 	if (!sr->video_w) {
 		puts("createwindow error");
 		return -1;

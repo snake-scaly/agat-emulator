@@ -128,6 +128,11 @@ struct SYS_RUN_STATE*get_run_state_ptr(LPCTSTR name)
 	return runs[i].st;
 }
 
+struct SYS_RUN_STATE*get_run_state_ptr_by_no(int no)
+{
+	if (no < 0 || no >= n_runs) return NULL;
+	return runs[no].st;
+}
 
 int get_n_running_systems()
 {

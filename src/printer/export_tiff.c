@@ -707,7 +707,8 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 	case 'A':
 //		printch(et, 0xA4);
 		if (nparams == 1) {
-			et->line_h = (*params) * et->res_y / 72;
+			int n = (*params);
+			if (n < 0x60) et->line_h = n * et->res_y / 72;
 		}
 		break;
 	case 'C':

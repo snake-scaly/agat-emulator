@@ -18,6 +18,7 @@ unsigned and_run_state_flags(LPCTSTR name, unsigned flags);
 LPCTSTR get_run_state_name(struct SYS_RUN_STATE*st);
 int set_run_state_ptr(LPCTSTR name, struct SYS_RUN_STATE*st);
 struct SYS_RUN_STATE*get_run_state_ptr(LPCTSTR name);
+struct SYS_RUN_STATE*get_run_state_ptr_by_no(int no);
 
 int get_n_running_systems();
 int free_all_running_systems();

@@ -37,6 +37,7 @@ enum {
 	SYS_COMMAND_CPUTIMER,     // param = timer id
 	SYS_COMMAND_LOAD_DONE,     // do some work after all modules are loaded
 
+	SYS_COMMAND_SET_PARENT,     // set parent window (param=hwnd or NULL if detach)
 	SYS_N_COMMANDS
 };
 
