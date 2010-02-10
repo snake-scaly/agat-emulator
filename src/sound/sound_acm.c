@@ -29,6 +29,7 @@ typedef unsigned char sample_t;
 #define MIN_SAMPLE 0x00
 #define MAX_SAMPLE 0xFF
 #define XOR_SAMPLE (MAX_SAMPLE ^ MIN_SAMPLE)
+#define MID_SAMPLE ((MIN_SAMPLE + MAX_SAMPLE) >> 1)
 
 struct ACM_DATA
 {
@@ -202,24 +203,38 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 	Sprintf(("acm: end sound_write\n"));
 }
 
+static void sound_correct(struct ACM_DATA*p, double amp)
+{
+	if (p->curbuf == -1) return;
+	if (!p->curofs) return;
+	p->bufs[p->curbuf][p->curofs - 1] *= amp;
+}
+
 static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 {
 	int nsmp, maxnsmp = p->maxlen;
+	double fsmp;
 	if (!p || !p->out) return -1;
 	if (val == SOUND_TOGGLE) val = (p->cur_val ^= XOR_SAMPLE);
 	if (t < p->prev_tick || !p->prev_tick || !p->pending) {
 		p->prev_tick = t - 1;
 		nsmp = 1;
 	} else {
-		nsmp = (t - p->prev_tick) * (double)p->freq/1000.0/(double)f * 1.1;
+		fsmp = (t - p->prev_tick) * (double)p->freq/1000.0/(double)f * 1.05;
+		nsmp = (double)fsmp;
 	}
 //	printf("nsmp = %i\n", nsmp);
-	if (!nsmp) nsmp = 1;
 	if (nsmp > maxnsmp) { nsmp = 1; }
 	EnterCriticalSection(&p->crit);
+	if (!nsmp) {
+		val = ((double)val - MID_SAMPLE) * fsmp + MID_SAMPLE;
+//		printf("fsmp = %g; val = %i\n", fsmp, val);
+		nsmp = 1;
+	}
 	sound_write(p, val, nsmp);
 	LeaveCriticalSection(&p->crit);
-	p->prev_tick = t; //nsmp * 1000.0 * f / p->freq;
+	p->prev_tick = t;
+//	p->prev_tick = t + nsmp * 1000.0 * f / p->freq;
 
 	p->last_append = GetTickCount();
 

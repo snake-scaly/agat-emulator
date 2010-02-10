@@ -357,6 +357,8 @@ byte baseio_read(word adr, struct MEM_PROC*baseio_sel)	// C000-C0FF
 
 byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 {
+//	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+//	if (sr->cur_key&0x80) printf("cur_key = %x\n", sr->cur_key);
 	return sr->cur_key;
 }
 
@@ -367,7 +369,7 @@ byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr)	// C063
 
 void keyb_clear(struct SYS_RUN_STATE*sr)	// C010-C01F
 {
-	sr->cur_key = 0;
+	sr->cur_key &= ~0x80;
 }
 
 byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr)	// C010-C01F
