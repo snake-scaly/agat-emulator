@@ -51,7 +51,8 @@ struct FDD_STATE
 #define FDD_PROLOG_SECTOR 17
 
 #define RAW_SECTOR_SIZE 0x11A
-#define RAW_TRACK_SIZE (RAW_SECTOR_SIZE * FDD_SECTOR_COUNT)
+#define RAW_TRACK_SIZE (RAW_SECTOR_SIZE * (FDD_SECTOR_COUNT + 2))
+#define RAW_TRACK_FILE_SIZE (RAW_SECTOR_SIZE * FDD_SECTOR_COUNT)
 #define AIM_TRACK_SIZE 6464
 
 static byte std_sig[]="Agathe emulator virtual disk\x0D\x0A\x1A""AD";
@@ -82,6 +83,8 @@ struct FDD_DRIVE_DATA
 
 	int	rawfmt; // 1 if disk in raw (nibble) format, 2 if disk in aim format
 	int  	raw_index;
+	int	raw_dirty;
+	int	raw_track_ofs;
 
 	char disk_name[1024];
 	int  start_ofs;
@@ -172,7 +175,7 @@ int open_fdd(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 	} else if (strstr(name,"aim") || strstr(name,"AIM")) {
 		puts("using aim format");
 		drv->rawfmt = 2;
-		drv->readonly = 1;
+//		drv->readonly = 1;
 		drv->raw_index = 0;
 	} else drv->rawfmt = 0;
 	drv->prolog[FDD_PROLOG_SECTOR]=FDD_SECTOR_COUNT-1;
@@ -488,7 +491,8 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		return;
 	}
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
-	isseek(drv->disk,drv->start_ofs+(t0 * AIM_TRACK_SIZE*2),SSEEK_SET);
+	drv->raw_track_ofs = drv->start_ofs+(t0 * AIM_TRACK_SIZE*2);
+	isseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 	logprint(0,TEXT("reading aim track %i"), t0);
 	if (isread(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
 		errprint(TEXT("can't read aim track"));
@@ -509,6 +513,42 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	}
 }
 
+static void save_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
+{
+	if (!drv->disk) {
+		drv->error=1;
+		return;
+	}
+	osseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+	logprint(0,TEXT("writing aim track"));
+	if (oswrite(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
+		errprint(TEXT("can't write aim track"));
+		drv->error=1;
+	}
+	drv->raw_dirty = 0;
+}
+
+static void save_track_fdd(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
+{
+	if (!drv->disk) {
+		drv->error=1;
+		return;
+	}
+	switch (drv->rawfmt) {
+	case 0: return;
+	case 1: break;
+	case 2: save_aim_track(data, drv); return;
+	}
+	osseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+//	logprint(0,TEXT("writing raw track"));
+	if (oswrite(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
+		errprint(TEXT("can't write raw track"));
+		drv->error=1;
+	}
+	drv->raw_dirty = 0;
+}
+
+
 
 static void load_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 {
@@ -517,15 +557,17 @@ static void load_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		drv->error=1;
 		return;
 	}
+	if (drv->raw_dirty) save_track_fdd(data, drv);
 	switch (drv->rawfmt) {
 	case 0: return;
 	case 1: break;
 	case 2: load_aim_track(data, drv); return;
 	}
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
-	isseek(drv->disk,drv->start_ofs+(t0 * RAW_TRACK_SIZE),SSEEK_SET);
+	drv->raw_track_ofs = drv->start_ofs+(t0 * RAW_TRACK_FILE_SIZE);
+	isseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 //	logprint(0,TEXT("reading raw track %i"), t0);
-	if (isread(drv->disk,drv->raw_track_data,RAW_TRACK_SIZE)!=RAW_TRACK_SIZE) {
+	if (isread(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
 		errprint(TEXT("can't read raw track"));
 		drv->error=1;
 	}
@@ -560,6 +602,10 @@ static void make_step(struct FDD_DATA*data,byte _b)
 static void prepare_to_write(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	if (drv->rawfmt) {
+		update_regs(data);
+		return;
+	}
 	drv->write_mode=0;
 //	logprint(0,TEXT("prepare_to_write"));
 	if (!drv->use_prolog||drv->disk_index>10) {
@@ -576,6 +622,13 @@ static void prepare_to_write(struct FDD_DATA*data)
 static void prepare_sector_to_write(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	if (drv->rawfmt) {
+		if (drv->rawfmt == 2) {
+			drv->aim_track_data[drv->raw_index] &= 0xFF;
+			drv->aim_track_data[drv->raw_index] |= 0x0100;
+		}
+		return;
+	}
 	drv->write_mode=1;
 //	logprint(0,TEXT("prepare_sector_to_write"));
 	if (drv->use_prolog) drv->disk_index=13;
@@ -613,9 +666,29 @@ static void write_sector(struct FDD_DATA*data)
 	}
 }
 
+static int locate_raw_start(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
+{
+	int i, na = 0;
+	for (i = 0; i < RAW_TRACK_SIZE; ++i) {
+		if (drv->raw_track_data[i] == 0xAA) {
+			++na;
+		} else {
+			if (na > 200) {
+				int r = i - 12;
+				if (r < 0) r += RAW_TRACK_SIZE;
+				return r;
+			}
+		}
+	}
+	return 0;
+}
+
 static void prepare_sector_to_read(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	if (drv->rawfmt) {
+		return;
+	}
 	drv->use_prolog=1;
 	drv->disk_index=0;
 	if (!drv->disk) {
@@ -636,20 +709,26 @@ static void prepare_sector_to_read(struct FDD_DATA*data)
 static void rotate_sector(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
-	if ((data->state.rk&0x40)&&drv->write_mode) return;
+	if ((data->state.rk&0x40)&&(drv->write_mode&&!drv->rawfmt)) return;
 //	puts("rotate sector");
 	switch (drv->rawfmt) {
 	case 1:
 		++ drv->raw_index;
 		if (drv->raw_index == RAW_TRACK_SIZE) drv->raw_index = 0;
 		update_regs(data);
-		break;
+		return;
 	case 2:
 //		if (data->state.rd&0x40) {
 			++ drv->raw_index;
 			if (drv->raw_index == AIM_TRACK_SIZE || (drv->aim_track_data[drv->raw_index] & 0xFF00) == 0x0200) {
 				drv->raw_index = 0;
 			}
+		if (data->state.rk&0x40) {
+			if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x100) {
+				drv->aim_track_data[drv->raw_index] &= 0xFF;
+				drv->raw_dirty = 1;
+			}
+		}
 //		}
 		update_regs(data);
 		return;
@@ -733,40 +812,65 @@ static byte fdd_read_data(struct FDD_DATA*data)
 static void fdd_write_data(struct FDD_DATA*data,byte d)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
-	if (!data->initialized) return;
+	if ((!data->initialized) || drv->readonly) return;
 	if (!(data->state.rk&0x40)) return;
 //	logprint(0,TEXT("write_data: mode = %i; prolog=%i; index = %i; data = %02X"), drv->write_mode, drv->use_prolog, drv->disk_index, d);
-	if (!drv->use_prolog && !drv->write_mode && !drv->disk_index) {
-		if (d == 0xA4) drv->write_mode = 1;
-	}
-	if (!drv->use_prolog && drv->write_mode && drv->disk_index == 1) {
-		if (d == 0x95) { drv->use_prolog = 1; drv->disk_index = 13; }
-	}
-	if (!drv->write_mode) return;
-	if (drv->use_prolog) {
-		drv->prolog[drv->disk_index]=d;
-	} else {
-		drv->sector_data[drv->disk_index]=d;
-	}
-	drv->disk_index++;
-	if (drv->use_prolog) {
-		if (drv->disk_index>=FDD_PROLOG_SIZE-1) {
-			drv->write_mode=0;
-			drv->use_prolog=0;
-			drv->disk_index=0;
+	switch (drv->rawfmt) {
+	case 0:
+		if (!drv->use_prolog && !drv->write_mode && !drv->disk_index) {
+			if (d == 0xA4) drv->write_mode = 1;
 		}
-	} else {
-		if (drv->disk_index>=FDD_SECTOR_SIZE) {
-			write_sector(data);
-			drv->write_mode=0;
-			drv->use_prolog=1;
-			drv->disk_index=0;
-			drv->prolog[FDD_PROLOG_SECTOR]++;
-			if (drv->prolog[FDD_PROLOG_SECTOR]==FDD_SECTOR_COUNT)
-				drv->prolog[FDD_PROLOG_SECTOR]=0;
+		if (!drv->use_prolog && drv->write_mode && drv->disk_index == 1) {
+			if (d == 0x95) { drv->use_prolog = 1; drv->disk_index = 13; }
 		}
+		if (!drv->write_mode) return;
+		if (drv->use_prolog) {
+			drv->prolog[drv->disk_index]=d;
+		} else {
+			drv->sector_data[drv->disk_index]=d;
+		}
+		drv->disk_index++;
+		if (drv->use_prolog) {
+			if (drv->disk_index>=FDD_PROLOG_SIZE-1) {
+				drv->write_mode=0;
+				drv->use_prolog=0;
+				drv->disk_index=0;
+		}
+		} else {
+			if (drv->disk_index>=FDD_SECTOR_SIZE) {
+				write_sector(data);
+				drv->write_mode=0;
+				drv->use_prolog=1;
+				drv->disk_index=0;
+				drv->prolog[FDD_PROLOG_SECTOR]++;
+				if (drv->prolog[FDD_PROLOG_SECTOR]==FDD_SECTOR_COUNT)
+					drv->prolog[FDD_PROLOG_SECTOR]=0;
+			}
+		}
+		update_regs(data);
+	case 1:
+//		printf("nib write[%i]: %x\n", drv->raw_index, d);
+		drv->raw_track_data[drv->raw_index] = d;
+		drv->raw_dirty = 1;
+/*		++drv->raw_index;
+		if (drv->raw_index == RAW_TRACK_SIZE) drv->raw_index = 0;*/
+		update_regs(data);
+		break;
+	case 2:
+		drv->aim_track_data[drv->raw_index] &= ~0xFF;
+		if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x100) {
+			drv->aim_track_data[drv->raw_index] = 0;
+		}
+		drv->aim_track_data[drv->raw_index] |= d;
+		drv->raw_dirty = 1;
+/*		++drv->raw_index;
+		if (drv->raw_index == AIM_TRACK_SIZE || (drv->aim_track_data[drv->raw_index] & 0xFF00) == 0x0200) {
+			drv->raw_index = 0;
+		}*/
+		update_regs(data);
+		break;
 	}
-	update_regs(data);
+	data->state.rd &= ~0x80; // clear ready bit
 }
 
 
@@ -981,6 +1085,10 @@ byte fdd_io_read(unsigned short a, struct FDD_DATA*data)
 	fdd_access(data);
 	if (!data->initialized) return 0;
 	r=io_access[a].read(data);
+/*	if (data->state.rk&0x40) {
+		logprint(0, TEXT("R(%01x)=%02x "),a,r);
+//		show_info(data);
+	}*/
 //	logprint(0, TEXT("R(%01x)=%02x "),a,r);
 //	show_info(data);
 //	system_command(data->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);

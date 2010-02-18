@@ -369,7 +369,7 @@ byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr)	// C063
 
 void keyb_clear(struct SYS_RUN_STATE*sr)	// C010-C01F
 {
-	sr->cur_key &= ~0x80;
+	sr->cur_key = 0;
 }
 
 byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr)	// C010-C01F
