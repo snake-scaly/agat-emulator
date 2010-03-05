@@ -800,9 +800,9 @@ static byte fdd_read_data(struct FDD_DATA*data)
 		d = drv->raw_track_data[drv->raw_index];
 		break;
 	case 2:
-/*		logprint(0, TEXT("fdd_read_data: raw_index= %-4i, mode = %02X, data = %02x"),
-			drv->raw_index, drv->aim_track_data[drv->raw_index]>>8, drv->aim_track_data[drv->raw_index]&0xFF);
-*/		d = (byte)drv->aim_track_data[drv->raw_index];
+//		logprint(0, TEXT("fdd_read_data: raw_index= %-4i, mode = %02X, data = %02x"),
+//			drv->raw_index, drv->aim_track_data[drv->raw_index]>>8, drv->aim_track_data[drv->raw_index]&0xFF);
+		d = (byte)drv->aim_track_data[drv->raw_index];
 		break;
 	}
 	data->state.rd &= ~0x80; // clear ready bit
@@ -890,8 +890,11 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 	byte b=data->state.rk^rk;
 	data->state.rk=rk;
 	if (b&8) { // drive was changed
+		if (drv->raw_dirty) save_track_fdd(data, drv);
 		if (rk&8) data->drv=1;
 		else data->drv=0;
+//		printf(">>> drive %i\n", data->drv);
+		load_track(data, drv);
 		prepare_sector_to_read(data);
 		update_regs(data);
 		drv=data->drives+data->drv;
@@ -908,6 +911,14 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 		} else {
 			prepare_sector_to_read(data);
 		}
+	}
+	if (b&0x80) {
+		if (rk&0x80) {
+//			printf(">>> enable\n");
+		} else {
+//			printf(">>> disable\n");
+			if (drv->raw_dirty) save_track_fdd(data, drv);
+		}	
 	}
 	if (data->use_fast && (b&0x80)) { // enable
 		extern int cpu_debug;
