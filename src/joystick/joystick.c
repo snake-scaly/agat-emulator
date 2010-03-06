@@ -34,12 +34,12 @@ struct JOYDATA
 
 static int  joy_status_none(struct JOYDATA*j, int no, unsigned dt)
 {
-	return 0x7F;
+	return 0xFF;
 }
 
 static int  joy_button_none(struct JOYDATA*j, int no)
 {
-	return 0x7F;
+	return 0xFF;
 }
 
 static void joy_reset_none(struct JOYDATA*j)

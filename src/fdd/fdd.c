@@ -102,7 +102,7 @@ struct FDD_DATA
 	int	type;
 	byte	fdd_rom[FDD_ROM_SIZE];
 	int	use_fast;
-	int	sync, rd;
+	int	sync, rd, write_sync;
 };
 
 
@@ -530,6 +530,7 @@ static void save_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 
 static void save_track_fdd(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 {
+	if (drv->readonly) return;
 	if (!drv->disk) {
 		drv->error=1;
 		return;
@@ -602,6 +603,7 @@ static void make_step(struct FDD_DATA*data,byte _b)
 static void prepare_to_write(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	data->write_sync = 0;
 	if (drv->rawfmt) {
 		update_regs(data);
 		return;
@@ -623,10 +625,6 @@ static void prepare_sector_to_write(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
 	if (drv->rawfmt) {
-		if (drv->rawfmt == 2) {
-			drv->aim_track_data[drv->raw_index] &= 0xFF;
-			drv->aim_track_data[drv->raw_index] |= 0x0100;
-		}
 		return;
 	}
 	drv->write_mode=1;
@@ -715,23 +713,27 @@ static void rotate_sector(struct FDD_DATA*data)
 	case 1:
 		++ drv->raw_index;
 		if (drv->raw_index == RAW_TRACK_SIZE) drv->raw_index = 0;
-		update_regs(data);
-		return;
+		goto fin;
 	case 2:
-//		if (data->state.rd&0x40) {
-			++ drv->raw_index;
-			if (drv->raw_index == AIM_TRACK_SIZE || (drv->aim_track_data[drv->raw_index] & 0xFF00) == 0x0200) {
-				drv->raw_index = 0;
-			}
 		if (data->state.rk&0x40) {
-			if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x100) {
-				drv->aim_track_data[drv->raw_index] &= 0xFF;
-				drv->raw_dirty = 1;
-			}
+			if (data->write_sync) {
+				if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x00) {
+					drv->aim_track_data[drv->raw_index] &= 0xFF;
+					drv->aim_track_data[drv->raw_index] |= 0x100;
+					drv->raw_dirty = 1;
+				}
+			} else {
+				if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x100) {
+					drv->aim_track_data[drv->raw_index] &= 0xFF;
+					drv->raw_dirty = 1;
+				}
+			}	
 		}
-//		}
-		update_regs(data);
-		return;
+		++ drv->raw_index;
+		if (drv->raw_index == AIM_TRACK_SIZE || (drv->aim_track_data[drv->raw_index] & 0xFF00) == 0x0200) {
+			drv->raw_index = 0;
+		}
+		goto fin;
 	}
 	drv->disk_index++;
 	if (drv->use_prolog) {
@@ -750,7 +752,9 @@ static void rotate_sector(struct FDD_DATA*data)
 			if (!(data->state.rk&0x40)) prepare_sector_to_read(data);
 		}
 	}
+fin:
 	update_regs(data);
+	data->write_sync = 0;
 }
 
 
@@ -812,8 +816,9 @@ static byte fdd_read_data(struct FDD_DATA*data)
 static void fdd_write_data(struct FDD_DATA*data,byte d)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
-	if ((!data->initialized) || drv->readonly) return;
-	if (!(data->state.rk&0x40)) return;
+//	printf(">>> write_data: %02X\n", d);
+	if ((!data->initialized) || drv->readonly) goto fin;
+	if (!(data->state.rk&0x40)) goto fin;
 //	logprint(0,TEXT("write_data: mode = %i; prolog=%i; index = %i; data = %02X"), drv->write_mode, drv->use_prolog, drv->disk_index, d);
 	switch (drv->rawfmt) {
 	case 0:
@@ -858,9 +863,6 @@ static void fdd_write_data(struct FDD_DATA*data,byte d)
 		break;
 	case 2:
 		drv->aim_track_data[drv->raw_index] &= ~0xFF;
-		if ((drv->aim_track_data[drv->raw_index] & ~0xFF) == 0x100) {
-			drv->aim_track_data[drv->raw_index] = 0;
-		}
 		drv->aim_track_data[drv->raw_index] |= d;
 		drv->raw_dirty = 1;
 /*		++drv->raw_index;
@@ -870,6 +872,7 @@ static void fdd_write_data(struct FDD_DATA*data,byte d)
 		update_regs(data);
 		break;
 	}
+fin:
 	data->state.rd &= ~0x80; // clear ready bit
 }
 
@@ -1016,9 +1019,11 @@ static byte fdd_read10(struct FDD_DATA*data)
 
 static void fdd_write_syncro(struct FDD_DATA*data,byte d)
 {
+//	puts(">>> write synchro");
 	if (data->state.rk&0x40) {
 //		logprint(0,TEXT("write_syncro"));
 		prepare_sector_to_write(data);
+		data->write_sync = 1;
 	}
 }
 
