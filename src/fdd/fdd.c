@@ -499,8 +499,9 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		errprint(TEXT("can't read aim track"));
 		drv->error=1;
 	}
-	drv->raw_index = 0;
+//	drv->raw_index = 0;
 //	data->state.s |= 0x10;
+	data->state.s |= 0x10;
 	{
 		int i;
 		for (i = 0; i < AIM_TRACK_SIZE; ++i) {
@@ -509,7 +510,7 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		if (i == AIM_TRACK_SIZE) {
 			logprint(0,TEXT("aim: no index mark on track."));
 			drv->aim_track_data[0] |= 0x0300;
-			drv->aim_track_data[0x40] |= 0x1300;
+			drv->aim_track_data[0x140] |= 0x1300;
 		}
 	}
 	drv->raw_data = 1;
@@ -835,9 +836,13 @@ static byte fdd_read_data(struct FDD_DATA*data)
 		break;
 	}
 	data->state.rd &= ~0x80; // clear ready bit
-//	fprintf(stderr, "fdd_read_data: raw_index: %i; d = %02X\n", drv->raw_index, d);
-//	system_command(data->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
-//	dump_mem(data->st->sr, 0, 0x10000, "saves/mem2.bin");
+/*	fprintf(stderr, "fdd_read_data: raw_index: %i; d = %02X\n", drv->raw_index, d);
+	system_command(data->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+	if (_access("saves/mem3.bin",0)) dump_mem(data->st->sr, 0, 0x10000, "saves/mem3.bin");
+	{
+		extern int cpu_debug;
+		cpu_debug = 1;
+	}*/
 	return d;
 }
 
@@ -1056,6 +1061,7 @@ static void fdd_write_syncro(struct FDD_DATA*data,byte d)
 static void fdd_clear_syncro(struct FDD_DATA*data, byte d)
 {
 //	logprint(0, TEXT("clear sync"));
+//	fprintf(stderr, ">>clear sync\n");
 	data->sync = 0;
 	data->state.rd |= 0x40;
 }
@@ -1085,7 +1091,7 @@ static struct {
 
 void fdd_access(struct FDD_DATA*data)
 {
-	int t0 = 92;
+	int t0 = 63;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
 	dt = t - data->time;
@@ -1095,11 +1101,13 @@ void fdd_access(struct FDD_DATA*data)
 	if (dt > t0) {
 //		if (dt > 300) t0 = 30;
 		while (dt >= t0) { 
+//			fprintf(stderr, ">>rotate\n");
 //			logprint(0, TEXT("rotate"));
 			rotate_sector(data); 
 			dt -= t0; 
 		}
 		if (data->sync) {
+//			fprintf(stderr, ">>sync\n");
 //			logprint(0, TEXT("fdd sync"));
 			data->state.rd &= ~0x40;
 		}// else data->state.rd |= 0x40;
