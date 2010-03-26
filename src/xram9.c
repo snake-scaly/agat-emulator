@@ -2,12 +2,15 @@
 	Agat Emulator version 1.0
 	Copyright (c) NOP, nnop@newmail.ru
 	baseram - emulation of base ROM module for both models
+
+	Saturn RAM 128K emulation is incomplete
 */
 
 #include "sysconf.h"
 #include "types.h"
 #include "streams.h"
 #include "debug.h"
+#include "syslib.h"
 
 #include "memory.h"
 #include "runmgrint.h"
@@ -31,6 +34,7 @@ struct XRAM_STATE
 	int   ram9_enabled[8];
 	byte  psrom9_mode;
 	int   psrom9_ofs;
+	int   last_write;
 };
 
 
@@ -97,6 +101,7 @@ static int xram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 
 static void xram_restore_segment(struct XRAM_STATE*st, int ind)
 {
+	printf("xram9 restore segment: %i\n", ind);
 	if (ind<6) {
 		fill_read_proc(st->sr->base_mem+ind*4, 4, xram9_read, st);
 		fill_write_proc(st->sr->base_mem+ind*4, 4, xram9_write, st);
@@ -132,6 +137,8 @@ static void xram_restore_segment(struct XRAM_STATE*st, int ind)
 	}
 }
 
+
+
 static int xram_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 {
 	struct XRAM_STATE*st = ss->data;
@@ -152,9 +159,18 @@ static int xram_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		}
 		break;
 	case SYS_COMMAND_APPLEMODE:
+		st->psrom9_mode = 1;
+		st->psrom9_ofs=-RAM9_BANK_SIZE/2;
 		if (data) {
+			st->last_write = 0;
+			memzero(st->ram9_enabled, sizeof(st->ram9_enabled));
+			fill_rw_proc(ss->io_sel, 1, empty_read_addr, xram9_write_mapping, st);
 			fill_rw_proc(ss->baseio_sel, 1, xram9_apple_read_psrom_mode, xram9_apple_write_psrom_mode, st);
+//			system_command(st->sr, SYS_COMMAND_BASEMEM9_RESTORE, st->nslot, 6);
+//			system_command(st->sr, SYS_COMMAND_BASEMEM9_RESTORE, st->nslot, 7);
 		} else {
+			memzero(st->ram9_enabled, sizeof(st->ram9_enabled));
+			fill_rw_proc(ss->io_sel, 1, xram9_read_mapping, xram9_write_mapping, st);
 			fill_rw_proc(ss->baseio_sel, 1, xram9_read_psrom_mode, xram9_write_psrom_mode, st);
 		}
 	}
@@ -216,31 +232,70 @@ static void xram9_write_mapping(word adr,byte d,struct XRAM_STATE*st)
 	}
 }
 
+
+static byte get_state(struct XRAM_STATE*st)
+{
+	byte res = 0xC0;
+	int wr = st->psrom9_mode & 1;
+	int rd = (st->ram9_mapping[6] && (st->psrom9_mode&3)!=1) ? 1: 0;
+	if (!st->psrom9_ofs) res |= 8;
+	if (wr) res |= 1;
+	if (rd == wr) res |= 2;
+	return res;
+}
+
 static byte xram9_select_apple_psrom_mode(word adr,struct XRAM_STATE*st)
 {
 	int hi = adr & 8;
+	int sb = adr & 4;
 	int mde = adr & 3;
 	byte last_mode = st->psrom9_mode;
+	byte last_state = get_state(st);
+	printf("xram9 apple read: %x\n", adr);
 	if (hi) st->psrom9_ofs=0;
 	else st->psrom9_ofs=-RAM9_BANK_SIZE/2;
-	switch (mde) {
-	case 0:
-		st->psrom9_mode = 2 | hi | (adr & 0xF0);
-		break;
-	case 1:
-		st->psrom9_mode = 1 | hi | (adr & 0xF0);
-		break;
-	case 2:
-		st->psrom9_mode = 0 | hi | (adr & 0xF0);
-		break;
-	case 3: { int dr;
-		dr = (((st->psrom9_mode&3)==1) || ((st->psrom9_mode&3)==3));
-		st->psrom9_mode = 3 | hi | (adr & 0xF0);
-		break; }
+	if (sb) {
+		int bank = adr & 3;
+		if (adr & 8) bank |= 4;
+		printf("select bank %i\n", bank);
+		bank <<= 1;
+		st->ram9_mapping[6] = bank;
+		st->ram9_mapping[7] = bank + 1;
+	} else {
+		switch (mde) {
+		case 0:
+			st->ram9_enabled[6] = st->ram9_enabled[7] = 1;
+			st->psrom9_mode = 2 | hi | (adr & 0xF0);
+			st->last_write = 0;
+			break;
+		case 1:
+			st->ram9_enabled[6] = st->ram9_enabled[7] = 0;
+			st->psrom9_mode = st->last_write | hi | (adr & 0xF0);
+			st->last_write = 1;
+			break;
+		case 2:
+			st->ram9_enabled[6] = st->ram9_enabled[7] = 0;
+			st->psrom9_mode = 0 | hi | (adr & 0xF0);
+			st->last_write = 0;
+			break;
+		case 3: {
+			st->ram9_enabled[6] = st->ram9_enabled[7] = 1;
+			st->psrom9_mode = 2 | st->last_write | hi | (adr & 0xF0);
+			st->last_write = 1;
+			break; }
+		}
 	}
-	if (st->ram9_enabled[6]) xram_restore_segment(st, 6);
-	if (st->ram9_enabled[7]) xram_restore_segment(st, 7);
-	return last_mode;
+	if (st->ram9_enabled[6]) {
+		xram_restore_segment(st, 6);
+	} else {
+		system_command(st->sr, SYS_COMMAND_BASEMEM9_RESTORE, st->nslot, 6);
+	}
+	if (st->ram9_enabled[7]) {
+		xram_restore_segment(st, 7);
+	} else {
+		system_command(st->sr, SYS_COMMAND_BASEMEM9_RESTORE, st->nslot, 7);
+	}
+	return last_state;
 }
 
 static byte xram9_apple_read_psrom_mode(word adr,struct XRAM_STATE*st)

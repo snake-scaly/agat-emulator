@@ -35,6 +35,7 @@ struct BASERAM_STATE
 	int   psrom9_ofs;
 	byte *ram;
 	byte  apple_rom_mode;
+	int   last_write;
 };
 
 
@@ -394,7 +395,24 @@ static int ram9_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		break;
 	case SYS_COMMAND_BASEMEM9_RESTORE:
 //		printf("*** baseram9_restore_segment(%i)\n", param);
-		baseram9_restore_segment(st, param);
+		if (st->apple_emu) {
+			switch (st->apple_rom_mode&3) {
+			case 2:
+				apple_set_ext_rom_mode(1, 0, st);
+				break;
+			case 1:
+				apple_set_ext_rom_mode(0, 1, st);
+				break;
+			case 0:
+				apple_set_ext_rom_mode(0, 0, st);
+				break;
+			case 3:
+				apple_set_ext_rom_mode(1, 1, st);
+				break;
+			}
+		} else {
+			baseram9_restore_segment(st, param);
+		}
 		return 1;
 	}
 	return 0;
@@ -533,20 +551,23 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	case 0:
 		st->apple_rom_mode = 0xC2 | hi;
 		apple_set_ext_rom_mode(1, 0, st);
+		st->last_write = 0;
 		break;
 	case 1:
-		st->apple_rom_mode = 0xC1 | hi;
-		apple_set_ext_rom_mode(0, 1, st);
+		st->apple_rom_mode = 0xC0 | hi | st->last_write;
+		apple_set_ext_rom_mode(0, st->last_write, st);
+		st->last_write = 1;
 		break;
 	case 2:
 		st->apple_rom_mode = 0xC0 | hi;
 		apple_set_ext_rom_mode(0, 0, st);
+		st->last_write = 0;
 		break;
-	case 3: { int dr;
-		dr = (((st->apple_rom_mode&3)==1) || ((st->apple_rom_mode&3)==3));
-		st->apple_rom_mode = 0xC3 | hi;
-		apple_set_ext_rom_mode(1, dr, st);
-		break; }
+	case 3: 
+		st->apple_rom_mode = 0xC2 | hi | st->last_write;
+		apple_set_ext_rom_mode(1, st->last_write, st);
+		st->last_write = 1;
+		break;
 	}
 	return last_mode;
 }
@@ -561,6 +582,7 @@ void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 {
 	puts("apple mode");
 	st->sr->apple_emu = st->apple_emu = 1;
+	st->last_write = 0;
 	fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
 	fill_rw_proc(st->sr->io_sel+1, 1, empty_read_addr, empty_write, st);
 	fill_read_proc(st->sr->base_mem,24,baseram9_read, st);

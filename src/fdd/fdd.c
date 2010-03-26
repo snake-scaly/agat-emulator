@@ -1091,7 +1091,7 @@ static struct {
 
 void fdd_access(struct FDD_DATA*data)
 {
-	int t0 = 63;//92;
+	int t0 = 73;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
 	dt = t - data->time;
