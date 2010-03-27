@@ -54,7 +54,7 @@ static int ram_free(struct SLOT_RUN_STATE*ss)
 	return 0;
 }
 
-static void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st);
+static void apple_set_ext_rom_mode(int read, int write, int what, struct BASERAM_STATE*st);
 static byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st);
 static void apple_write_psrom_mode(word adr, byte d, struct BASERAM_STATE*st);
 
@@ -84,6 +84,24 @@ static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 	return 0;
 }
 
+static void upd_apple(struct BASERAM_STATE*st, int what)
+{
+	switch (st->apple_rom_mode&3) {
+	case 2:
+		apple_set_ext_rom_mode(1, 0, what, st);
+		break;
+	case 1:
+		apple_set_ext_rom_mode(0, 1, what, st);
+		break;
+	case 0:
+		apple_set_ext_rom_mode(0, 0, what, st);
+		break;
+	case 3:
+		apple_set_ext_rom_mode(1, 1, what, st);
+		break;
+	}
+}
+
 static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 {
 	struct BASERAM_STATE*st = ss->data, st0;
@@ -105,22 +123,7 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 	case SYSTEM_9:
 		if (!st->apple_emu) break;
 	case SYSTEM_A:
-		{
-			switch (st->apple_rom_mode&3) {
-			case 2:
-				apple_set_ext_rom_mode(1, 0, st);
-				break;
-			case 1:
-				apple_set_ext_rom_mode(0, 1, st);
-				break;
-			case 0:
-				apple_set_ext_rom_mode(0, 0, st);
-				break;
-			case 3:
-				apple_set_ext_rom_mode(1, 1, st);
-				break;
-			}
-		}
+		upd_apple(st, 3);
 		break;
 	}
 	return 0;
@@ -131,7 +134,7 @@ static int rama_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 	struct BASERAM_STATE*st = ss->data;
 	switch (cmd) {
 	case SYS_COMMAND_HRESET:
-		apple_set_ext_rom_mode(0, 1, st);
+		apple_set_ext_rom_mode(0, 1, 3, st);
 		clear_block(st->ram, st->ram_size);
 	}
 	return 0;
@@ -164,7 +167,7 @@ int rama_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 		}
 		fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
 		st->apple_rom_mode = 0xC1;
-		apple_set_ext_rom_mode(0, 1, st);
+		apple_set_ext_rom_mode(0, 1, 3, st);
 	}
 	return 0;
 }
@@ -227,7 +230,7 @@ static int ram7_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		}
 		break;
 	case SYS_COMMAND_XRAM_RELEASE:
-		puts("baseram: restore ram");
+//		puts("baseram: restore ram");
 		if (st->ram_size > 0x8000) {
 			fill_rw_proc(st->sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 0x4000>>BASEMEM_BLOCK_SHIFT, ram7_read, ram7_write, st);
 		} else {
@@ -395,23 +398,23 @@ static int ram9_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		break;
 	case SYS_COMMAND_BASEMEM9_RESTORE:
 //		printf("*** baseram9_restore_segment(%i)\n", param);
-		if (st->apple_emu) {
-			switch (st->apple_rom_mode&3) {
-			case 2:
-				apple_set_ext_rom_mode(1, 0, st);
-				break;
-			case 1:
-				apple_set_ext_rom_mode(0, 1, st);
-				break;
-			case 0:
-				apple_set_ext_rom_mode(0, 0, st);
-				break;
-			case 3:
-				apple_set_ext_rom_mode(1, 1, st);
-				break;
-			}
-		} else {
-			baseram9_restore_segment(st, param);
+		baseram9_restore_segment(st, param);
+		return 1;
+	case SYS_COMMAND_APPLE9_RESTORE:
+//		printf("restore base ram for %s %s\n", (*(int*)param&1)?"read":"", (*(int*)param&2)?"write":"");
+		switch (st->apple_rom_mode&3) {
+		case 2:
+			apple_set_ext_rom_mode(1, 0, *(int*)param, st);
+			break;
+		case 1:
+			apple_set_ext_rom_mode(0, 1, *(int*)param, st);
+			break;
+		case 0:
+			apple_set_ext_rom_mode(0, 0, *(int*)param, st);
+			break;
+		case 3:
+			apple_set_ext_rom_mode(1, 1, *(int*)param, st);
+			break;
 		}
 		return 1;
 	}
@@ -519,23 +522,31 @@ byte baseram9_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	return res;
 }
 
-void apple_set_ext_rom_mode(int read, int write, struct BASERAM_STATE*st)
+void apple_set_ext_rom_mode(int read, int write, int what, struct BASERAM_STATE*st)
 {
 //	printf("apple language card emulation: read=%i, write=%i\n", read, write);
 	if (st->apple_emu) {
-		fill_read_proc(st->sr->base_mem+26,2,read?apple_read_psrom_d:baseram9_read_psrom,st);
-		fill_read_proc(st->sr->base_mem+28,4,read?apple_read_psrom_e:baseram9_read,st);
-		fill_write_proc(st->sr->base_mem+26,2,write?apple_write_psrom_d:empty_write,st);
-		fill_write_proc(st->sr->base_mem+28,4,write?apple_write_psrom_e:empty_write,st);
-	} else {
-		if (!read) {
-			system_command(st->sr, SYS_COMMAND_PSROM_RELEASE, 0, 0);
-		} else {
-			fill_read_proc(st->sr->base_mem+26,2,apple_read_lang_d,st);
-			fill_read_proc(st->sr->base_mem+28,4,apple_read_lang_e,st);
+		if (what & 1) {
+			fill_read_proc(st->sr->base_mem+26,2,read?apple_read_psrom_d:baseram9_read_psrom,st);
+			fill_read_proc(st->sr->base_mem+28,4,read?apple_read_psrom_e:baseram9_read,st);
 		}
-		fill_write_proc(st->sr->base_mem+26,2,write?apple_write_lang_d:empty_write,st);
-		fill_write_proc(st->sr->base_mem+28,4,write?apple_write_lang_e:empty_write,st);
+		if (what & 2) {
+			fill_write_proc(st->sr->base_mem+26,2,write?apple_write_psrom_d:empty_write,st);
+			fill_write_proc(st->sr->base_mem+28,4,write?apple_write_psrom_e:empty_write,st);
+		}
+	} else {
+		if (what & 1) {
+			if (!read) {
+				system_command(st->sr, SYS_COMMAND_PSROM_RELEASE, 0, 0);
+			} else {
+				fill_read_proc(st->sr->base_mem+26,2,apple_read_lang_d,st);
+				fill_read_proc(st->sr->base_mem+28,4,apple_read_lang_e,st);
+			}
+		}
+		if (what & 2) {
+			fill_write_proc(st->sr->base_mem+26,2,write?apple_write_lang_d:empty_write,st);
+			fill_write_proc(st->sr->base_mem+28,4,write?apple_write_lang_e:empty_write,st);
+		}
 	}
 }
 
@@ -550,22 +561,22 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	switch (mde) {
 	case 0:
 		st->apple_rom_mode = 0xC2 | hi;
-		apple_set_ext_rom_mode(1, 0, st);
+		apple_set_ext_rom_mode(1, 0, 3, st);
 		st->last_write = 0;
 		break;
 	case 1:
 		st->apple_rom_mode = 0xC0 | hi | st->last_write;
-		apple_set_ext_rom_mode(0, st->last_write, st);
+		apple_set_ext_rom_mode(0, st->last_write, 3, st);
 		st->last_write = 1;
 		break;
 	case 2:
 		st->apple_rom_mode = 0xC0 | hi;
-		apple_set_ext_rom_mode(0, 0, st);
+		apple_set_ext_rom_mode(0, 0, 3, st);
 		st->last_write = 0;
 		break;
 	case 3: 
 		st->apple_rom_mode = 0xC2 | hi | st->last_write;
-		apple_set_ext_rom_mode(1, st->last_write, st);
+		apple_set_ext_rom_mode(1, st->last_write, 3, st);
 		st->last_write = 1;
 		break;
 	}
@@ -588,7 +599,7 @@ void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 	fill_read_proc(st->sr->base_mem,24,baseram9_read, st);
 	fill_write_proc(st->sr->base_mem,24,baseram9_write, st);
 	st->apple_rom_mode = 0xC1;
-	apple_set_ext_rom_mode(0, 1, st);
+	apple_set_ext_rom_mode(0, 1, 3, st);
 	system_command(st->sr, SYS_COMMAND_APPLEMODE, 1, 0);
 }
 

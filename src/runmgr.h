@@ -22,6 +22,7 @@ enum {
 	SYS_COMMAND_PSROM_RELEASE, // restore PSROM module
 	SYS_COMMAND_APPLEMODE, // switch to apple mode
 	SYS_COMMAND_BASEMEM9_RESTORE, // restore mapping
+	SYS_COMMAND_APPLE9_RESTORE, // restore mapping in apple mode; data=slot, param: int* 1-restore read, 2-restore write.
 	SYS_COMMAND_ACTIVATE, // activate window
 	SYS_COMMAND_WINCMD, // WM_COMMAND event: data = command, param = hwnd
 	SYS_COMMAND_INITMENU, // used to init menus, param = menu handle
