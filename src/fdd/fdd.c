@@ -494,7 +494,7 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
 	drv->raw_track_ofs = drv->start_ofs+(t0 * AIM_TRACK_SIZE*2);
 	isseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
-	logprint(0,TEXT("reading aim track %i"), t0);
+//	logprint(0,TEXT("reading aim track %i"), t0);
 	if (isread(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
 		errprint(TEXT("can't read aim track"));
 		drv->error=1;
@@ -508,7 +508,7 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 			if ((drv->aim_track_data[i] & 0xEF00) == 0x0300) break;
 		}
 		if (i == AIM_TRACK_SIZE) {
-			logprint(0,TEXT("aim: no index mark on track."));
+//			logprint(0,TEXT("aim: no index mark on track."));
 			drv->aim_track_data[0] |= 0x0300;
 			drv->aim_track_data[0x30] |= 0x1300;
 		}
@@ -575,7 +575,7 @@ static void load_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		errprint(TEXT("can't read raw track"));
 		drv->error=1;
 	}
-	drv->raw_index = 0;
+//	drv->raw_index = 0;
 }
 
 
@@ -596,7 +596,7 @@ static void make_step(struct FDD_DATA*data,byte _b)
 	}
 	switch (drv->rawfmt) {
 	case 0: break;
-	case 1: break;
+	case 1: 
 	case 2: drv->raw_index = 0; data->state.s &= ~0x10; break;
 	}
 	drv->prolog[FDD_PROLOG_SECTOR]=FDD_SECTOR_COUNT-1;
@@ -948,7 +948,7 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 		} else { // read
 			extern int cpu_debug;
 	//		cpu_debug = 1;
-//			if (_access("saves/mem3.bin",0)) dump_mem(data->st->sr, 0, 0x10000, "saves/mem3.bin");
+//			if (_access("saves/mem4.bin",0)) dump_mem(data->st->sr, 0, 0x10000, "saves/mem4.bin");
 			prepare_sector_to_read(data);
 		}
 	}
@@ -1098,10 +1098,10 @@ static struct {
 
 void fdd_access(struct FDD_DATA*data)
 {
-	int t0 = 65;//92;
+	int t0 = 75;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
-	if (data->state.rd&0x80) data->time -= 5;
+	if (data->state.rd&0x80) data->time -= 8;
 	dt = t - data->time;
 	if (dt > t0 * 10) dt = t0 * 10;
 	if (!(data->state.rk & 0x80)) { data->time = t; return; }

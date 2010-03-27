@@ -74,6 +74,8 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 
 	SetDlgItemText(hwnd, IDC_FW1_NAME, conf->cfgstr[CFG_STR_ROM]);
 	SetDlgItemText(hwnd, IDC_FW2_NAME, conf->cfgstr[CFG_STR_ROM2]);
+
+	EnableDlgItem(hwnd, IDC_PRINT_MODE, conf->dev_type != DEV_MOUSE_PAR);
 	return 0;
 }
 

@@ -356,7 +356,8 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	byte r;
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 
-	if (!d->disk) { d->error = 1; return rand()%0xFF; }
+	if (!d->present) return 0;
+	if (!d->disk) { d->error = 1; return rand()%0x80; }
 
 	if (!(data->time&3)) r = 0;
 	else {
@@ -873,7 +874,9 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		break;
 	case 12:
 		if (data->state.ReadMode) {
-			r = fdd_read_data(data);
+			if (data->state.MotorOn)
+				r = fdd_read_data(data);
+			else r = rand()%0x80;
 		} else {
 			fdd_write_data(data);
 		}

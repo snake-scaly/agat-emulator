@@ -133,6 +133,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("1.DSK"));
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE2], TEXT("2.DSK"));
 		return 0;
+	case DEV_MOUSE_PAR:
 	case DEV_PRINTER9:
 		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
@@ -390,6 +391,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_PRINTER9:
 		localize_str(LOC_PRINTER, c->cfgint[CFG_INT_PRINT_MODE], buf, 1024);
 		_tcscat(buf, TEXT("; "));
+	case DEV_MOUSE_PAR:
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);

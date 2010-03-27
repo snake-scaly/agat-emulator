@@ -86,6 +86,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_MEMORY_SATURN:
 		puts("saturnmem_init");
 		return saturnmem_init(sr, st, sc);
+	case DEV_MOUSE_PAR:
+		puts("mouse9_init");
+		return mouse9_init(sr, st, sc);
 	}
 	return 0;
 }

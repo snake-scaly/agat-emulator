@@ -463,6 +463,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_LBUTTONDOWN:
 		SetCapture(w);
+		ShowCursor(FALSE);
 		sr->mousebtn|=1;
 /*		if (GetKeyState(VK_MENU)) 
 			TrackPopupMenu(popup_menu,0,
@@ -471,13 +472,16 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_RBUTTONDOWN:
 		SetCapture(w);
+		ShowCursor(FALSE);
 		sr->mousebtn|=2;
 		break;
 	case WM_LBUTTONUP:
+		ShowCursor(TRUE);
 		ReleaseCapture();
 		sr->mousebtn&=~1;
 		break;
 	case WM_RBUTTONUP:
+		ShowCursor(TRUE);
 		ReleaseCapture();
 		sr->mousebtn&=~2;
 		break;

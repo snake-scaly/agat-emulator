@@ -44,6 +44,7 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTER9);
 		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
+		DevList_AddItem(hlist, DEV_MOUSE_PAR);
 		return 0;
 	case 2: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
