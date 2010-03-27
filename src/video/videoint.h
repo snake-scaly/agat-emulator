@@ -34,7 +34,7 @@
 #define N_RBINT_9 40
 
 #define N_RBINT_DELAY_7 700
-#define N_RBINT_DELAY_9 100
+#define N_RBINT_DELAY_9 70
 
 #define MAX_RASTER_RANGES 2
 

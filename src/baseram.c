@@ -24,6 +24,19 @@ void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st);
 
 static const int startup_ram9_mapping[16]={0,1,2,3,4,5,6,7,0,0,0,0,0,0,0,0};
 
+struct BASERAM_STATE_SAV
+{
+	struct SYS_RUN_STATE*sr;
+	dword ram_size;
+	dword basemem7_mapping[3];
+	int   ram9_mapping[16];
+	int   apple_emu;
+	byte  psrom9_mode;
+	int   psrom9_ofs;
+	byte *ram;
+	byte  apple_rom_mode;
+};
+
 struct BASERAM_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -78,8 +91,10 @@ static struct BASERAM_STATE*ram_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_ST
 
 static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 {
+	struct BASERAM_STATE_SAV st0;
 	struct BASERAM_STATE*st = ss->data;
-	WRITE_FIELD(out, *st);
+	memcpy(&st0, st, sizeof(st0));
+	WRITE_FIELD(out, st0);
 	oswrite(out, st->ram, st->ram_size);
 	return 0;
 }
@@ -104,12 +119,13 @@ static void upd_apple(struct BASERAM_STATE*st, int what)
 
 static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 {
-	struct BASERAM_STATE*st = ss->data, st0;
+	struct BASERAM_STATE*st = ss->data;
+	struct BASERAM_STATE_SAV st0;
 	int lm = st->apple_emu;
 	READ_FIELD(in, st0);
 	st0.sr = st->sr;
 	st0.ram = st->ram;
-	*st = st0;
+	memcpy(st, &st0, sizeof(st0));
 	isread(in, st->ram, st->ram_size);
 	system_command(st->sr, SYS_COMMAND_REPAINT, 0, 0);
 	if (st->apple_emu != lm) {

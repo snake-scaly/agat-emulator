@@ -437,13 +437,13 @@ static void update_regs(struct FDD_DATA*data)
 		if (drv->prolog[FDD_PROLOG_TRACK]>1) x|=0x40;
 		if (!drv->readonly) x|=0x20;
 		if (drv->rawfmt) {
-			if (drv->raw_index > 5 && drv->raw_index < RAW_TRACK_SIZE-50) x |= 0x10;
+			if (drv->raw_index > 250 && drv->raw_index < RAW_TRACK_SIZE-50) x |= 0x10;
 		} else {
 			if (drv->use_prolog) {
-				if (drv->prolog[FDD_PROLOG_SECTOR]>11) x|=0x10;
+				if (drv->prolog[FDD_PROLOG_SECTOR]>2) x|=0x10;
 			} else {
 				if ((drv->prolog[FDD_PROLOG_SECTOR]!=FDD_SECTOR_COUNT-1||drv->disk_index<FDD_SECTOR_SIZE-50)
-					&&drv->prolog[FDD_PROLOG_SECTOR]>11) x|=0x10;
+					&&drv->prolog[FDD_PROLOG_SECTOR]>2) x|=0x10;
 			}
 		}
 		if (drv->error) x &= 0x7F;
@@ -499,9 +499,9 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		errprint(TEXT("can't read aim track"));
 		drv->error=1;
 	}
-//	drv->raw_index = 0;
-//	data->state.s |= 0x10;
-	data->state.s |= 0x10;
+//	printf("disk index = %i; state&0x10 = %x\n", drv->disk_index, data->state.s&0x10);
+//	if (drv->disk_index > 0x140) data->state.s |= 0x10;
+//	else data->state.s &= ~0x10;
 	{
 		int i;
 		for (i = 0; i < AIM_TRACK_SIZE; ++i) {
@@ -510,7 +510,7 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		if (i == AIM_TRACK_SIZE) {
 			logprint(0,TEXT("aim: no index mark on track."));
 			drv->aim_track_data[0] |= 0x0300;
-			drv->aim_track_data[0x140] |= 0x1300;
+			drv->aim_track_data[0x30] |= 0x1300;
 		}
 	}
 	drv->raw_data = 1;
@@ -593,6 +593,11 @@ static void make_step(struct FDD_DATA*data,byte _b)
 			drv->prolog[FDD_PROLOG_TRACK]-=2;
 			load_track(data, drv);
 		}
+	}
+	switch (drv->rawfmt) {
+	case 0: break;
+	case 1: break;
+	case 2: drv->raw_index = 0; data->state.s &= ~0x10; break;
 	}
 	drv->prolog[FDD_PROLOG_SECTOR]=FDD_SECTOR_COUNT-1;
 	drv->disk_index=250;
@@ -942,7 +947,8 @@ static void fdd_write_rk(struct FDD_DATA*data,byte rk)
 			prepare_to_write(data);
 		} else { // read
 			extern int cpu_debug;
-//			cpu_debug = 1;
+	//		cpu_debug = 1;
+//			if (_access("saves/mem3.bin",0)) dump_mem(data->st->sr, 0, 0x10000, "saves/mem3.bin");
 			prepare_sector_to_read(data);
 		}
 	}
@@ -996,7 +1002,7 @@ static void fdd_prepare_run(struct FDD_DATA*data)
 	data->initialized=1;
 	data->drv=0;
 	data->state.rd=0x5F;
-	data->state.s=0;
+	data->state.s=0x10;
 	data->sync = 0;
 	data->rd = 0;
 	fdd_write_rk(data,0);
@@ -1064,6 +1070,7 @@ static void fdd_clear_syncro(struct FDD_DATA*data, byte d)
 //	fprintf(stderr, ">>clear sync\n");
 	data->sync = 0;
 	data->state.rd |= 0x40;
+	data->time += 100;
 }
 
 
@@ -1091,11 +1098,12 @@ static struct {
 
 void fdd_access(struct FDD_DATA*data)
 {
-	int t0 = 73;//92;
+	int t0 = 65;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
+	if (data->state.rd&0x80) data->time -= 5;
 	dt = t - data->time;
-	if (dt > t0 * 100) dt = t0 * 100;
+	if (dt > t0 * 10) dt = t0 * 10;
 	if (!(data->state.rk & 0x80)) { data->time = t; return; }
 //	logprint(0, TEXT("dt = %i"), dt);
 	if (dt > t0) {

@@ -1237,7 +1237,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 	if (cpu_debug || (c->flags & CMD_NEW)) {
 		op_disassemble(st, c);
 	}
-	if (c->adr) c->adr(st); else n++;
+	if (c->adr) c->adr(st);
 	if (c->cmd) c->cmd(st); else n++;
 	n += c->ticks;
 	return n;

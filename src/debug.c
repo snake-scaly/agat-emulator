@@ -64,7 +64,7 @@ void logprint(int lev,const char_t*fmt,...)
 	xvsprintf(buf,fmt,l);
 	va_end(l);
 	xsprintf(buf1,TEXT("log[%8i]: %s\n"),get_n_msec()-start_ticks,buf);
-	fprintf(stderr,"log: %s",buf1);
+	fprintf(stderr,"%s",buf1);
 	if (hlog) oswrite(hlog,buf1,s_len(buf1)*sizeof(buf1[0]));
 #ifdef CONSOLE
 	oswrite(hstdout,buf1,s_len(buf1));
@@ -79,7 +79,7 @@ void errprint(const char_t*fmt,...)
 	xvsprintf(buf,fmt,l);
 	va_end(l);
 	xsprintf(buf1,TEXT("error[%8i]: %s\n"),get_n_msec()-start_ticks,buf);
-	fprintf(stderr,"err: %s",buf1);
+	fprintf(stderr,"%s",buf1);
 	if (hlog) oswrite(hlog,buf1,s_len(buf1)*sizeof(buf1[0]));
 #ifdef CONSOLE
 	oswrite(hstdout,buf1,s_len(buf1));
