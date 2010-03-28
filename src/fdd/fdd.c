@@ -799,24 +799,6 @@ static byte fdd_read_rk(struct FDD_DATA*data)
 	return data->state.rk;
 }
 
-static byte xmem_read(word a, struct SYS_RUN_STATE*sr)
-{
-	if (a >= 0xC000 && a < 0xD000) return 0xFF;
-	return mem_read(a, sr);
-}
-
-int dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
-{
-	FILE*f = fopen(fname, "wb");
-	if (!f) return -1;
-	for (;size; --size, ++start) {
-		byte b = xmem_read(start, sr);
-		fwrite(&b, 1, 1, f);
-	}
-	fclose(f);
-	return 0;
-}
-
 static byte fdd_read_data(struct FDD_DATA*data)
 {
 	byte d;
@@ -1098,6 +1080,7 @@ static struct {
 
 void fdd_access(struct FDD_DATA*data)
 {
+	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
 	int t0 = 75;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
@@ -1120,7 +1103,7 @@ void fdd_access(struct FDD_DATA*data)
 			data->state.rd &= ~0x40;
 		}// else data->state.rd |= 0x40;
 		data->sync = 0;
-		data->state.rd |= 0x80;
+		if (drv->present && drv->disk) data->state.rd |= 0x80;
 		data->time = t - dt;
 		data->rd = 0;
 	}

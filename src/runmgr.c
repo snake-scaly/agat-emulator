@@ -392,7 +392,11 @@ void keyb_clear_w(word adr, byte d, struct SYS_RUN_STATE*sr)	// C010-C01F
 void mem_write(word adr, byte data, struct SYS_RUN_STATE*sr)
 {
 	int ind=adr>>0x0B;
-//	printf("mem_write(%04X, %02X)\n", adr, data);
+/*	if (adr == 0x87) {
+		logprint(0, "mem_write(%04X, %02X)", adr, data);
+		system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+		if (access("memdump1.bin", 0)) dump_mem(sr, 0, 0x10000, "memdump1.bin");
+	}*/
 	mem_proc_write(adr, data, sr->base_mem + ind);
 }
 

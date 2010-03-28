@@ -311,6 +311,25 @@ static void full_to_scr(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
 	d->bottom = (s->bottom + 1) / k2 - 1;
 }
 
+
+static byte xmem_read(word a, struct SYS_RUN_STATE*sr)
+{
+	if (a >= 0xC000 && a < 0xD000) return 0xFF;
+	return mem_read(a, sr);
+}
+
+int dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
+{
+	FILE*f = fopen(fname, "wb");
+	if (!f) return -1;
+	for (;size; --size, ++start) {
+		byte b = xmem_read(start, sr);
+		fwrite(&b, 1, 1, f);
+	}
+	fclose(f);
+	return 0;
+}
+
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
 	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
@@ -416,6 +435,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_SYSKEYDOWN:
 		switch (wp) {
 		case VK_F12: { extern int cpu_debug; cpu_debug = !cpu_debug; } break;
+		case VK_F11:
+			dump_mem(sr, 0, 0x10000, "memdump.bin");
+			break;
 		case VK_RETURN:
 			if (GetKeyState(VK_MENU)&0x8000) {
 				set_fullscreen(sr, !sr->fullscreen);

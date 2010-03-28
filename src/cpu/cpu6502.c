@@ -252,65 +252,65 @@ static void ea_show__acc(struct STATE_6502*st, FILE*out)
 
 static void ea_show_rel(struct STATE_6502*st, FILE*out)
 {
-	word a=(signed char)xmem_read(st->pc, st->sr)+(st->pc+1);
+	word a=(signed char)mem_read(st->pc, st->sr)+(st->pc+1);
 	fprintf(out," %04X",a);
 }
 
 
 static void ea_show_abs(struct STATE_6502*st, FILE*out)
 {
-	word a=xmem_read_word(st, st->pc);
-	fprintf(out," %04X (%02X)",a,xmem_read(a, st->sr));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X ([%04X]=%02X)",a,a,xmem_read(a, st->sr));
 }
 
 static void ea_show_zp(struct STATE_6502*st, FILE*out)
 {
-	byte a=xmem_read(st->pc, st->sr);
-	fprintf(out," %02X (%02X)",a,xmem_read(a, st->sr));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X ([%02X]=%02X)",a,a,xmem_read(a, st->sr));
 }
 
 static void ea_show_zpx(struct STATE_6502*st, FILE*out)
 {
-	byte a=xmem_read(st->pc, st->sr);
-	fprintf(out," %02X,X (%02X)",a,xmem_read((word)(a+st->x),st->sr));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X,X ([%02X]=%02X)",a,(byte)(a+st->x), xmem_read((byte)(a+st->x),st->sr));
 }
 
 static void ea_show_zpy(struct STATE_6502*st, FILE*out)
 {
-	byte a=xmem_read(st->pc, st->sr);
-	fprintf(out," %02X,Y (%02X)",a,xmem_read((word)(a+st->y), st->sr));
+	byte a=mem_read(st->pc, st->sr);
+	fprintf(out," %02X,Y ([%02X]=%02X)",a,(byte)(a+st->y), xmem_read((byte)(a+st->y), st->sr));
 }
 
 static void ea_show_absx(struct STATE_6502*st, FILE*out)
 {
-	word a=xmem_read_word(st, st->pc);
-	fprintf(out," %04X,X (%02X)",a,xmem_read((word)(a+st->x), st->sr));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X,X ([%04X]=%02X)",a,(word)(a+st->x), xmem_read((word)(a+st->x), st->sr));
 }
 
 static void ea_show_absy(struct STATE_6502*st, FILE*out)
 {
-	word a=xmem_read_word(st, st->pc);
-	fprintf(out," %04X,Y (%02X)",a,xmem_read((word)(a+st->y),st->sr));
+	word a=mem_read_word(st, st->pc);
+	fprintf(out," %04X,Y ([%04X]=%02X)",a,(word)(a+st->y), xmem_read((word)(a+st->y),st->sr));
 }
 
 static void ea_show_indx(struct STATE_6502*st, FILE*out)
 {
-	byte a=xmem_read(st->pc,st->sr);
-	word adr = xmem_read_word_page(st, a + st->x);
+	byte a=mem_read(st->pc,st->sr);
+	word adr = mem_read_word_page(st, a + st->x);
 	fprintf(out," (%02X,X) ([%04X]=%02X)",a,adr,xmem_read(adr, st->sr));
 }
 
 static void ea_show_indy(struct STATE_6502*st, FILE*out)
 {
-	byte a=xmem_read(st->pc,st->sr);
-	word adr = xmem_read_word_page(st, a) + st->y;
+	byte a=mem_read(st->pc,st->sr);
+	word adr = mem_read_word_page(st, a) + st->y;
 	fprintf(out," (%02X),Y ([%04X]=%02X)",a,adr,xmem_read(adr, st->sr));
 }
 
 static void ea_show_ind(struct STATE_6502*st, FILE*out)
 {
-	word a=xmem_read_word(st,st->pc);
-	word adr = xmem_read_word_page(st, a);
+	word a=mem_read_word(st,st->pc);
+	word adr = mem_read_word_page(st, a);
 	fprintf(out," (%04X) ([%04X]=%02X)",a,adr,xmem_read(adr, st->sr));
 }
 
