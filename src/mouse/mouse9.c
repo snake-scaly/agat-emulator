@@ -130,8 +130,10 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-
 	}
 }
 
-#define DIV_H 512
-#define DIV_V 512
+#define DIV_H 600
+#define DIV_V 600
+#define MAX_H 7
+#define MAX_V 7
 
 static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 {
@@ -147,14 +149,14 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 		pcs->regs[2] = 0x01;
 		if (pcs->regs[0] & 0x80) { // delta y
 			ofs = pcs->st->sr->ymousepos/DIV_V - pcs->lastpos[1];
-			if (ofs > 7) ofs = 7;
-			if (ofs < -7) ofs = -7;
+			if (ofs > MAX_V) ofs = MAX_V;
+			if (ofs < -MAX_V) ofs = -MAX_V;
 			pcs->lastpos[1] += ofs;
 			ofs = -ofs;
 		} else { // delta x
 			ofs = pcs->st->sr->xmousepos/DIV_H - pcs->lastpos[0];
-			if (ofs > 7) ofs = 7;
-			if (ofs < -7) ofs = -7;
+			if (ofs > MAX_H) ofs = MAX_H;
+			if (ofs < -MAX_H) ofs = -MAX_H;
 			pcs->lastpos[0] += ofs;
 		}
 //		printf("(%i,%i)->(%i,%i)\n", pcs->lastpos[0], pcs->lastpos[1], pcs->st->sr->xmousepos/DIV_H, pcs->st->sr->ymousepos/DIV_V);
