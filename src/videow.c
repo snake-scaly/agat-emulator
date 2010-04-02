@@ -318,6 +318,42 @@ static byte xmem_read(word a, struct SYS_RUN_STATE*sr)
 	return mem_read(a, sr);
 }
 
+int lock_mouse(struct SYS_RUN_STATE*sr)
+{
+	RECT r;
+	if (sr->mouselocked) return 1;
+	sr->mouselocked = 1;
+	SetClassLongPtr(sr->video_w, GCL_HCURSOR, 0);
+	ShowCursor(FALSE);
+	GetClientRect(sr->video_w, &r);
+	{
+		POINT pt = {(r.right+r.left)/2, (r.bottom-r.top)/2};
+		ClientToScreen(sr->video_w, &pt);
+		SetCursorPos(pt.x, pt.y);
+	}
+	return 0;
+}
+
+int unlock_mouse(struct SYS_RUN_STATE*sr)
+{
+	RECT r;
+	if (!sr->mouselocked) return 1;
+	sr->mouselocked = 0;
+	SetClassLongPtr(sr->video_w, GCL_HCURSOR, (LONG)LoadCursor(NULL,IDC_ARROW));
+	ShowCursor(TRUE);
+	GetClientRect(sr->video_w, &r);
+	{
+		POINT pt = {
+			sr->xmousepos * (r.right - r.left) / 0xFFFF,
+			sr->ymousepos * (r.bottom - r.top) / 0xFFFF
+		};
+		ClientToScreen(sr->video_w, &pt);
+		SetCursorPos(pt.x, pt.y);
+	}
+	return 0;
+}
+
+
 int dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
 {
 	FILE*f = fopen(fname, "wb");
@@ -415,10 +451,18 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		free_system_state(sr);
 		break;
 	case WM_ACTIVATE:
+		switch (wp) {
+		case WA_CLICKACTIVE:
+			if (sr->mouselock) lock_mouse(sr);
+			break;
+		case WA_INACTIVE:
+			unlock_mouse(sr);
+			break;
+		}
 		if (sr->pause_inactive) {
 			switch (wp) {
-			case WA_ACTIVE:
 			case WA_CLICKACTIVE:
+			case WA_ACTIVE:
 				system_command(sr, SYS_COMMAND_START, 0, 0);
 				break;
 			case WA_INACTIVE:
@@ -459,6 +503,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F4:
 			system_command(sr, SYS_COMMAND_TOGGLE_MONO, 0, 0);
 			break;
+		case VK_F5:
+			unlock_mouse(sr);
+			break;
 		case VK_APPS:
 			system_command(sr, SYS_COMMAND_FAST, 1, 0);
 			break;
@@ -484,8 +531,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		break;
 	case WM_LBUTTONDOWN:
-		SetCapture(w);
-		ShowCursor(FALSE);
+		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=1;
 /*		if (GetKeyState(VK_MENU)) 
 			TrackPopupMenu(popup_menu,0,
@@ -493,18 +539,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				0,w,NULL);*/
 		break;
 	case WM_RBUTTONDOWN:
-		SetCapture(w);
-		ShowCursor(FALSE);
+		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=2;
 		break;
 	case WM_LBUTTONUP:
-		ShowCursor(TRUE);
-		ReleaseCapture();
 		sr->mousebtn&=~1;
 		break;
 	case WM_RBUTTONUP:
-		ShowCursor(TRUE);
-		ReleaseCapture();
 		sr->mousebtn&=~2;
 		break;
 	case WM_DESTROY:
@@ -555,10 +596,35 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_MOUSEMOVE:
 		{
 			RECT r;
+			int x, y;
 			GetClientRect(w, &r);
-			sr->xmousepos=((long)(short)LOWORD(lp))*0xFFFF/(r.right-r.left);
-			sr->ymousepos=((long)(short)HIWORD(lp))*0xFFFF/(r.bottom-r.top);
-//			printf("x=%i, y=%i\n", xmousepos, ymousepos);
+			x=((long)(short)LOWORD(lp))*0xFFFF/(r.right-r.left);
+			y=((long)(short)HIWORD(lp))*0xFFFF/(r.bottom-r.top);
+			if (sr->mouselocked) {
+				POINT pt = {(r.right+r.left)/2, (r.bottom-r.top)/2};
+				int lx = pt.x*0xFFFF/(r.right-r.left);
+				int ly = pt.y*0xFFFF/(r.bottom-r.top);
+				sr->dxmouse = x - lx;
+				sr->dymouse = y - ly;
+				sr->xmousepos += sr->dxmouse;
+				sr->ymousepos += sr->dymouse;
+				if (sr->xmousepos > 0xFFFF) sr->xmousepos = 0xFFFF;
+				if (sr->ymousepos > 0xFFFF) sr->ymousepos = 0xFFFF;
+				if (sr->xmousepos < 0) sr->xmousepos = 0;
+				if (sr->ymousepos < 0) sr->ymousepos = 0;
+				if ((pt.x != (short)LOWORD(lp)) || (pt.y != (short)HIWORD(lp))) {
+					ClientToScreen(w, &pt);
+					SetCursorPos(pt.x, pt.y);
+				}
+			} else {
+				sr->dxmouse = x - sr->xmousepos;
+				sr->dymouse = y - sr->ymousepos;
+				sr->xmousepos = x;
+				sr->ymousepos = y;
+			}
+			sr->xmouse += sr->dxmouse;
+			sr->ymouse += sr->dymouse;
+//			printf("x=%i, y=%i\n", sr->xmousepos, sr->ymousepos);
 		}
 		break;
 	case WM_INPUTLANGCHANGE:

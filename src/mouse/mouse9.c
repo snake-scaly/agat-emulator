@@ -143,18 +143,18 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 	switch (adr) {
 	case 2:
 		if (pcs->lastpos[0] == -1 && pcs->lastpos[1] == -1) {
-			pcs->lastpos[0] = pcs->st->sr->xmousepos/DIV_H;
-			pcs->lastpos[1] = pcs->st->sr->ymousepos/DIV_V;
+			pcs->lastpos[0] = pcs->st->sr->xmouse/DIV_H;
+			pcs->lastpos[1] = pcs->st->sr->ymouse/DIV_V;
 		}
 		pcs->regs[2] = 0x01;
 		if (pcs->regs[0] & 0x80) { // delta y
-			ofs = pcs->st->sr->ymousepos/DIV_V - pcs->lastpos[1];
+			ofs = pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1];
 			if (ofs > MAX_V) ofs = MAX_V;
 			if (ofs < -MAX_V) ofs = -MAX_V;
 			pcs->lastpos[1] += ofs;
 			ofs = -ofs;
 		} else { // delta x
-			ofs = pcs->st->sr->xmousepos/DIV_H - pcs->lastpos[0];
+			ofs = pcs->st->sr->xmouse/DIV_H - pcs->lastpos[0];
 			if (ofs > MAX_H) ofs = MAX_H;
 			if (ofs < -MAX_H) ofs = -MAX_H;
 			pcs->lastpos[0] += ofs;
@@ -208,6 +208,8 @@ int  mouse9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTC
 	st->command = printer_command;
 	st->load = printer_load;
 	st->save = printer_save;
+
+	++sr->mouselock;
 
 	fill_rw_proc(st->io_sel, 1, printer_rom_r, empty_write, pcs);
 	fill_rw_proc(st->baseio_sel, 1, printer_io_r, printer_io_w, pcs);

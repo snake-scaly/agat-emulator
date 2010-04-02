@@ -31,7 +31,11 @@ struct SYS_RUN_STATE
 	HDC mem_dc;
 	int bmp_pitch;
 	LPVOID bmp_bits;
-	int xmousepos, ymousepos;
+	int xmousepos, ymousepos; // restricted position
+	int xmouse, ymouse; // unrestricted position
+	int dxmouse, dymouse;
+	int mouselock;
+	int mouselocked;
 	int mousebtn;
 	int keyreg;
 	int cur_key;
