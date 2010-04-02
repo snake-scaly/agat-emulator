@@ -488,6 +488,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				return 0;
 			}
 			break;
+		case VK_PAUSE:
+			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
+			break;
 		}
 		break;
 	case WM_KEYDOWN:

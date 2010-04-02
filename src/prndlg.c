@@ -63,19 +63,36 @@ static void PrnList_AddItem(HWND hlist, int id, int selid)
 	}
 }
 
+static void MouseList_AddItem(HWND hlist, int id, int selid)
+{
+	int no;
+	TCHAR buf[1024];
+	no = ComboBox_AddStringData(hlist, localize_str(LOC_MOUSE, 10 + id, buf, sizeof(buf)), id);
+	if (id == selid) {
+		ComboBox_SetCurSel(hlist, no);
+	}
+}
+
 static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 {
 	HWND hlist;
 	hlist = GetDlgItem(hwnd, IDC_PRINT_MODE);
-	PrnList_AddItem(hlist, PRINT_RAW, conf->cfgint[CFG_INT_PRINT_MODE]);
-	PrnList_AddItem(hlist, PRINT_TEXT, conf->cfgint[CFG_INT_PRINT_MODE]);
-	PrnList_AddItem(hlist, PRINT_TIFF, conf->cfgint[CFG_INT_PRINT_MODE]);
-	PrnList_AddItem(hlist, PRINT_PRINT, conf->cfgint[CFG_INT_PRINT_MODE]);
-
+	if (conf->dev_type == DEV_MOUSE_PAR) {
+		TCHAR buf[1024];
+		SetWindowText(hwnd, localize_str(LOC_MOUSE, 0, buf, sizeof(buf)));
+		SetDlgItemText(hwnd, 102, localize_str(LOC_MOUSE, 1, buf, sizeof(buf)));
+		MouseList_AddItem(hlist, MOUSE_NONE, conf->cfgint[CFG_INT_MOUSE_TYPE]);
+		MouseList_AddItem(hlist, MOUSE_MM8031, conf->cfgint[CFG_INT_MOUSE_TYPE]);
+		MouseList_AddItem(hlist, MOUSE_MARS, conf->cfgint[CFG_INT_MOUSE_TYPE]);
+	} else {
+		PrnList_AddItem(hlist, PRINT_RAW, conf->cfgint[CFG_INT_PRINT_MODE]);
+		PrnList_AddItem(hlist, PRINT_TEXT, conf->cfgint[CFG_INT_PRINT_MODE]);
+		PrnList_AddItem(hlist, PRINT_TIFF, conf->cfgint[CFG_INT_PRINT_MODE]);
+		PrnList_AddItem(hlist, PRINT_PRINT, conf->cfgint[CFG_INT_PRINT_MODE]);
+	}
 	SetDlgItemText(hwnd, IDC_FW1_NAME, conf->cfgstr[CFG_STR_ROM]);
 	SetDlgItemText(hwnd, IDC_FW2_NAME, conf->cfgstr[CFG_STR_ROM2]);
 
-	EnableDlgItem(hwnd, IDC_PRINT_MODE, conf->dev_type != DEV_MOUSE_PAR);
 	return 0;
 }
 

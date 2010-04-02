@@ -181,6 +181,12 @@ enum {
 };
 
 enum {
+	MOUSE_NONE,
+	MOUSE_MM8031,
+	MOUSE_MARS
+};
+
+enum {
 	CFG_INT_DRV_TYPE1,
 	CFG_INT_DRV_TYPE2,
 	CFG_INT_DRV_COUNT,
@@ -232,6 +238,10 @@ enum {
 
 enum {
 	CFG_INT_PRINT_MODE,
+};
+
+enum {
+	CFG_INT_MOUSE_TYPE,
 };
 
 #endif //SYSCONF_H
