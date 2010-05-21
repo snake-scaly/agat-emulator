@@ -102,7 +102,7 @@ static byte mouse_io_r(word adr, struct MOUSE_STATE*mcs) // C0X0-C0XF
 		break;
 	case 0x09:
 		d = ((mcs->regs[0] / DIV_X) >> 4) & 0x07;
-		if (mcs->st->sr->mousebtn & 1) d |= 0x08;
+		if (mcs->st->sr->mousebtn & 2) d |= 0x08;
 		break;
 	case 0x0A:
 		d = (mcs->regs[1] / DIV_Y) & 0x0F;
