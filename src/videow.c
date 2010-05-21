@@ -536,6 +536,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_LBUTTONDOWN:
 		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=1;
+		sr->mousechanged|=1;
+		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 1, 0);
+		
 /*		if (GetKeyState(VK_MENU)) 
 			TrackPopupMenu(popup_menu,0,
 				(short)LOWORD(lp),(short)HIWORD(lp),
@@ -544,12 +547,18 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_RBUTTONDOWN:
 		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=2;
+		sr->mousechanged|=2;
+		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 2, 0);
 		break;
 	case WM_LBUTTONUP:
 		sr->mousebtn&=~1;
+		sr->mousechanged|=1;
+		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 1, 0);
 		break;
 	case WM_RBUTTONUP:
 		sr->mousebtn&=~2;
+		sr->mousechanged|=2;
+		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 2, 0);
 		break;
 	case WM_DESTROY:
 		if (sr->base_w) {
@@ -627,6 +636,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			sr->xmouse += sr->dxmouse;
 			sr->ymouse += sr->dymouse;
+			sr->mousechanged|=0x80;
+			system_command(sr, SYS_COMMAND_MOUSE_EVENT, 0x80, 0);
 //			printf("x=%i, y=%i\n", sr->xmousepos, sr->ymousepos);
 		}
 		break;

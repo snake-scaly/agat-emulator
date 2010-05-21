@@ -138,6 +138,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
 		_tcscpy(c->cfgstr[CFG_STR_ROM2], TEXT("ROMS\\CM6337P.ROM"));
 		return 0;
+	case DEV_MOUSE_APPLE:
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\AMOUSE.ROM"));
+		return 0;
 	case DEV_PRINTER9:
 		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
@@ -166,6 +169,8 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_MOCKINGBOARD:
 		return 0;
 	case DEV_NIPPELCLOCK:
+		return 0;
+	case DEV_MOUSE_NIPPEL:
 		return 0;
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
@@ -398,6 +403,11 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM2]);
+		return 0;
+	case DEV_MOUSE_NIPPEL: // no parameters
+		return 0;
+	case DEV_MOUSE_APPLE:
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_PRINTER9:
 		localize_str(LOC_PRINTER, c->cfgint[CFG_INT_PRINT_MODE], buf, 1024);

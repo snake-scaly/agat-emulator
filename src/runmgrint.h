@@ -31,6 +31,7 @@ struct SYS_RUN_STATE
 	HDC mem_dc;
 	int bmp_pitch;
 	LPVOID bmp_bits;
+	int mousechanged; // bit0 - btn1, bit1 - btn2, bit2 - btn3, bit 7 - pos
 	int xmousepos, ymousepos; // restricted position
 	int xmouse, ymouse; // unrestricted position
 	int dxmouse, dymouse;

@@ -496,6 +496,8 @@ BEGIN
 	12130   "RamFactor Memory Card"
 	12131	"Saturn Ram Board"
 	12132	"Mouse via Printer Card"
+	12133	"Mouse via Nippel Mouse Card"
+	12134	"Mouse via Apple Mouse Card"
 
 	12200	"Slot #0"
 	12201	"Slot #1"

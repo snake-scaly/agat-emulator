@@ -89,6 +89,12 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_MOUSE_PAR:
 		puts("mouse9_init");
 		return mouse9_init(sr, st, sc);
+	case DEV_MOUSE_APPLE:
+		puts("applemouse_init");
+		return applemouse_init(sr, st, sc);
+	case DEV_MOUSE_NIPPEL:
+		puts("nippelmouse_init");
+		return nippelmouse_init(sr, st, sc);
 	}
 	return 0;
 }

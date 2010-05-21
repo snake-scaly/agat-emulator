@@ -39,6 +39,7 @@ enum {
 	SYS_COMMAND_LOAD_DONE,     // do some work after all modules are loaded
 
 	SYS_COMMAND_SET_PARENT,     // set parent window (param=hwnd or NULL if detach)
+	SYS_COMMAND_MOUSE_EVENT,    // mouse notification (data&1 - left button, 2 - right button, 0x80 - move)
 	SYS_N_COMMANDS
 };
 

@@ -778,7 +778,9 @@ BEGIN
     12129                   "Плата Apple ][ Memory Expansion Card"
     12130                   "Плата RamFactor"
     12131                   "Плата Saturn Ram Board"
-    12132                   "Мышь ММ8031 через ячейку принтера"
+    12132                   "Мышь через ячейку принтера"
+    12133                   "Мышь через плату Nippel Mouse"
+    12134                   "Мышь через плату Apple Mouse"
 END
 
 STRINGTABLE DISCARDABLE 

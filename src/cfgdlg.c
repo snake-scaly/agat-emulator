@@ -447,6 +447,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return prn9dlg_run(hwnd, slot);
 	case DEV_PRINTERA:
 		return prnadlg_run(hwnd, slot);
+	case DEV_MOUSE_APPLE:
+		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	}
 
 	switch (slot->slot_no) {
