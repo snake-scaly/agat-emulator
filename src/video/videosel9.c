@@ -6,18 +6,19 @@ void videosel_9(struct VIDEO_STATE*vs, int mode)
 	page=(mode>>4)&0x07;
 	subpage=(mode>>2)&3;
 	type=(mode&3);
-//	printf("select video mode: %x (last %x)\n", mode, vs->rb_cur.vmode);
-//	system_command(vs->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+/*	printf("select video mode: %x (last %x)\n", mode, vs->rb_cur.vmode);
+	system_command(vs->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+	if ((mode&0xFF) == 0xA8) {
+		dump_mem(vs->sr, 0, 0x10000, "memory.dmp");
+		exit(1);
+	}*/
 	vs->rb_cur.vmode=mode;
 	vs->rb_cur.vtype=type;
 	vs->rb_cur.n_ranges = 1;
 	switch (type) {
 	case 0:
-		if (mode & 0x80) {
-			vs->rb_cur.vtype=6;
-		} else {
-			vs->rb_cur.vtype=5;
-		}
+//		mode &= 0x7F;
+		vs->rb_cur.vtype=5;
 		if (mode&8) page|=8;
 		page&=~1;
 		vs->rb_cur.n_ranges = 2;
