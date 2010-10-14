@@ -77,6 +77,9 @@ static int videoterm_command(struct SLOT_RUN_STATE*st, int cmd, int data, long p
 	case SYS_COMMAND_HRESET:
 		memset(vts->ram, 0, sizeof(vts->ram));
 		memset(vts->regs, 0, sizeof(vts->regs));
+		vts->ram_offset = 0;
+		vs->vinf.cur_ofs = 0;
+		vs->vinf.ram_ofs = 0;
 		return 0;
 	case SYS_COMMAND_FLASH:
 		return 0;

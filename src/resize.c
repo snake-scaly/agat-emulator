@@ -98,6 +98,13 @@ int resize_realign(struct RESIZE_DIALOG*r,HWND wnd,int neww,int newh)
 {
 	int i;
 	struct RESIZE_CONTROL*rc;
+	if (r->hsizebox) {
+		WINDOWPLACEMENT plc;
+		plc.length = sizeof(plc);
+		if (GetWindowPlacement(wnd, &plc)) {
+			ShowWindow(r->hsizebox, (plc.showCmd != SW_SHOWMAXIMIZED));
+		}
+	}
 	if (r->flags&RESIZE_NO_REALIGN) return 1;
 	for (i=0,rc=r->controls;i<r->n_controls;i++,rc++) {
 		HWND ctrl;
@@ -194,10 +201,12 @@ int resize_init_placement(HWND wnd, LPCTSTR id)
 		wsprintf(sid, TEXT("#%i"), id);
 		id = sid;
 	}
-	if (cfg)
-		GetPrivateProfileStruct(TEXT("placement"), id, pl, sizeof(*pl), cfg);
-	else return -1;
+	if (cfg) {
+		if (!GetPrivateProfileStruct(TEXT("placement"), id, pl, sizeof(*pl), cfg)) 
+			return -3;
+	} else return -1;
 	if (pl->length) SetWindowPlacement(wnd, pl);
+	else return -2;
 	return 0;
 }
 
@@ -212,8 +221,10 @@ int resize_save_placement(HWND wnd, LPCTSTR id)
 	}
 	pl->length = sizeof(*pl);
 	GetWindowPlacement(wnd, pl);
-	if (cfg) WritePrivateProfileStruct(TEXT("placement"), id, pl, sizeof(*pl), cfg);
-	else return -1;
+	if (cfg) {
+		if (!WritePrivateProfileStruct(TEXT("placement"), id, pl, sizeof(*pl), cfg)) 
+			return -3;
+	} else return -1;
 	return 0;
 }
 
