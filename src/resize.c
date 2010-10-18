@@ -152,6 +152,7 @@ int resize_realign(struct RESIZE_DIALOG*r,HWND wnd,int neww,int newh)
 		int ww = 30, wh = 30;
 		MoveWindow(r->hsizebox, neww - ww,  newh - wh, ww, wh, TRUE);
 	}
+	InvalidateRect(wnd, NULL, FALSE);
 	return 0;
 }
 
