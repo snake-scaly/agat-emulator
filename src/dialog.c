@@ -10,7 +10,7 @@ HINSTANCE res_instance;
 
 static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-	int r;
+	int r = -1;
 	struct DIALOG_DATA*data = (struct DIALOG_DATA*)GetWindowLong(hwnd, DWL_USER);
 	if (msg == WM_INITDIALOG) {
 		SetWindowLong(hwnd, DWL_USER, lp);
