@@ -7,8 +7,8 @@ void video_switch_block_pages(struct VIDEO_STATE*vs, int rbi)
 	byte*mem = ramptr(vs->sr);
 	int upd=0;
 	int j;
-//	printf("video_switch_block_pages[%i]: type = %i, base = %x, prev_base = %x, size = %x\n", 
-//		rbi, vs->rb[rbi].vtype, vs->rb[rbi].base_addr[0], vs->rb[rbi].prev_base[0], vs->rb[rbi].mem_size[0]);
+	printf("video_switch_block_pages[%i]: type = %i, base = %x, prev_base = %x, size = %x\n", 
+		rbi, vs->rb[rbi].vtype, vs->rb[rbi].base_addr[0], vs->rb[rbi].prev_base[0], vs->rb[rbi].mem_size[0]);
 	switch (vs->rb[rbi].el_size) {
 	case 1:
 		for (j = vs->rb[rbi].n_ranges-1; j>=0; --j) {
@@ -37,5 +37,6 @@ void video_switch_block_pages(struct VIDEO_STATE*vs, int rbi)
 	default:;
 		abort();
 	}
+	printf("upd = %i; inv = {%i,%i,%i,%i}\n", upd, inv.left, inv.top, inv.right, inv.bottom);
 	if (upd) invalidate_video_window(vs->sr, &inv);
 }

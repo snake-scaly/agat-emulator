@@ -46,6 +46,7 @@ void video_update_rb(struct VIDEO_STATE*vs, int rbi)
 
 	if (rb->vmode == crb->vmode) {
 		if (rb->dirty) {
+			puts("video_repaint_block");
 			video_repaint_block(vs, rbi);
 			rb->dirty = 0;
 		}
@@ -69,8 +70,10 @@ void video_update_rb(struct VIDEO_STATE*vs, int rbi)
 	rb->el_size = crb->el_size;
 
 	if (lt == crb->vtype && !rb->dirty) {
+		puts("video_switch_block_pages");
 		video_switch_block_pages(vs, rbi);
 	} else {
+		puts("video_repaint_block");
 		video_repaint_block(vs, rbi);
 	}
 	rb->dirty = 0;

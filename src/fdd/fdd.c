@@ -510,7 +510,7 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		if (i == AIM_TRACK_SIZE) {
 //			logprint(0,TEXT("aim: no index mark on track."));
 			drv->aim_track_data[0] |= 0x0300;
-			drv->aim_track_data[0x30] |= 0x1300;
+			drv->aim_track_data[0x5] |= 0x1300;
 		}
 	}
 	drv->raw_data = 1;
@@ -1081,7 +1081,7 @@ static struct {
 void fdd_access(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
-	int t0 = 75;//92;
+	int t0 =  75;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
 	if (data->state.rd&0x80) data->time -= 8;

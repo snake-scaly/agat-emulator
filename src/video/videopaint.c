@@ -4,12 +4,13 @@ static void video_repaint_screen_comb(struct VIDEO_STATE*vs)
 {
 	dword addr, n;
 	dword badr = (vs->ainf.page+1)*0x400;
-	if (vs->ainf.text_mode||!vs->ainf.combined) return;
-	for (addr=badr,n=0x400;n;n--,addr++) {
-		RECT r;
-		apaint_t40_addr_mix(vs, addr,&r);
+	if (!vs->ainf.text_mode&&vs->ainf.combined) {
+		for (addr=badr,n=0x400;n;n--,addr++) {
+			RECT r;
+			apaint_t40_addr_mix(vs, addr,&r);
+		}
+		invalidate_video_window(vs->sr, NULL);
 	}
-	invalidate_video_window(vs->sr, NULL);
 }
 
 void video_repaint_block(struct VIDEO_STATE*vs, int rbi)

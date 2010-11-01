@@ -176,6 +176,8 @@ int set_rb_count(struct VIDEO_STATE*vs, int n, int nint)
 	struct RASTER_BLOCK*rb;
 	int i;
 
+	if (vs->n_rb == n) return 1;
+
 	vs->n_rb = n;
 	for (i = n, rb = vs->rb; i; --i, ++rb) {
 		rb->vmode = -1;
@@ -186,6 +188,28 @@ int set_rb_count(struct VIDEO_STATE*vs, int n, int nint)
 	if (nint) {
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000 / nint, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
+	} else { // kill timers
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
+	}
+	return 0;
+}
+
+int video_init_rb(struct VIDEO_STATE*vs)
+{
+	switch (vs->sr->cursystype) {
+	case SYSTEM_7:
+		set_rb_count(vs, vs->rb_enabled?N_RB_7:1, N_RBINT_7);
+		break;
+	case SYSTEM_9:
+		switch (vs->video_mode) {
+		case VIDEO_MODE_AGAT:
+			set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
+			return 0;
+		}
+	case SYSTEM_A:
+		set_rb_count(vs, 1, 0);
+		break;
 	}
 	return 0;
 }
@@ -227,9 +251,9 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	st->save = video_save;
 
 	video_set_pal(&vs->pal, 0);
+	video_init_rb(vs);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
-		set_rb_count(vs, vs->rb_enabled?N_RB_7:1, N_RBINT_7);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -238,7 +262,6 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		fill_rw_proc(sr->baseio_sel + 5, 1, disable_ints_r, disable_ints_w, vs);
 		break;
 	case SYSTEM_9:
-		set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
 		video_set_mode(vs, VIDEO_MODE_AGAT);
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
@@ -249,7 +272,6 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		goto l1;
 		break;
 	case SYSTEM_A:
-		set_rb_count(vs, 1, 0);
 		video_set_mode(vs, VIDEO_MODE_APPLE);
 		update_video_ap(vs);
 		fill_read_proc(sr->baseio_sel + 5, 1, vsel_ap_r, vs);

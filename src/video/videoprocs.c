@@ -731,16 +731,66 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	const int clr1[2]={0,15};
 	const int clr2[2][2]={{5,2},{12,1}};
-	byte b=mem[addr];
+	int b=mem[addr], bp;
 	int i1, i2;
-	int wasc, firstc, lastc;
-	byte fl;
+	int wasc = 0;
+	int npix = 7;
+	int fill = 1;
+//	byte fl;
 
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);
 	if (vs->ainf.combined&&y>=160) {
 		return;
 	}
-	if (b&0x80) i1 = 1; else i1 = 0;
+
+	if (b & 0x80) i1 = 1; else i1 = 0;
+	b &= 0x7F;
+	i2 = x & 1;
+
+	if (x > 0) {
+		bp = mem[addr - 1];
+//		if ((bp & 0x40) != ((bp & 0x20)<<1)) { // check two rightmost bits of the previous byte
+			// this byte affects pixels from the previouts byte
+			npix +=1;
+			x -= 1;
+			ptr -= 1;
+			i2 ^= 1;
+			b <<= 1;
+			if (bp & 0x40) b |= 1;
+			if (bp & 0x20) {
+				wasc = ptr[-1]&0x0F;
+//				if (wasc != clr1[1]) wasc = clr1[0];
+			} else wasc = clr1[0];
+//		}
+	}
+
+	if (x<273) {
+		bp = mem[addr + 1];
+		if (bp & 0x01) b |= (1<<npix);
+		if (bp & 0x02) b |= (2<<npix);
+		npix += 1;
+	}
+
+	r->left=x*HGR_W;
+	r->top=y*HGR_H;
+	r->right=r->left+HGR_W*npix;
+	r->bottom=r->top+HGR_H;
+
+
+	for (; npix; --npix, b>>=1, ptr++, i2^=1) {
+		byte c, c0;
+		if (b&1) {
+			c0 = clr2[i1][i2];
+			if (wasc||(b&2)) {
+				c = c0 = clr1[1];
+			} else c = c0;
+		} else { c0 = clr1[0]; c = (fill&&(b&2)&&(wasc!=clr1[1]||!(b&4)))?wasc:c0; }
+		wasc = c0;
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+	}
+/*	if (b&0x80) i1 = 1; else i1 = 0;
 	b&=0x7F;
 	if (x) {
 		firstc = vs->ainf.hgr_flags[x7-1][y]&0x0F;
@@ -806,7 +856,7 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 			ptr[0]=c;
 			ptr[bmp_pitch]=c;
 		}
-	}
+	}*/
 }
 
 

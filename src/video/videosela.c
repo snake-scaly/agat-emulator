@@ -40,7 +40,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 {
 	struct APPLE_INFO*ai = &vs->ainf;
 	struct VTERM_INFO*vi = &vs->vinf;
-//	printf("apple video select: %x\n", adr);
+	printf("apple video select: %x\n", adr);
 	if (adr&8) {
 		if (vi->ram) {
 			switch (adr&0x0F) {

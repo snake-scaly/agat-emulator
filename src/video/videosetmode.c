@@ -21,6 +21,7 @@ static void video_set_size(struct VIDEO_STATE*vs, int w, int h)
 
 void video_update_mode(struct VIDEO_STATE*vs)
 {
+	video_init_rb(vs);
 	switch (vs->video_mode) {
 	case VIDEO_MODE_AGAT:
 		video_set_size(vs, PIX_W*256, PIX_H*256);
