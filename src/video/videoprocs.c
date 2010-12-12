@@ -735,7 +735,7 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int i1, i2;
 	int wasc = 0;
 	int npix = 7;
-	int fill = 1;
+	int fill = (vs->sr->cursystype == SYSTEM_A);
 //	byte fl;
 
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);

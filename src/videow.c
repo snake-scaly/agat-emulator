@@ -478,7 +478,11 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		return TRUE;
 	case WM_SYSKEYDOWN:
 		switch (wp) {
-		case VK_F12: { extern int cpu_debug; cpu_debug = !cpu_debug; } break;
+		case VK_F12: {
+			extern int cpu_debug;
+			cpu_debug = !cpu_debug;
+			dump_mem(sr, 0, 0x10000, "debug.bin");
+			} break;
 		case VK_F11:
 			dump_mem(sr, 0, 0x10000, "memdump.bin");
 			break;

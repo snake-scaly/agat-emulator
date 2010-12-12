@@ -510,7 +510,20 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		if (i == AIM_TRACK_SIZE) {
 //			logprint(0,TEXT("aim: no index mark on track."));
 			drv->aim_track_data[0] |= 0x0300;
-			drv->aim_track_data[0x5] |= 0x1300;
+			drv->aim_track_data[0x15] |= 0x1300;
+		} else { // shift track by two bytes
+			word lw = drv->aim_track_data[i] & 0xFF00;
+			memmove(drv->aim_track_data + i, drv->aim_track_data + i + 1, (AIM_TRACK_SIZE - i - 1) * sizeof(drv->aim_track_data[0]));
+			drv->aim_track_data[i] |= lw;
+			drv->aim_track_data[AIM_TRACK_SIZE - 1] |= 0x0200;
+			for (++i; i < AIM_TRACK_SIZE; ++i) {
+				if ((drv->aim_track_data[i] & 0xEF00) == 0x0300) break;
+			}
+			if (i < AIM_TRACK_SIZE) {
+				lw = drv->aim_track_data[i] & 0xFF00;
+				memmove(drv->aim_track_data + i, drv->aim_track_data + i + 1, (AIM_TRACK_SIZE - i - 1) * sizeof(drv->aim_track_data[0]));
+				drv->aim_track_data[i] |= lw;
+			}
 		}
 	}
 	drv->raw_data = 1;

@@ -329,18 +329,28 @@ static void op_adc(struct STATE_65C02 *st)
 	byte b=mem_read(st->ea, st->sr);
 	word w;
 	byte b1,b2,b3;
+
 	w=(word)st->a+b;
 	if (st->f&FLAG_C) w++;
+
 	if (st->f&FLAG_D) {
-		if ((w&0x0F)>9) {
-			w+=0x10-10;
+		w = (st->a & 0x0F) + (b & 0x0F);
+		if (st->f & FLAG_C) ++ w;
+		if (w > 9) {
+			w += 0x10 - 10;
 		}
-		if ((w&0xF0)>0x90) {
+		w += (st->a & 0xF0) + (b & 0xF0);
+		if (w&0x80) st->f |= FLAG_N; else st->f &= ~FLAG_N;
+		if (w >= 0xA0) {
 			w+=0x100-0xA0;
+			st->f|=FLAG_C;
+		} else {
+			st->f&=~FLAG_C;
 		}
 //		logprint(0,"adc decimal: %x+%x=%x",st->a,b,w);
+	} else {
+		if (w&0x100) st->f|=FLAG_C; else st->f&=~FLAG_C;
 	}
-	if (w&0x100) st->f|=FLAG_C; else st->f&=~FLAG_C;
 	b1=st->a&0x80;
 	b2=b&0x80;
 	b3=w&0x80;
@@ -794,25 +804,43 @@ static void op_sbc(struct STATE_65C02 *st)
 	word b=mem_read(st->ea, st->sr);
 	word w;
 	byte b1,b2,b3;
+
 	w=(word)st->a-b;
-	if (!(st->f&FLAG_C)) w--;
+	if (!(st->f&FLAG_C)) --w;
+	check_flags_log(st, w);
+
 	if (st->f&FLAG_D) {
-		if ((w&0x0F)>9) {
-			w-=0x10-10;
+		word t = (st->a & 0x0F) - (b & 0x0F);
+		if (!(st->f & FLAG_C)) -- t;
+		t &= 0x1F;
+		if (t > 9) {
+			w -= 0x10 - 10;
 		}
-		if ((w&0xF0)>0x90) {
-			w-=0x100-0xA0;
+		if (w&0x80) st->f |= FLAG_N; else st->f &= ~FLAG_N;
+		if ((w&0x1F0) > 0x90) {
+			w -= 0x100 - 0xA0;
+			st->f&=~FLAG_C;
+		} else {
+			st->f|=FLAG_C;
 		}
-//		logprint(0,"sbc decimal: %x-%x=%x\n",st->a,b,w);
+//		logprint(0,"sbc decimal: %02x-%02x-%x=%02x",st->a,b,(st->f&FLAG_C)?0:1,w&0xFF);
+	} else {
+		if (w&0xFF00) st->f&=~FLAG_C; else st->f|=FLAG_C;
 	}
-//	logprint(0, "sbc binary: %x-%x=%x\n",st->a,b,w);
-	if (w&0xFF00) st->f&=~FLAG_C; else st->f|=FLAG_C;
 	b1=st->a&0x80;
 	b2=b&0x80;
-	b3=w&0x80;
-	st->a=(byte)w;
+	b3=(st->f&FLAG_N)?0x80:0;
 	if ((b1^b2)&(b1^b3)&0x80) st->f|=FLAG_V; else st->f&=~FLAG_V;
-	check_flags_log(st, st->a);
+//	logprint(0, "sbc binary: %x-%x=%x\n",st->a,b,w);
+/*	if (st->f & FLAG_D) {
+		printf("sbc: %02X - %02X = %02X (C=%i, V=%i, N=%i, Z=%i)\n",
+			st->a, b, w & 0xFF,
+			(st->f&FLAG_C)?1:0,
+			(st->f&FLAG_V)?1:0,
+			(st->f&FLAG_N)?1:0,
+			(st->f&FLAG_Z)?1:0);
+	}*/
+	st->a=(byte)w;
 }
 
 static void op_sec(struct STATE_65C02 *st)
