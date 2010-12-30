@@ -7,7 +7,7 @@ static struct SOUNDPROC* procs[4]={
 };
 
 
-#define TIMER_INTERVAL_MS 300
+#define TIMER_INTERVAL_MS 100
 
 struct SOUNDDATA
 {
@@ -90,6 +90,7 @@ int  sound_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCO
 	par.w = sr->video_w;
 	par.freq = cf->cfgint[CFG_INT_SOUND_FREQ]?cf->cfgint[CFG_INT_SOUND_FREQ]:44100;
 	par.buflen = cf->cfgint[CFG_INT_SOUND_BUFSIZE]?cf->cfgint[CFG_INT_SOUND_BUFSIZE]:par.freq / 2;
+	par.sr = sr;
 	if (!p) return -1;
 	d0 = calloc(sizeof(*d0), 1);
 	if (!d0) return -3;

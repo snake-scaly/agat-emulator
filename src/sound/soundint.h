@@ -12,6 +12,7 @@
 
 struct SOUNDPARAMS
 {
+	struct SYS_RUN_STATE*sr;
 	HWND	w;
 	int 	freq;
 	int	buflen;

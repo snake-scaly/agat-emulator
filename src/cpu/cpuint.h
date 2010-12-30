@@ -38,7 +38,7 @@ struct CPU_STATE
 	DWORD thid;
 	void *state;
 
-	int fast_mode;
+	int fast_mode, fast_boost;
 
 	unsigned long long freq_6502;//=800; // 1MHz
 	int undoc; // enable undocumented commands

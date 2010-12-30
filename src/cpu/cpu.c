@@ -40,6 +40,9 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		cs->fast_mode = data;
 //		printf("fast mode: %i\n", data);
 		return r;
+	case SYS_COMMAND_BOOST:
+		cs->fast_boost += data;
+		return cs->fast_boost;
 	case SYS_COMMAND_HRESET:
 		return cpu_hreset(cs);
 	case SYS_COMMAND_RESET:
@@ -290,6 +293,8 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 		if (r > 0) {
 			cs->tsc_6502 += r;
 			n_ticks += r;
+			if (cs->fast_boost > r) cs->fast_boost -= r;
+			else cs->fast_boost = 0;
 		}
 		if (r < 0) {
 			if (MessageBox(cs->sr->video_w, 
@@ -312,7 +317,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			unsigned t=get_n_msec();
 			unsigned rt=n_ticks/cs->freq_6502;
 			if (rt-t+t0>cs->min_msleep) {
-				if (rt>t-t0 && !cs->fast_mode) {
+				if (rt>t-t0 && !cs->fast_mode && ! cs->fast_boost) {
  					msleep(rt-t+t0);
 				}
 				t0=t;
