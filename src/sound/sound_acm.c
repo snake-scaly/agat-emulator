@@ -44,12 +44,12 @@ struct ACM_DATA
 	long	prev_tick;
 	int	freq;
 
+	double  flen, fsum; // fractional length and summ of weighted sample values
 	int	pending; // samples pending to play
 
 	int	curbuf; // current buffer number
 	int	curofs; // current buffer offset in samples
 
-	double  flen, fsum; // fractional length and summ of weighted sample values
 	int	nbuf_playing;
 
 	DWORD	last_append;
@@ -214,12 +214,13 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 
 static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 {
-	int maxnsmp = p->maxlen;
+	int maxnsmp = p->maxlen * 2;
 	double fsmp, mult = 1.01;
 	if (!p || !p->out) return -1;
 	if (val == SOUND_TOGGLE) val = (p->cur_val ^= XOR_SAMPLE);
+	else p->cur_val = val;
 	if (p->nbuf_playing < 1) {
-		system_command(p->sr, SYS_COMMAND_BOOST, 1000, 0);
+		system_command(p->sr, SYS_COMMAND_BOOST, 100, 0);
 	}
 	if (t < p->prev_tick || !p->prev_tick || !p->pending) {
 		p->prev_tick = t - 1;

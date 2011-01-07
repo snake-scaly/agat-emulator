@@ -85,6 +85,7 @@ struct FDD_DRIVE_DATA
 	int  	raw_index;
 	int	raw_dirty, raw_data;
 	int	raw_track_ofs;
+	int	no_mark;
 
 	char disk_name[1024];
 	int  start_ofs;
@@ -107,6 +108,7 @@ struct FDD_DATA
 
 
 
+static void rotate_sector(struct FDD_DATA*data);
 
 static void fdd_io_write(unsigned short a,unsigned char d,struct FDD_DATA*data);
 static byte fdd_io_read(unsigned short a,struct FDD_DATA*data);
@@ -394,6 +396,7 @@ int  fdd_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 static void aim_update_regs(struct FDD_DATA*data, byte code)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	int rot = 0;
 //	printf("aim_update regs %x\n", code);
 	if (data->state.rk&0x10) {
 		drv->prolog[FDD_PROLOG_TRACK]|=1;
@@ -404,9 +407,17 @@ static void aim_update_regs(struct FDD_DATA*data, byte code)
 		register byte x=((data->state.rk&0x80)^0x80)|data->type|(data->state.s&0x10);
 		if (drv->prolog[FDD_PROLOG_TRACK]>1) x|=0x40;
 		if (!drv->readonly) x|=0x20;
-//		if (drv->raw_index < 0x40) x&=~0x10; else x|=0x10;
-		if (code == 0x03) x &= ~0x10;
-		if (code == 0x13) x |= 0x10;
+		if (drv->no_mark) {
+			if (drv->raw_index < 0x40) x&=~0x10; else x|=0x10;
+		}
+		if (code == 0x03) {
+			x &= ~0x10;
+			rot = 1;
+		}
+		if (code == 0x13) {
+			x |= 0x10;
+			rot = 1;
+		}
 		if (drv->error) x &= 0x7F;
 		data->state.s=x;
 	}
@@ -417,6 +428,7 @@ static void aim_update_regs(struct FDD_DATA*data, byte code)
 //			data->state.rd &= ~0x40; // synchro
 		}
 	}
+	if (rot) rotate_sector(data);
 }
 
 static void update_regs(struct FDD_DATA*data)
@@ -508,23 +520,9 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 			if ((drv->aim_track_data[i] & 0xEF00) == 0x0300) break;
 		}
 		if (i == AIM_TRACK_SIZE) {
+			drv->no_mark = 1;
 //			logprint(0,TEXT("aim: no index mark on track."));
-			drv->aim_track_data[0] |= 0x0300;
-			drv->aim_track_data[0x15] |= 0x1300;
-		} else { // shift track by two bytes
-			word lw = drv->aim_track_data[i] & 0xFF00;
-			memmove(drv->aim_track_data + i, drv->aim_track_data + i + 1, (AIM_TRACK_SIZE - i - 1) * sizeof(drv->aim_track_data[0]));
-			drv->aim_track_data[i] |= lw;
-			drv->aim_track_data[AIM_TRACK_SIZE - 1] |= 0x0200;
-			for (++i; i < AIM_TRACK_SIZE; ++i) {
-				if ((drv->aim_track_data[i] & 0xEF00) == 0x0300) break;
-			}
-			if (i < AIM_TRACK_SIZE) {
-				lw = drv->aim_track_data[i] & 0xFF00;
-				memmove(drv->aim_track_data + i, drv->aim_track_data + i + 1, (AIM_TRACK_SIZE - i - 1) * sizeof(drv->aim_track_data[0]));
-				drv->aim_track_data[i] |= lw;
-			}
-		}
+		} else drv->no_mark = 0;
 	}
 	drv->raw_data = 1;
 }
@@ -778,8 +776,8 @@ static void rotate_sector(struct FDD_DATA*data)
 		}
 	}
 fin:
-	update_regs(data);
 	data->write_sync = 0;
+	update_regs(data);
 }
 
 
@@ -887,12 +885,13 @@ static void fdd_write_data(struct FDD_DATA*data,byte d)
 		}
 		update_regs(data);
 	case 1:
-//		printf("nib write[%i]: %x\n", drv->raw_index, d);
+//		printf("nib write[%i]: %x (%x)\n", drv->raw_index, d, drv->raw_track_data[drv->raw_index]);
 		drv->raw_track_data[drv->raw_index] = d;
 		drv->raw_dirty = 1;
 		update_regs(data);
 		break;
 	case 2:
+//		logprint(0, TEXT("aim write[%i]: %02x (%02x)"), drv->raw_index, d, drv->aim_track_data[drv->raw_index] & 0xFF);
 		drv->aim_track_data[drv->raw_index] &= ~0xFF;
 		drv->aim_track_data[drv->raw_index] |= d;
 		drv->raw_dirty = 1;
@@ -1107,7 +1106,7 @@ void fdd_access(struct FDD_DATA*data)
 		while (dt >= t0) { 
 //			fprintf(stderr, ">>rotate\n");
 //			logprint(0, TEXT("rotate"));
-			rotate_sector(data); 
+			rotate_sector(data);
 			dt -= t0; 
 		}
 		if (data->sync) {

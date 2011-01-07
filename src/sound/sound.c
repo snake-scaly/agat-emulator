@@ -60,13 +60,19 @@ static int sound_term(struct SLOT_RUN_STATE*st)
 	return 0;
 }
 
-static void sound_toggle(struct SLOT_RUN_STATE*st)
+
+static void sound_write(struct SLOT_RUN_STATE*st, int d)
 {
 	struct SOUNDDATA* d0 = st->data;
 	struct SOUNDPROC*p = d0->proc;
 	if (!p) return;
-	p->sound_data(d0->data, SOUND_TOGGLE, 
+	p->sound_data(d0->data, d, 
 		cpu_get_tsc(d0->sr), d0->sync_freq?d0->sync_freq:cpu_get_freq(d0->sr));
+}
+
+static void sound_toggle(struct SLOT_RUN_STATE*st)
+{
+	sound_write(st, SOUND_TOGGLE);
 }
 
 static void sound_w(word adr, byte data, struct SLOT_RUN_STATE*st) // C030-C03F
