@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include <stdio.h>
 #include "soundint.h"
 #include "debug.h"
 
@@ -20,6 +21,8 @@
 #endif
 
 #define TIMEOUT_MSEC	50
+
+#define FIRST_DELAY 300
 
 #define N_BUFFERS 4
 
@@ -38,17 +41,20 @@ struct ACM_DATA
 	sample_t *bufs[N_BUFFERS];
 	int	maxlen;
 
-	int	timer_id;
-
 	sample_t cur_val;
 	long	prev_tick;
 	int	freq;
+
+	int	timer_id;
 
 	double  flen, fsum; // fractional length and summ of weighted sample values
 	int	pending; // samples pending to play
 
 	int	curbuf; // current buffer number
+	int	prevbuf; // previous buffer for reference
 	int	curofs; // current buffer offset in samples
+
+	int	bufrefs[N_BUFFERS];
 
 	int	nbuf_playing;
 
@@ -64,6 +70,8 @@ static void CALLBACK out_proc(
   DWORD dwParam1,    
   DWORD dwParam2
 );
+
+static void post_cur_buffer(struct ACM_DATA*p);
 
 
 #define fill_smps memset
@@ -87,6 +95,7 @@ static void* sound_init(struct SOUNDPARAMS*par)
 	p->cur_val = MIN_SAMPLE;
 
 	p->curbuf = -1;
+	p->prevbuf = -1;
 
 	p->maxlen = par->buflen;
 
@@ -117,6 +126,7 @@ static void* sound_init(struct SOUNDPARAMS*par)
 		p->hdrs[i].lpData = p->bufs[i];
 		p->hdrs[i].dwBufferLength = p->maxlen * sizeof(sample_t);
 		p->hdrs[i].dwFlags = 0;
+		p->hdrs[i].dwUser = i;
 		if (ACM_FAILED(waveOutPrepareHeader(p->out, p->hdrs + i, sizeof(*p->hdrs)), TEXT("preparing waveout header"))) { ++i; goto err1; }
 		p->hdrs[i].dwFlags |= WHDR_DONE;
 	}
@@ -140,15 +150,22 @@ static void sound_term(struct ACM_DATA*p)
 {
 	if (!p) return;
 	p->curbuf = -1;
+	if (p->timer_id) timeKillEvent(p->timer_id);
 	if (p->out) {
 		int i;
+		for (i = 0; i < N_BUFFERS; ++i) {
+			p->bufrefs[i] = -1;
+		}
 		waveOutReset(p->out);
 		for (i = 0; i < N_BUFFERS; ++i) {
+			p->bufrefs[i] = -1;
 			waveOutUnprepareHeader(p->out, p->hdrs + i, sizeof(p->hdrs[i]));
 			if (p->bufs[i]) free(p->bufs[i]);
 		}
 		waveOutClose(p->out);
+		p->out = NULL;
 	}
+	if (p->timer_id) timeKillEvent(p->timer_id);
 	DeleteCriticalSection(&p->crit);
 	free(p);
 	Sprintf(("acm: sound uninitialized\n"));
@@ -165,22 +182,57 @@ static int allocate_buffer(struct ACM_DATA*p)
 	return -1;
 }
 
+static void CALLBACK finish_timer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+{
+	struct ACM_DATA*p = (struct ACM_DATA*)dwUser;
+//	printf("acm: finish_timer\n");
+	if (!p->out) return;
+	EnterCriticalSection(&p->crit);
+		if (p->pending) {
+//			if (p->nbuf_playing < 2)
+//			system_command(p->sr, SYS_COMMAND_BOOST, 10000, 0);
+			Sprintf(("posting from timer\n"));
+			post_cur_buffer(p);
+		}
+	LeaveCriticalSection(&p->crit);
+	p->timer_id = 0;
+}
+
+static void set_timer_for_buf(struct ACM_DATA*p, WAVEHDR*h)
+{
+	int msec;
+	if (!h) msec = FIRST_DELAY;
+	else msec = h->dwBufferLength / sizeof(sample_t) * 900 / p->freq - 20;
+	if (msec <= 0) msec = 1;
+//	printf("acm: set_timer = %i msec (buf = %i)\n", msec, h?h->dwUser:-1);
+	p->timer_id = timeSetEvent(msec, 0, finish_timer, (DWORD)p, TIME_ONESHOT);
+	if (!p->timer_id) {
+		fprintf(stderr, "timer: set event failed\n");
+	}
+}
+
 static void post_cur_buffer(struct ACM_DATA*p)
 {
 	int n = p->curbuf;
 	if (p->curbuf == -1) return;
+	if (p->prevbuf != -1) p->bufrefs[p->prevbuf] = p->curbuf;
+	p->bufrefs[p->curbuf] = -1;
 	p->prev_tick = 0;
-//	printf("acm: posting current buffer %i with size %i samples\n", p->curbuf, p->curofs);
+//	printf("acm: posting current buffer %i with size %i samples (%i msec)\n", p->curbuf, p->curofs, p->curofs * 1000 / p->freq);
 	p->pending -= p->curofs;
 	p->hdrs[n].dwBufferLength = p->curofs * sizeof(sample_t);
+	if (!p->nbuf_playing) set_timer_for_buf(p, p->hdrs + n);
 	if (ACM_FAILED(waveOutWrite(p->out, p->hdrs + n, sizeof(*p->hdrs)), TEXT("waveout write"))) goto err;
-	++p->nbuf_playing;
+	InterlockedIncrement(&p->nbuf_playing);
+	p->prevbuf = p->curbuf;
 	p->curbuf = -1;
 	return;
 err:
 	p->curbuf = -1;
 	return;
 }
+
+
 
 static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 {
@@ -215,12 +267,13 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 {
 	int maxnsmp = p->maxlen * 2;
-	double fsmp, mult = 1.01;
+	double fsmp, mult = 1.00;
 	if (!p || !p->out) return -1;
 	if (val == SOUND_TOGGLE) val = (p->cur_val ^= XOR_SAMPLE);
 	else p->cur_val = val;
-	if (p->nbuf_playing < 1) {
-		system_command(p->sr, SYS_COMMAND_BOOST, 100, 0);
+	Sprintf(("acm: sound_data: %i\n", val));
+	if (!p->pending && !p->nbuf_playing && !p->flen) {
+//		system_command(p->sr, SYS_COMMAND_BOOST, 10000, 0);
 	}
 	if (t < p->prev_tick || !p->prev_tick || !p->pending) {
 		p->prev_tick = t - 1;
@@ -251,6 +304,9 @@ static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 		sound_write(p, val, (int)fsmp);
 		fsmp -= (int)fsmp;
 	}
+	if (p->pending == 1 && !p->nbuf_playing) {
+		set_timer_for_buf(p, NULL);
+	}
 	// at this point fsmp < 1 always
 	p->fsum = ((double)val - MID_SAMPLE) / (double)(MAX_SAMPLE - MID_SAMPLE) * fsmp;
 	p->flen = fsmp;
@@ -263,7 +319,6 @@ fin:
 	return 0;
 }
 
-
 static void CALLBACK out_proc(HWAVEOUT hwo,UINT uMsg,DWORD dwInstance,  
 				DWORD dwParam1,DWORD dwParam2)
 {
@@ -273,34 +328,17 @@ static void CALLBACK out_proc(HWAVEOUT hwo,UINT uMsg,DWORD dwInstance,
 	switch (uMsg) {
 	case WOM_DONE:
 		{
-			Sprintf(("acm: buffer done\n"));
-			-- p->nbuf_playing;
-			
-			if (TryEnterCriticalSection(&p->crit)) {
-				if (p->pending) {
-//					puts("posting from proc");
-					post_cur_buffer(p);
-				}
-				LeaveCriticalSection(&p->crit);
-			}	
+			WAVEHDR*h = (WAVEHDR*)dwParam1;
+			int n = p->bufrefs[h->dwUser];
+			Sprintf(("acm: buffer done: buf = %i, next = %i\n", h->dwUser, n));
+			InterlockedDecrement(&p->nbuf_playing);
+			if (n != -1) set_timer_for_buf(p, p->hdrs + n);
 		}
 		break;
 	}
 	Sprintf(("acm: end callback\n"));
 }
 
-void sound_timer(struct ACM_DATA*p)
-{
-	if (!p->out) return;
-	Sprintf(("acm: timer\n"));
-	EnterCriticalSection(&p->crit);
-		if (p->pending && (GetTickCount() - p->last_append) > TIMEOUT_MSEC) {
-//			puts("posting from timer");
-			post_cur_buffer(p);
-		}
-	LeaveCriticalSection(&p->crit);
-	Sprintf(("acm: end timer\n"));
-}
 
 
-struct SOUNDPROC soundacm={ sound_init, sound_term, sound_data, sound_timer };
+struct SOUNDPROC soundacm={ sound_init, sound_term, sound_data, NULL};

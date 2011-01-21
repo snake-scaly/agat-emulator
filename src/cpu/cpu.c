@@ -41,6 +41,7 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 //		printf("fast mode: %i\n", data);
 		return r;
 	case SYS_COMMAND_BOOST:
+//		printf("cpu: boost (%i) += %i\n", cs->fast_boost, data);
 		cs->fast_boost += data;
 		return cs->fast_boost;
 	case SYS_COMMAND_HRESET:

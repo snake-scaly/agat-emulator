@@ -55,7 +55,7 @@ static int sound_term(struct SLOT_RUN_STATE*st)
 	struct SOUNDDATA* d0 = st->data;
 	struct SOUNDPROC*p = d0->proc;
 	if (!p) return -1;
-	timeKillEvent(d0->timer_id);
+	if (d0->timer_id) timeKillEvent(d0->timer_id);
 	p->sound_term(d0->data);
 	return 0;
 }
@@ -103,13 +103,14 @@ int  sound_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCO
 	data = p->sound_init(&par);
 	if (!data) { free(d0); return -2; }
 
-	
-        d0->timer_id = timeSetEvent(TIMER_INTERVAL_MS, 0, (LPTIMECALLBACK)acm_timer, (DWORD_PTR)d0, TIME_PERIODIC);
-        if (!d0->timer_id) {
-        	p->sound_term(data);
-        	free(d0);
-        	return -4;
-        }
+	if (p->sound_timer) {
+		d0->timer_id = timeSetEvent(TIMER_INTERVAL_MS, 0, (LPTIMECALLBACK)acm_timer, (DWORD_PTR)d0, TIME_PERIODIC);
+	        if (!d0->timer_id) {
+	        	p->sound_term(data);
+	        	free(d0);
+	        	return -4;
+	        }
+	} else d0->timer_id = 0;
 
 	puts("sound init ok");
 
