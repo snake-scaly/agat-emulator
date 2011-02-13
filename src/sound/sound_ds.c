@@ -361,7 +361,10 @@ static int sound_write(struct DS_DATA*p, int val, int nsmp)
 //	printf("sound_write: %i, %i\n", val, nsmp);
 	++n;
 	if (n == BUF_SIZE) n = 0;
-	while (n == p->rpos) msleep(30);
+	while (n == p->rpos) {
+		if (cpu_get_fast(p->sr)) return 0;
+		msleep(30);
+	}	
 	p->buf[n] = pack;
 	p->wpos = n;
 /*	do {

@@ -4,6 +4,7 @@
 	fdd - emulation of Shugart floppy drive
 */
 
+#include "common.h"
 #include "types.h"
 #include "memory.h"
 #include "streams.h"
@@ -301,6 +302,9 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 {
 	struct FDD_DATA*data;
 	ISTREAM*rom;
+	const char_t*name;
+	char_t buf[32];
+
 	data = calloc(1, sizeof(*data));
 	if (!data) return -1;
 
@@ -318,13 +322,19 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	fill_fdd1(data);
 	if (cf->cfgint[CFG_INT_DRV_TYPE1] == DRV_TYPE_SHUGART) {
 		data->drives[0].present = 1;
-		strcpy(data->drives[0].disk_name, cf->cfgstr[CFG_STR_DRV_IMAGE1]);
-		open_fdd1(data->drives, data->drives[0].disk_name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 0);
+		sprintf(buf, "s%id1", st->sc->slot_no);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE1];
+		strcpy(data->drives[0].disk_name, name);
+		open_fdd1(data->drives, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 0);
 	}
 	if (cf->cfgint[CFG_INT_DRV_TYPE2] == DRV_TYPE_SHUGART) {
 		data->drives[1].present = 1;
-		strcpy(data->drives[1].disk_name, cf->cfgstr[CFG_STR_DRV_IMAGE2]);
-		open_fdd1(data->drives+1, data->drives[1].disk_name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 1);
+		sprintf(buf, "s%id2", st->sc->slot_no);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE2];
+		strcpy(data->drives[1].disk_name, name);
+		open_fdd1(data->drives+1, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 1);
 	}
 	data->initialized = 1;
 	fill_read_proc(st->baseio_sel, 1, fdd_io_read, data);

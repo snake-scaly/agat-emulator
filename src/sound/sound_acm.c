@@ -245,6 +245,7 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 			for (n = ntry; n; --n) {
 				p->curbuf = allocate_buffer(p);
 				if (p->curbuf != -1) break;
+				if (cpu_get_fast(p->sr)) return;
 				msleep(30);
 			}
 			if (p->curbuf == -1) {

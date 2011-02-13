@@ -344,3 +344,10 @@ int cpu_get_freq(struct SYS_RUN_STATE*sr)
 	cs = sr->slots[CONF_CPU].data;
 	return cs->freq_6502;
 }
+
+int cpu_get_fast(struct SYS_RUN_STATE*sr)
+{
+	struct CPU_STATE*cs;
+	cs = sr->slots[CONF_CPU].data;
+	return cs->fast_mode;
+}

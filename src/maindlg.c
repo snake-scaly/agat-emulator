@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <htmlhelp.h>
 #include <commctrl.h>
+#include "common.h"
 #include "resize.h"
 #include "dialog.h"
 #include "sysconf.h"
@@ -245,6 +246,10 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 			localize_str(LOC_MAIN, 11, buf[1], sizeof(buf[1])), //TEXT("Инициализация системы"), 
 			MB_ICONEXCLAMATION);
 		return -4;
+	}
+	{
+		const char*fs = sys_get_parameter("fs");
+		if (fs) set_fullscreen(sr, atoi(fs));
 	}
 	if (use_save) {
 		if (load_system_state_file(sr) < 0) {

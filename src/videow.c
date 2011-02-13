@@ -1,6 +1,7 @@
 #include <windows.h>
 #include "resource.h"
 
+#include "common.h"
 #include "runmgr.h"
 #include "memory.h"
 #include "runmgrint.h"
@@ -265,10 +266,10 @@ static void on_clear_state(HWND w, struct SYS_RUN_STATE*sr)
 	}
 }
 
-static void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
+void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
 {
 	if (sr->fullscreen == fs) return;
-	printf("set fullscreen %i\n", fs);
+//	printf("set fullscreen %i\n", fs);
 	sr->fullscreen = fs;
 	if (fs) {
 		RECT r;

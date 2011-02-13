@@ -47,8 +47,38 @@ int load_buf_res(int no, void*buf, int len)
 
 TCHAR lang[256];
 
+static int g_argc;
+static const char**g_argv;
+
+const char*sys_get_parameter(const char*name)
+{
+	int i;
+	const char**p;
+	for (i = g_argc, p = g_argv; i > 1; --i, ++p) {
+		if (p[0][0] == '-' && !_stricmp(name, p[0] + 1)) {
+			return p[1];
+		}
+	}
+	return NULL;
+}
+
 int main(int argc, const char* argv[])
 {
+	const char*cfgname = NULL;
+	int r;
+	if (argc > 1) {
+		g_argc = argc - 2;
+		g_argv = argv + 2;
+		cfgname = argv[1];
+	} else {
+		g_argc = argc - 1;
+		g_argv = argv + 1;
+	}
+	{
+		const char*dir;
+		dir = sys_get_parameter("cd");
+		if (dir) SetCurrentDirectory(dir);
+	}
 	resize_set_cfgname(TEXT(INI_NAME));
 	localize_init();
 	{
@@ -57,8 +87,15 @@ int main(int argc, const char* argv[])
 	}
 	debug_init();
 	InitCommonControls();
-	(argc>1)?maindlg_run_config(NULL, argv[1]):maindlg_run(NULL);
+	if (cfgname) {
+		r = maindlg_run_config(NULL, cfgname);
+		if (r) {
+			MessageBox(NULL, TEXT("Error loading configuration"), cfgname, 0);
+		}
+	} else {
+		r = maindlg_run(NULL);
+	}
 	debug_term();
 	localize_term();
-	return 0;
+	return r;
 }

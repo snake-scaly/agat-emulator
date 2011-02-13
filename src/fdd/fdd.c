@@ -4,6 +4,7 @@
 	fdd - emulation of TEAC floppy drive
 */
 
+#include "common.h"
 #include "types.h"
 #include "memory.h"
 #include "streams.h"
@@ -321,6 +322,7 @@ static int fdd_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	if (data->drives[0].present) {
 		open_fdd(data->drives, data->drives[0].disk_name, data->drives[0].readonly & 1, 0);
 	}
+
 	if (data->drives[1].present) {
 		open_fdd(data->drives + 1, data->drives[1].disk_name, data->drives[1].readonly & 1, 1);
 	}
@@ -348,6 +350,9 @@ int  fdd_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 {
 	struct FDD_DATA*data;
 	ISTREAM*rom;
+	const char_t*name;
+	char_t buf[32];
+
 	data = calloc(1, sizeof(*data));
 	if (!data) return -1;
 
@@ -362,15 +367,23 @@ int  fdd_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	}
 
 	fill_fdd(data);
+
+
 	if (cf->cfgint[CFG_INT_DRV_TYPE1] != DRV_TYPE_NONE) {
 		data->drives[0].present = 1;
-		strcpy(data->drives[0].disk_name, cf->cfgstr[CFG_STR_DRV_IMAGE1]);
-		open_fdd(data->drives,cf->cfgstr[CFG_STR_DRV_IMAGE1], cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 0);
+		sprintf(buf, "s%id1", st->sc->slot_no);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE1];
+		strcpy(data->drives[0].disk_name, name);
+		open_fdd(data->drives, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 0);
 	}
 	if (cf->cfgint[CFG_INT_DRV_TYPE2] != DRV_TYPE_NONE) {
 		data->drives[1].present = 1;
-		strcpy(data->drives[1].disk_name, cf->cfgstr[CFG_STR_DRV_IMAGE2]);
-		open_fdd(data->drives+1,cf->cfgstr[CFG_STR_DRV_IMAGE2], cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 1);
+		sprintf(buf, "s%id2", st->sc->slot_no);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE2];
+		strcpy(data->drives[1].disk_name, name);
+		open_fdd(data->drives+1, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 1);
 	}
 
 	data->type = (conv_type(cf->cfgint[CFG_INT_DRV_TYPE1]) << 2) | 
