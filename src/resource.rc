@@ -43,6 +43,7 @@ IDB_APPLE2_LOGO         BITMAP  DISCARDABLE     "bmps\\apple2_logo.bmp"
 IDB_AGAT7_LOGO          BITMAP  DISCARDABLE     "bmps\\agat7_logo.bmp"
 IDB_AGAT9_LOGO          BITMAP  DISCARDABLE     "bmps\\agat9_logo.bmp"
 IDI_MAIN icon discardable "bmps\\agat.ico"
+IDI_DISK icon discardable "bmps\\diskette.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

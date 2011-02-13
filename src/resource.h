@@ -23,6 +23,7 @@
 #define IDI_MAIN                        114
 #define IDD_TAPECFG                     114
 #define IDD_VTCFG                       115
+#define IDI_DISK                        115
 #define IDD_PRN9CFG                     116
 #define IDD_PRNACFG                     117
 #define IDC_NEW                         200
