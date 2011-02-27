@@ -202,6 +202,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			c->cfgint[CFG_INT_DRV_ROM_RES] = 23;
 			break;
 		case SYSTEM_A:
+			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGART13.ROM"));
+			break;
+		case SYSTEM_P:
 			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGARTA.ROM"));
 			c->cfgint[CFG_INT_DRV_ROM_RES] = 24;
 			break;
@@ -382,7 +385,19 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			}
 			return 0;
 		case CONF_PALETTE:
-			_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("PALETTE\\DEFAULT.PAL"));
+			switch (systype) {
+//			case SYSTEM_7:
+//			case SYSTEM_9:
+//			case SYSTEM_1:
+			case SYSTEM_A:
+			case SYSTEM_P:
+			case SYSTEM_E:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("PALETTE\\APPLE2.PAL"));
+				return 0;
+			default:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("PALETTE\\DEFAULT.PAL"));
+				return 0;
+			}
 			return 0;
 		}
 	}

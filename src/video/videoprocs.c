@@ -644,6 +644,7 @@ void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte d = mem[addr], c1, c2, c;
 	int xn, yn;
 	static const byte gr_pal[16] = {0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15};
+//	static const byte gr_pal[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 	if (vs->ainf.combined&&y>=40) {
 		return;
 	}
@@ -730,7 +731,8 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	const int clr1[2]={0,15};
-	const int clr2[2][2]={{5,2},{12,1}};
+//	const int clr2[2][2]={{5,2},{12,1}};
+	const int clr2[2][2]={{5,10},{6,9}};
 	int b=mem[addr], bp;
 	int palbits;
 	int i2;
