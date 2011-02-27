@@ -423,7 +423,7 @@ byte keyb_preview(word adr, struct SYS_RUN_STATE*sr)
 
 byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 {
-	if (sr->input_data && sr->input_size) {
+	if (sr->input_data && sr->input_size && ! sr->cur_key) {
 		byte ch;
 		int n;
 		n = isread(sr->input_data, &ch, 1);

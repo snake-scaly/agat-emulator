@@ -81,6 +81,16 @@ void flash_system_1(struct SYS_RUN_STATE*sr)
 	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
 }
 
+static void video_clear(struct SYS_RUN_STATE*sr)
+{
+	struct APPLE1_DATA*a1 = sr->ptr;
+	int bmp_pitch = sr->bmp_pitch;
+	byte*bmp_bits = sr->bmp_bits;
+	memset(bmp_bits, 0, bmp_pitch * CHAR_H * 24);
+	a1->lsz = 0;
+	a1->pos[0] = a1->pos[1] = 0;
+}
+
 static void video_write(byte data, struct SYS_RUN_STATE*sr)
 {
 	struct APPLE1_DATA*a1 = sr->ptr;
@@ -93,6 +103,9 @@ static void video_write(byte data, struct SYS_RUN_STATE*sr)
 		if (a1->lsz) -- a1->lsz;
 		break;
 	case 0xFF: // right
+		break;
+	case 0x8C: // ctrl+L, extension
+		video_clear(sr);
 		break;
 	case 0x8A:
 	case 0x8D:
