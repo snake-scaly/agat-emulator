@@ -426,6 +426,9 @@ byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 	if (sr->input_data && sr->input_size && ! sr->cur_key) {
 		byte ch;
 		int n;
+		static int cntr = 10;
+		if (cntr) { -- cntr; goto ret; }
+		cntr = 10;
 		n = isread(sr->input_data, &ch, 1);
 //		printf("isread = %i, ch = %x: pos = %i, size = %i\n", n, ch, sr->input_pos, sr->input_size);
 		if (n != 1) {
@@ -454,6 +457,7 @@ byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 			}
 		}
 	}
+ret:
 //	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 //	if (sr->cur_key&0x80) printf("cur_key = %x\n", sr->cur_key);
 	return sr->cur_key;
