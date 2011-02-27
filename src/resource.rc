@@ -1,7 +1,6 @@
 //Microsoft Developer Studio generated resource script.
 //
 #include "resource.h"
-#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -36,14 +35,28 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 // Bitmap
 //
 
+IDB_APPLE2E             BITMAP  DISCARDABLE     "bmps\\apple2e.bmp"
 IDB_APPLE2              BITMAP  DISCARDABLE     "bmps\\apple2.bmp"
 IDB_AGAT7               BITMAP  DISCARDABLE     "bmps\\agat7.bmp"
 IDB_AGAT9               BITMAP  DISCARDABLE     "bmps\\agat9.bmp"
+IDB_APPLE2P             BITMAP  DISCARDABLE     "bmps\\apple2p.bmp"
+IDB_APPLE1              BITMAP  DISCARDABLE     "bmps\\apple1.bmp"
 IDB_APPLE2_LOGO         BITMAP  DISCARDABLE     "bmps\\apple2_logo.bmp"
+IDB_APPLE2P_LOGO        BITMAP  DISCARDABLE     "bmps\\apple2p_logo.bmp"
+IDB_APPLE2E_LOGO        BITMAP  DISCARDABLE     "bmps\\apple2e_logo.bmp"
 IDB_AGAT7_LOGO          BITMAP  DISCARDABLE     "bmps\\agat7_logo.bmp"
 IDB_AGAT9_LOGO          BITMAP  DISCARDABLE     "bmps\\agat9_logo.bmp"
-IDI_MAIN icon discardable "bmps\\agat.ico"
-IDI_DISK icon discardable "bmps\\diskette.ico"
+IDB_APPLE1_LOGO         BITMAP  DISCARDABLE     "bmps\\apple1_logo.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_MAIN                ICON    DISCARDABLE     "bmps\\agat.ico"
+IDI_DISK                ICON    DISCARDABLE     "bmps\\diskette.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -98,9 +111,9 @@ END
 //
 
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
-STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME | WS_MINIMIZEBOX
-CAPTION VERSION_NAME_STR
+STYLE DS_ABSALIGN | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU | WS_THICKFRAME
+CAPTION "Agat v1.17"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
@@ -123,7 +136,7 @@ CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
     DEFPUSHBUTTON   "Закрыть",IDOK,68,128,50,14
-    CTEXT           VERSION_NAME_STR,11,7,7,173,8,SS_NOTIFY
+    CTEXT           "Agat v1.17",11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
                     13,7,29,173,19,SS_NOTIFY
@@ -307,7 +320,7 @@ BEGIN
                     WS_TABSTOP,88,78,82,10
 END
 
-IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 295, 161
+IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 295, 275
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Выбор системы"
 FONT 9, "Tahoma"
@@ -318,8 +331,14 @@ BEGIN
                     38,10
     CONTROL         "&Apple ][",IDC_APPLE_2,"Button",BS_AUTORADIOBUTTON,220,
                     121,42,10
-    DEFPUSHBUTTON   "OK",IDOK,84,140,50,14,WS_DISABLED
-    PUSHBUTTON      "Отмена",IDCANCEL,151,140,50,14
+    CONTROL         "Apple II Plus",IDC_APPLE_2P,"Button",BS_AUTORADIOBUTTON,
+                    25,236,57,10
+    CONTROL         "Apple IIe",IDC_APPLE_2E,"Button",BS_AUTORADIOBUTTON,129,
+                    236,46,10
+    CONTROL         "&Apple I",IDC_APPLE_1,"Button",BS_AUTORADIOBUTTON,221,
+                    236,39,10
+    DEFPUSHBUTTON   "OK",IDOK,84,254,50,14,WS_DISABLED
+    PUSHBUTTON      "Отмена",IDCANCEL,151,254,50,14
     LTEXT           "Выберите тип системы:",IDC_STATIC,7,7,83,8
     CONTROL         109,11,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_GROUP,7,23,92,93
@@ -327,6 +346,12 @@ BEGIN
                     SS_REALSIZEIMAGE,101,23,92,93
     CONTROL         108,13,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE,195,23,92,93
+    CONTROL         118,14,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE | WS_GROUP,8,138,92,93
+    CONTROL         IDI_DISK,15,"Static",SS_BITMAP | SS_NOTIFY | 
+                    SS_CENTERIMAGE | SS_REALSIZEIMAGE,102,138,92,93
+    CONTROL         119,16,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE,196,138,92,93
 END
 
 IDD_TAPECFG DIALOG DISCARDABLE  0, 0, 187, 117
@@ -389,7 +414,6 @@ BEGIN
     LTEXT           "Режим вывода:",102,7,54,68,8
 END
 
-
 IDD_PRNACFG DIALOG DISCARDABLE  0, 0, 206, 79
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка Printer Interface Card"
@@ -405,6 +429,7 @@ BEGIN
     LTEXT           "PROM",100,7,22,73,8
     LTEXT           "Режим вывода:",102,7,40,68,8
 END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -517,7 +542,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 288
         TOPMARGIN, 7
-        BOTTOMMARGIN, 154
+        BOTTOMMARGIN, 268
         HORZGUIDE, 23
         HORZGUIDE, 116
         HORZGUIDE, 131
@@ -550,7 +575,44 @@ END
 //
 // Version
 //
-#include "resversion.rh"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,17,0,0
+ PRODUCTVERSION 1,17,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041904b0"
+        BEGIN
+            VALUE "Comments", "Agat-7,9, Apple ][ emulator\0"
+            VALUE "CompanyName", "Nop\0"
+            VALUE "FileDescription", "Agat-7,9, Apple ][ emulator\0"
+            VALUE "FileVersion", "1, 17, 0, 0\0"
+            VALUE "InternalName", "emulator.exe\0"
+            VALUE "LegalCopyright", "Copyright © 2008,2009 Nop\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "interface.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "Agat-7,9, Apple ][ emulator\0"
+            VALUE "ProductVersion", "1, 17, 0, 0\0"
+            VALUE "SpecialBuild", "\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x419, 1200
+    END
+END
+
 #endif    // !_MAC
 
 
@@ -662,6 +724,10 @@ BEGIN
     10013                   "Выбор текстового файла для записи"
     10014                   "Бинарные файлы (*.bin)@*.bin@Все файлы@*.*@"
     10015                   "Выбор бинарного файла для записи"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     10016                   "Файлы изображений Tiff (*.tiff)@*.tiff@Все файлы@*.*@"
     10017                   "Выбор графического файла для записи"
     10018                   "Образ памяти (*.ram)@*.ram@Все файлы@*.*@"
@@ -733,12 +799,16 @@ BEGIN
     12009                   "20 Кбайт"
     12010                   "24 Кбайта"
     12011                   "36 Кбайт"
-    12012		    "256 Кбайт"  // 4096
-    12013		    "512 Кбайт"  // 8192
-    12014		    "768 Кбайт"  // 16384
-    12015		    "1 Мбайт"  // 32768
-    12016		    "2 Мбайта"  // 65536
-    12017		    "4 Мбайта"  // 131072
+    12012                   "256 Кбайт"
+    12013                   "512 Кбайт"
+    12014                   "768 Кбайт"
+    12015                   "1 Мбайт"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    12016                   "2 Мбайта"
+    12017                   "4 Мбайта"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -775,6 +845,10 @@ BEGIN
     12125                   "Ячейка принтера Агат-9"
     12126                   "Плата звука Mockingboard"
     12127                   "Ячейка часов Nippel"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     12128                   "Плата Parallel Printer Card"
     12129                   "Плата Apple ][ Memory Expansion Card"
     12130                   "Плата RamFactor"
@@ -782,6 +856,7 @@ BEGIN
     12132                   "Мышь через ячейку принтера"
     12133                   "Мышь через плату Nippel Mouse"
     12134                   "Мышь через плату Apple Mouse"
+    12135                   "Apple Cassette Interface (ACI)"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -815,6 +890,13 @@ BEGIN
     12300                   "Агат-7"
     12301                   "Агат-9"
     12302                   "Apple ]["
+    12303                   "Apple ][ Plus"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    12304                   "Apple IIe"
+    12305                   "Apple I"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -849,7 +931,10 @@ BEGIN
     13001                   "Вывод в текстовый файл"
     13002                   "Вывод в графический файл Tiff"
     13003                   "Печать на принтере Windows"
+END
 
+STRINGTABLE DISCARDABLE 
+BEGIN
     13100                   "Закончить печать"
 END
 

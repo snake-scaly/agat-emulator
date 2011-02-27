@@ -872,6 +872,8 @@ void apaint_hgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	else apaint_hgr_addr_color(vs, addr, r);
 }
 
+void apaint_apple1(struct VIDEO_STATE*vs, dword addr, RECT*r);
+
 void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 {
 	paint_lgr_addr, //0
@@ -886,4 +888,5 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 	apaint_hgr_addr, // 9
 	paint_t64_addr_i, //10 inverse
 	apaint_t80_addr, //11
+	apaint_apple1, //12
 };

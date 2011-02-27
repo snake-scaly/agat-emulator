@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by resource1.rc
+// Used by resource.rc
 //
 #define IDD_MAIN                        101
 #define IDD_ABOUT                       102
@@ -24,8 +24,14 @@
 #define IDD_TAPECFG                     114
 #define IDD_VTCFG                       115
 #define IDI_DISK                        115
+#define IDB_APPLE2E                     115
 #define IDD_PRN9CFG                     116
+#define IDB_APPLE2E_LOGO                116
 #define IDD_PRNACFG                     117
+#define IDB_APPLE2P_LOGO                117
+#define IDB_APPLE2P                     118
+#define IDB_APPLE1                      119
+#define IDB_APPLE1_LOGO                 120
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -65,8 +71,11 @@
 #define IDC_CPU_TYPE                    1031
 #define IDC_APPLE_2                     1032
 #define IDC_FILE                        1033
+#define IDC_APPLE_2P                    1033
 #define IDC_FNAME                       1034
+#define IDC_APPLE_2E                    1034
 #define IDC_CHOOSE                      1035
+#define IDC_APPLE_1                     1035
 #define IDC_FAST                        1036
 #define IDC_UPDATE                      1037
 #define IDC_IRQ                         1038
@@ -94,7 +103,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        115
+#define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1054
 #define _APS_NEXT_SYMED_VALUE           101

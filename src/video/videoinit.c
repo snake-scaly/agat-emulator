@@ -207,11 +207,28 @@ int video_init_rb(struct VIDEO_STATE*vs)
 			set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
 			return 0;
 		}
+	case SYSTEM_1:
 	case SYSTEM_A:
+	case SYSTEM_P:
+	case SYSTEM_E:
 		set_rb_count(vs, 1, 0);
 		break;
 	}
 	return 0;
+}
+
+const byte*video_get_font(struct SYS_RUN_STATE*sr)
+{
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+	return vs->font[0];
+}
+
+int video_get_flash(struct SYS_RUN_STATE*sr)
+{
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+	return vs->pal.flash_mode;
 }
 
 int  video_init(struct SYS_RUN_STATE*sr)
@@ -272,6 +289,8 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		goto l1;
 		break;
 	case SYSTEM_A:
+	case SYSTEM_P:
+	case SYSTEM_E:
 		video_set_mode(vs, VIDEO_MODE_APPLE);
 		update_video_ap(vs);
 		fill_read_proc(sr->baseio_sel + 5, 1, vsel_ap_r, vs);
@@ -279,6 +298,11 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	l1:
 		vs->ainf.page = 0;
 		video_set_mono(vs, 0, sr->config->slots[CONF_MONITOR].dev_type == DEV_MONO);
+		break;
+	case SYSTEM_1:
+		video_set_mode(vs, VIDEO_MODE_APPLE_1);
+		set_video_active_range(vs, 0, 0, 1);
+		set_video_type(vs, 12);
 		break;
 	}
 	return 0;

@@ -5,18 +5,22 @@
 #include "resource.h"
 
 
-static void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f
-static byte io6_read(word adr, struct MEM_PROC*io6_sel); // c060-c06f
-static void io_write(word adr, byte data, struct MEM_PROC*io_sel); // C000-C7FF
-static byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
-static void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel); // C000-C0FF
-static byte baseio_read(word adr, struct MEM_PROC*baseio_sel);	// C000-C0FF
+void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f
+byte io6_read(word adr, struct MEM_PROC*io6_sel); // c060-c06f
+void io_write(word adr, byte data, struct MEM_PROC*io_sel); // C000-C7FF
+byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
+void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel); // C000-C0FF
+byte baseio_read(word adr, struct MEM_PROC*baseio_sel);	// C000-C0FF
 
 static byte keyb_read(word adr, struct SYS_RUN_STATE*sr);	// C000-C00F
 byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr);	// C063
 void keyb_clear(struct SYS_RUN_STATE*sr);	// C010-C01F
 static byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr);	// C010-C01F
 static void keyb_clear_w(word adr, byte d, struct SYS_RUN_STATE*sr);	// C010-C01F
+
+extern int init_system_1(struct SYS_RUN_STATE*sr);
+extern int free_system_1(struct SYS_RUN_STATE*sr);
+
 
 
 int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*sc)
@@ -95,6 +99,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_MOUSE_NIPPEL:
 		puts("nippelmouse_init");
 		return nippelmouse_init(sr, st, sc);
+	case DEV_ACI:
+		puts("aci_init");
+		return aci_init(sr, st, sc);
 	}
 	return 0;
 }
@@ -123,21 +130,8 @@ int free_slot_state(struct SLOT_RUN_STATE*st)
 	else return -1;
 }
 
-
-
-struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name)
+static int init_systems(struct SYS_RUN_STATE*sr)
 {
-	struct SYS_RUN_STATE*sr;
-	int i, r;
-
-	sr = calloc(1, sizeof(*sr));
-	if (!sr) return NULL;
-	sr->name = name?_tcsdup(name):NULL;
-	sr->config = c;
-	sr->cursystype = c->systype;
-	sr->base_w = hmain;
-
-
 	fill_read_proc(sr->base_mem, BASEMEM_NBLOCKS - 6, empty_read, NULL);
 	fill_read_proc(sr->base_mem + BASEMEM_NBLOCKS - 6, 6, empty_read_addr, NULL);
 	fill_write_proc(sr->base_mem, BASEMEM_NBLOCKS, empty_write, NULL);
@@ -160,9 +154,34 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	fill_read_proc(sr->baseio_sel + 1, 1, keyb_clear_r, sr);
 	fill_write_proc(sr->baseio_sel + 1, 1, keyb_clear_w, sr);
 
-	set_run_state_ptr(sr->name, sr);
-
 	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
+	return 0;
+}
+
+
+
+struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name)
+{
+	struct SYS_RUN_STATE*sr;
+	int i, r;
+
+	sr = calloc(1, sizeof(*sr));
+	if (!sr) return NULL;
+	sr->name = name?_tcsdup(name):NULL;
+	sr->config = c;
+	sr->cursystype = c->systype;
+	sr->base_w = hmain;
+
+	switch (sr->cursystype) {
+	case SYSTEM_1:
+		init_system_1(sr);
+		break;
+	default:
+		init_systems(sr);
+		break;
+	}
+
+	set_run_state_ptr(sr->name, sr);
 
 	r = init_video_window(sr);
 	if (r < 0) goto fail;
@@ -207,6 +226,15 @@ fail:
 			free_slot_state(sr->slots + j);
 		}
 		term_video_window(sr);
+
+		switch (sr->cursystype) {
+		case SYSTEM_1:
+			free_system_1(sr);
+			break;
+		default:
+//			free_systems(sr);
+			break;
+		}
 		if (sr->name) free((void*)sr->name);
 		free(sr);
 		return NULL;
@@ -228,6 +256,15 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 	set_run_state_ptr(sr->name, NULL);
 
 	term_video_window(sr);
+
+	switch (sr->cursystype) {
+	case SYSTEM_1:
+		free_system_1(sr);
+		break;
+	default:
+//		free_systems(sr);
+		break;
+	}
 
 	for (i = 0; i < NCONFTYPES; i++) {
 		free_slot_state(sr->slots + i);
@@ -340,13 +377,13 @@ static byte io6_read(word adr, struct MEM_PROC*io6_sel) // c060-c06f
 	return mem_proc_read(adr, io6_sel + ind);
 }
 
-static void io_write(word adr, byte data, struct MEM_PROC*io_sel) // C000-C7FF
+void io_write(word adr, byte data, struct MEM_PROC*io_sel) // C000-C7FF
 {
 	int ind = (adr>>8) & 7;
 	mem_proc_write(adr, data, io_sel + ind);
 }
 
-static byte io_read(word adr, struct MEM_PROC*io_sel) // C000-C7FF
+byte io_read(word adr, struct MEM_PROC*io_sel) // C000-C7FF
 {
 	int ind = (adr>>8) & 7;
 	return mem_proc_read(adr, io_sel + ind);

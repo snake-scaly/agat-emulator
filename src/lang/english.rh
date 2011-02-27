@@ -3,6 +3,9 @@
 #include "../resource.h"
 #include "../version.h"
 
+IDB_APPLE2E             BITMAP  DISCARDABLE     "..\\bmps\\apple2e.bmp"
+IDB_APPLE2P             BITMAP  DISCARDABLE     "..\\bmps\\apple2p.bmp"
+IDB_APPLE1              BITMAP  DISCARDABLE     "..\\bmps\\apple1.bmp"
 IDB_APPLE2              BITMAP  DISCARDABLE     "..\\bmps\\apple2.bmp"
 IDB_AGAT7               BITMAP  DISCARDABLE     "..\\bmps\\agat7.bmp"
 IDB_AGAT9               BITMAP  DISCARDABLE     "..\\bmps\\agat9.bmp"
@@ -225,7 +228,7 @@ BEGIN
                     WS_TABSTOP,88,110,82,10
 END
 
-IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 295, 161
+IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 295, 275
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "System type"
 FONT 9, "Tahoma"
@@ -236,15 +239,27 @@ BEGIN
                     38,10
     CONTROL         "&Apple ][",IDC_APPLE_2,"Button",BS_AUTORADIOBUTTON,220,
                     121,42,10
-    DEFPUSHBUTTON   "OK",IDOK,84,140,50,14,WS_DISABLED
-    PUSHBUTTON      "Cancel",IDCANCEL,151,140,50,14
-    LTEXT           "Choose system type:",IDC_STATIC,7,7,83,8
+    CONTROL         "Apple II Plus",IDC_APPLE_2P,"Button",BS_AUTORADIOBUTTON,
+                    25,236,57,10
+    CONTROL         "Apple IIe",IDC_APPLE_2E,"Button",BS_AUTORADIOBUTTON,129,
+                    236,46,10
+    CONTROL         "&Apple I",IDC_APPLE_1,"Button",BS_AUTORADIOBUTTON,221,
+                    236,39,10
+    DEFPUSHBUTTON   "OK",IDOK,84,254,50,14,WS_DISABLED
+    PUSHBUTTON      "Cancel",IDCANCEL,151,254,50,14
+    LTEXT           "Choose System type:",IDC_STATIC,7,7,83,8
     CONTROL         109,11,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE | WS_GROUP,7,23,92,93
     CONTROL         110,12,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE,101,23,92,93
     CONTROL         108,13,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
                     SS_REALSIZEIMAGE,195,23,92,93
+    CONTROL         118,14,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE | WS_GROUP,8,138,92,93
+    CONTROL         IDI_DISK,15,"Static",SS_BITMAP | SS_NOTIFY | 
+                    SS_CENTERIMAGE | SS_REALSIZEIMAGE,102,138,92,93
+    CONTROL         119,16,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE,196,138,92,93
 END
 
 IDD_TAPECFG DIALOG DISCARDABLE  0, 0, 187, 117
@@ -498,6 +513,7 @@ BEGIN
 	12132	"Mouse via Printer Card"
 	12133	"Mouse via Nippel Mouse Card"
 	12134	"Mouse via Apple Mouse Card"
+	12135   "Apple Cassette Interface (ACI)"
 
 	12200	"Slot #0"
 	12201	"Slot #1"
@@ -523,6 +539,8 @@ BEGIN
 	12300	"Agat-7"
 	12301	"Agat-9"
 	12302	"Apple ]["
+	12303	"Apple ][ Plus"
+	12304	"Apple IIe"
 
 	12400	"none"
 	12401	"Shugart"

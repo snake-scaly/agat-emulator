@@ -220,7 +220,7 @@ static byte tape_in(struct TAPE_STATE*st, int tsc, int freq)
 //	int i;
 //	int nn[2]={0, 0};
 
-	if (st->in_disabled) {
+	if (st->in_disabled || (st->sr->cursystype == SYSTEM_1 && st->f)) {
 		st->lastmsec = get_n_msec();
 		return st->val;
 	}
@@ -257,13 +257,13 @@ static byte tape_in(struct TAPE_STATE*st, int tsc, int freq)
 	return st->val = ((r > 0x7F)?0xFF:0x7F);
 }
 
-static void tape_toggle(struct SLOT_RUN_STATE*st)
+void tape_toggle(struct SLOT_RUN_STATE*st)
 {
 	if (!st->data) return;
 	tape_out(st->data, cpu_get_tsc(st->sr), cpu_get_freq(st->sr));
 }
 
-static byte tape_read(struct SLOT_RUN_STATE*st)
+byte tape_read(struct SLOT_RUN_STATE*st)
 {
 	if (!st->data) return 0xFF;
 	return tape_in(st->data, cpu_get_tsc(st->sr), cpu_get_freq(st->sr));

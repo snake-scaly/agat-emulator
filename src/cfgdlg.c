@@ -442,6 +442,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return vtermdlg_run(hwnd, slot);
 	case DEV_THUNDERCLOCK:
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+	case DEV_ACI:
+		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_MOUSE_PAR:
 	case DEV_PRINTER9:
 		return prn9dlg_run(hwnd, slot);

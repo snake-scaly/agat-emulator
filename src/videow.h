@@ -28,6 +28,8 @@ int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r);
 int  video_init(struct SYS_RUN_STATE*sr);
 void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword addr);
 void set_fullscreen(struct SYS_RUN_STATE*sr, int fs);
+const byte*video_get_font(struct SYS_RUN_STATE*sr);
+int video_get_flash(struct SYS_RUN_STATE*sr);
 
 
 #ifndef FLASH_INTERVAL

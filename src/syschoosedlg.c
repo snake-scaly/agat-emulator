@@ -8,17 +8,23 @@
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
-	{{295,170},{0,0}},
-	8,
+	{{295,275},{0,0}},
+	14,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
-		{11,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
-		{12,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_CENTER}},
-		{13,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
-		{IDC_AGAT_7,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
-		{IDC_AGAT_9,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_CENTER}},
-		{IDC_APPLE_2,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
+		{11,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_NONE}},
+		{12,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_NONE}},
+		{13,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_NONE}},
+		{14,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_TOP}},
+		{15,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+		{16,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
+		{IDC_AGAT_7,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_NONE}},
+		{IDC_AGAT_9,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_NONE}},
+		{IDC_APPLE_2,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_NONE}},
+		{IDC_APPLE_2P,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_TOP}},
+		{IDC_APPLE_2E,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+		{IDC_APPLE_1,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 	}
 };
 
@@ -38,17 +44,29 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 	SetFocus(GetDlgItem(hwnd, IDOK));
 	switch (id) {
 	case 11:
-		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_2, IDC_AGAT_7);
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_AGAT_7);
 		break;
 	case 12:
-		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_2, IDC_AGAT_9);
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_AGAT_9);
 		break;
 	case 13:
-		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_2, IDC_APPLE_2);
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_APPLE_2);
+		break;
+	case 14:
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_APPLE_2P);
+		break;
+	case 15:
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_APPLE_2E);
+		break;
+	case 16:
+		CheckRadioButton(hwnd, IDC_AGAT_7, IDC_APPLE_1, IDC_APPLE_1);
 		break;
 	case IDC_AGAT_7:
 	case IDC_AGAT_9:
 	case IDC_APPLE_2:
+	case IDC_APPLE_2E:
+	case IDC_APPLE_2P:
+	case IDC_APPLE_1:
 //		EnableDlgItem(hwnd, IDOK, TRUE);
 		return 0;
 	}
@@ -61,6 +79,9 @@ static int dialog_ok(HWND hwnd, struct SLOTCONFIG*conf)
 	if (IsDlgButtonChecked(hwnd, IDC_AGAT_7) == BST_CHECKED) r = SYSTEM_7;
 	else if (IsDlgButtonChecked(hwnd, IDC_AGAT_9) == BST_CHECKED) r = SYSTEM_9;
 	else if (IsDlgButtonChecked(hwnd, IDC_APPLE_2) == BST_CHECKED) r = SYSTEM_A;
+	else if (IsDlgButtonChecked(hwnd, IDC_APPLE_2P) == BST_CHECKED) r = SYSTEM_P;
+	else if (IsDlgButtonChecked(hwnd, IDC_APPLE_2E) == BST_CHECKED) r = SYSTEM_E;
+	else if (IsDlgButtonChecked(hwnd, IDC_APPLE_1) == BST_CHECKED) r = SYSTEM_1;
 	EndDialog(hwnd, r + TRUE);
 	return 0;
 }

@@ -29,7 +29,7 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 //			printf("j = %i; base_addr = %x; mem_size = %x\n", j, rb->base_addr[j], rb->mem_size[j]);
 			if (adr>=rb->base_addr[j]&&adr<rb->base_addr[j]+rb->mem_size[j]) {
 				RECT r;
-				if (vs->video_mode != VIDEO_MODE_APPLE && rb->vmode != vs->rb_cur.vmode) {
+				if (vs->video_mode == VIDEO_MODE_AGAT && rb->vmode != vs->rb_cur.vmode) {
 					rb->dirty = 1;
 				} else {
 //					printf("paint_addr[%i]: %x\n", rb->vtype, adr);

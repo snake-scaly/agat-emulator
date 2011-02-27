@@ -20,7 +20,10 @@
 enum {
 	SYSTEM_7,
 	SYSTEM_9,
-	SYSTEM_A,
+	SYSTEM_A, // original apple 2
+	SYSTEM_P, // apple 2 plus
+	SYSTEM_E, // apple 2e
+	SYSTEM_1, // apple 1
 
 	NSYSTYPES
 };
@@ -73,6 +76,8 @@ enum {
 	DEV_MOUSE_PAR,
 	DEV_MOUSE_NIPPEL,
 	DEV_MOUSE_APPLE,
+	
+	DEV_ACI, // cassette interface for Apple I
 
 	NDEVTYPES
 };

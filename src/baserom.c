@@ -24,6 +24,7 @@ struct BASEROM_STATE
 
 
 static byte rom_read(word adr,struct BASEROM_STATE*st);
+static byte rom1_read(word adr,struct BASEROM_STATE*st);
 
 
 static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
@@ -31,8 +32,12 @@ static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
 	struct BASEROM_STATE*st = ss->data;
 	int nb = st->rom_size>>BASEMEM_BLOCK_SHIFT;
 //	printf("rom_size = %i (%x); nb = %i\n", st->rom_size, st->rom_size, nb);
-	fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - st->rom_size) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
-	fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
+	if (ss->sr->cursystype != SYSTEM_1) {
+		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - st->rom_size) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
+		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
+	} else {
+		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-1, 1, rom1_read, st);
+	}
 }
 
 
@@ -76,7 +81,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 		return -1;
 	}
 
-//	puts(sc->cfgstr[CFG_STR_ROM]);
+	printf("rom size: %X (%i bytes), rom file: %s\n", st->rom_size, st->rom_size, sc->cfgstr[CFG_STR_ROM]);
 	in=isfopen(sc->cfgstr[CFG_STR_ROM]);
 	if (!in) {
 		int r;
@@ -116,3 +121,10 @@ static byte rom_read(word adr,struct BASEROM_STATE*st)
 	return st->rom[(adr & st->rom_mask) - st->rom_ofs];
 }
 
+
+static byte rom1_read(word adr,struct BASEROM_STATE*st)
+{
+//	printf("rom1_read: %X\n", adr);
+	if (adr >= 0xFF00) return st->rom[(adr & st->rom_mask) - st->rom_ofs];
+	else return empty_read(adr, st);
+}

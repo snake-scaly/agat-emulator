@@ -45,5 +45,7 @@ struct SYS_RUN_STATE
 
 	int pause_inactive; // pause execution when window is inactive
 	int apple_emu;
+
+	void*ptr;
 };
 

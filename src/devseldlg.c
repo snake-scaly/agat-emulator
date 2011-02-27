@@ -30,7 +30,7 @@ static int dialog_init(HWND hwnd, void*p)
 	HWND hlist = GetDlgItem(hwnd, IDC_DEVLIST);
 	DevList_AddItem(hlist, DEV_NULL);
 	switch (sysid) {
-	case 0: // agathe 7
+	case SYSTEM_7: // agathe 7
 		DevList_AddItem(hlist, DEV_MEMORY_XRAM7);
 		DevList_AddItem(hlist, DEV_MEMORY_PSROM7);
 		DevList_AddItem(hlist, DEV_FDD_TEAC);
@@ -40,7 +40,7 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_MOUSE_PAR);
 		DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
 		return 0;
-	case 1: // agathe 9
+	case SYSTEM_9: // agathe 9
 		DevList_AddItem(hlist, DEV_MEMORY_XRAM9);
 		DevList_AddItem(hlist, DEV_FDD_TEAC);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
@@ -49,7 +49,9 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_MOUSE_PAR);
 		DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
 		return 0;
-	case 2: // apple ][
+	case SYSTEM_A: // apple ][
+	case SYSTEM_P: // apple ][
+	case SYSTEM_E: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTERA);
@@ -61,6 +63,9 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_RAMFACTOR);
 		DevList_AddItem(hlist, DEV_MEMORY_SATURN);
 		DevList_AddItem(hlist, DEV_MOUSE_APPLE);
+		return 0;
+	case SYSTEM_1: // apple I
+		DevList_AddItem(hlist, DEV_ACI);
 		return 0;
 	}
 	return -1;
