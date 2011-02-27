@@ -304,11 +304,8 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 				localize_str(LOC_CPU, 0, bufs[1], sizeof(bufs[1])),
 //				TEXT("Процессор"), 
 				MB_ICONEXCLAMATION | MB_YESNO) == IDNO) {
-					TCHAR title[1024];
-					GetWindowText(cs->sr->video_w, title, 1024);
-					lstrcat(title, localize_str(LOC_CPU, 2, bufs[0], sizeof(bufs[0])));
 //					lstrcat(title, TEXT(" (неактивен)"));
-					SetWindowText(cs->sr->video_w, title);
+					system_command(cs->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)localize_str(LOC_CPU, 2, bufs[0], sizeof(bufs[0])));
 					cs->term_req = 1;
 					break;
 				}

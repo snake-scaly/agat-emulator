@@ -22,6 +22,7 @@ struct SYS_RUN_STATE
 	struct KEYMAP keymap;
 	int  fullscreen;
 	HWND video_w;
+	TCHAR title[1024];
 	WINDOWPLACEMENT old_pl;
 	LONG old_style;
 	HMENU popup_menu;
@@ -47,5 +48,9 @@ struct SYS_RUN_STATE
 	int apple_emu;
 
 	void*ptr;
+
+	ISTREAM*input_data;
+	int input_recode;
+	int input_size, input_pos;
 };
 

@@ -22,7 +22,8 @@ ISTREAM*isfopen_res(const char_t*rname);
 ISTREAM*isopenstdin();
 void isclose(ISTREAM*f);
 int  isread(ISTREAM*s,void*p,int nb);
-int  isseek(ISTREAM*s,int pos,int where);
+int  isseek(ISTREAM*s,long pos,int where);
+long istell(ISTREAM*s);
 
 OSTREAM*osfopen(const char_t*name);
 OSTREAM*osopenstdout();

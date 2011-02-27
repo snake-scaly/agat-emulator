@@ -236,7 +236,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			case SYSTEM_1:
 				c->cfgint[CFG_INT_MEM_SIZE] = 1;
-				c->cfgint[CFG_INT_MEM_MASK] = 2 | 4;
+				c->cfgint[CFG_INT_MEM_MASK] = 2 | 4 | 64;
 				return 0;
 			case SYSTEM_A:
 				c->cfgint[CFG_INT_MEM_SIZE] = 5;

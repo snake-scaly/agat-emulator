@@ -1,6 +1,7 @@
 #include "tapeint.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "localize.h"
 
 #define TAPE_TIMEOUT 500
 
@@ -116,6 +117,7 @@ static void tape_out_finish(struct TAPE_STATE*st)
 	finish_wave_output(&st->wo, st->f);
 	fclose(st->f);
 	st->f = NULL;
+	system_command(st->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, 0);
 }
 
 static void tape_in_finish(struct TAPE_STATE*st)
@@ -131,6 +133,7 @@ static void tape_in_finish(struct TAPE_STATE*st)
 	wave_file_clear(&st->wi);
 	fclose(st->in);
 	st->in = NULL;
+	system_command(st->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, 0);
 }
 
 static double xcos(double t)
@@ -191,6 +194,11 @@ static void tape_out(struct TAPE_STATE*st, int tsc, int freq)
 	st->val = st->val ^ 0xFF;
 	st->lastmsec = get_n_msec();
 //	printf("tape: out: %i samples %x\n", nsmp, ((st->val > 0x7F)?0xFF:0x7F));
+	if (nsmp) {
+		TCHAR bufs[2][1024];
+		wsprintf(bufs[1], localize_str(LOC_TAPE, 10, bufs[0], sizeof(bufs[0])), nsmp);
+		system_command(st->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)bufs[1]);
+	}
 	tape_out_samples(st, val0, st->val, nsmp);
 }
 
@@ -248,7 +256,10 @@ static byte tape_in(struct TAPE_STATE*st, int tsc, int freq)
 	st->insmp += nsmp;
 	prc = st->insmp * 100 / st->inlen;
 	if (st->inprc!=prc) {
-		printf("read %i%%    \r", prc);
+		TCHAR bufs[2][1024];
+		wsprintf(bufs[1], localize_str(LOC_TAPE, 11, bufs[0], sizeof(bufs[0])), prc);
+		system_command(st->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)bufs[1]);
+//		printf("read %i%%    \r", prc);
 		st->inprc = prc;
 	}
 	st->lastmsec = get_n_msec();

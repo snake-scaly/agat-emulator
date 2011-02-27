@@ -193,6 +193,11 @@ void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
 
 int term_video_window(struct SYS_RUN_STATE*sr)
 {
+	if (sr->input_data) {
+		isclose(sr->input_data);
+		sr->input_data = NULL;
+		sr->input_size = sr->input_pos = 0;
+	}
 	DestroyWindow(sr->video_w);
 	WaitForSingleObject(sr->h, INFINITE);
 	CloseHandle(sr->h);
@@ -367,6 +372,54 @@ int dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
 	return 0;
 }
 
+int on_input_file(HWND w, struct SYS_RUN_STATE*sr)
+{
+	TCHAR bufs[2][1024];
+	TCHAR fname[CFGSTRLEN] = "";
+	ISTREAM*in;
+	int r;
+	if (sr->input_data) {
+		isclose(sr->input_data);
+		sr->input_data = NULL;
+		sr->input_size = sr->input_pos = 0;
+	}
+	switch (MessageBox(w,
+		localize_str(LOC_VIDEO, 202, bufs[0], sizeof(bufs[0])),
+		localize_str(LOC_VIDEO, 201, bufs[1], sizeof(bufs[1])),
+		MB_ICONQUESTION | MB_YESNOCANCEL)) {
+	case IDYES:
+		sr->input_recode = 1;
+		break;
+	case IDNO:
+		sr->input_recode = 0;
+		break;
+	case IDCANCEL:
+		return 1;
+	}
+	r = select_open_text(w, fname);
+	if (!r) return 2;
+	in = isfopen(fname);
+	if (!in) {
+		MessageBox(w, localize_str(LOC_GENERIC, 2, bufs[0], sizeof(bufs[0])), NULL, 0);
+		return -1;
+	}
+	isseek(in, 0, SSEEK_END);
+	sr->input_size = istell(in);
+	isseek(in, 0, SSEEK_SET);
+	sr->input_data = in;
+	return 0;
+}
+
+int cancel_input_file(struct SYS_RUN_STATE*sr)
+{
+	if (!sr->input_data) return 0;
+	isclose(sr->input_data);
+	sr->input_data = NULL;
+	sr->input_size = sr->input_pos = 0;
+	system_command(sr, SYS_COMMAND_SET_STATUS_TEXT, -1, 0);
+	return 0;
+}
+
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
 	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
@@ -400,6 +453,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				localize_str(LOC_VIDEO, 111, lbuf, sizeof(lbuf))); //TEXT("Загрузить состояние..."));
 			AppendMenu(m,MF_STRING,IDC_CLEARSTATE,
 				localize_str(LOC_VIDEO, 112, lbuf, sizeof(lbuf))); //TEXT("Сбросить состояние..."));
+			AppendMenu(m,MF_SEPARATOR,0,0);
+
+			AppendMenu(m,MF_STRING,IDC_INPUT_FILE,
+				localize_str(LOC_VIDEO, 200, lbuf, sizeof(lbuf))); //TEXT("Ввод из текстового файла..."));
 			AppendMenu(m,MF_SEPARATOR,0,0);
 #ifdef UNDER_CE
 			AppendMenu(m,MF_SEPARATOR,0,0);
@@ -508,6 +565,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 #endif
 
 		switch (wp) {
+		case VK_ESCAPE:
+			cancel_input_file(sr);
+			break;
 		case VK_F4:
 			system_command(sr, SYS_COMMAND_TOGGLE_MONO, 0, 0);
 			break;
@@ -605,6 +665,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case IDC_CLEARSTATE:
 			on_clear_state(w, sr);
 			break;
+		case IDC_INPUT_FILE:
+			on_input_file(w, sr);
 		default:
 			system_command(sr, SYS_COMMAND_WINCMD, LOWORD(wp), (long)w);
 			break;

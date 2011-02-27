@@ -12,6 +12,7 @@ struct APPLE1_DATA
 	int dsp_cr, kbd_cr;
 	int remains;
 	int pos[2];
+	int lsz;
 };
 
 static void kbd_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d010
@@ -39,10 +40,11 @@ static void output_bitmap(struct SYS_RUN_STATE*sr, int x, int y, byte data, int 
 	struct APPLE1_DATA*a1 = sr->ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
-	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W/2));
+	byte*ptr;
 	const byte*fnt = video_get_font(sr);
 	int tc = 15, bc = 0;
 	int xi, yi, xn, yn;
+	ptr =(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W/2));
 	fnt += data * 8;
 	if (inv) { tc = 0; bc = 15; }
 	for (yn=8;yn;yn--,fnt++) {
@@ -88,24 +90,28 @@ static void video_write(byte data, struct SYS_RUN_STATE*sr)
 		output_bitmap(sr, a1->pos[0], a1->pos[1], 0xA0, 0);
 		if (a1->pos[0]) --a1->pos[0];
 		else { a1->pos[0] = 39; if (a1->pos[1]) --a1->pos[1]; }
+		if (a1->lsz) -- a1->lsz;
 		break;
 	case 0xFF: // right
 		break;
 	case 0x8A:
 	case 0x8D:
-		output_bitmap(sr, a1->pos[0], a1->pos[1], 0xA0, 0);
-		a1->pos[0] = 0;
-		++ a1->pos[1];
+		if (a1->pos[0] || !a1->lsz) {
+			output_bitmap(sr, a1->pos[0], a1->pos[1], 0xA0, 0);
+			a1->pos[0] = 0;
+			++ a1->pos[1];
+		}	
+		a1->lsz = 0;
 		break;
 	default:
 		output_bitmap(sr, a1->pos[0], a1->pos[1], data, 0);
 		++ a1->pos[0];
+		++ a1->lsz;
 	}
 	if (a1->pos[0] >= 40) { a1->pos[0] = 0; ++ a1->pos[1]; }
 	if (a1->pos[1] >= 24) {
 		scroll_bitmap(sr);
 		a1->pos[1] = 23;
-		invalidate_video_window(sr, NULL);
 	}
 	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
 }
@@ -126,6 +132,7 @@ static void dsp_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d012
 	struct APPLE1_DATA*a1 = sr->ptr;
 	a1->dsp_cr |= 0x80;
 	a1->remains = TERM_WAIT;
+//	printf("video_write: %X: lsz = %i\n", data, a1->lsz);
 	if (data & 0x80) video_write(data, sr);
 }
 
@@ -137,8 +144,8 @@ static void dspcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d013
 
 static byte kbd_read(word adr, struct SYS_RUN_STATE*sr) // d010
 {
-	byte r = sr->cur_key;
-	sr->cur_key = 0;
+	byte r = keyb_read(adr, sr);
+	keyb_clear(sr);
 //	printf("r = %x\n", r);
 	return r;
 }
@@ -146,7 +153,7 @@ static byte kbd_read(word adr, struct SYS_RUN_STATE*sr) // d010
 static byte kbdcr_read(word adr, struct SYS_RUN_STATE*sr) // d011
 {
 	struct APPLE1_DATA*a1 = sr->ptr;
-	if (!sr->cur_key) a1->kbd_cr &= ~0x80;
+	if (!keyb_preview(adr, sr)) a1->kbd_cr &= ~0x80;
 	else a1->kbd_cr |= 0x80;
 	return a1->kbd_cr;
 }

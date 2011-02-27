@@ -371,6 +371,8 @@ BEGIN
 	8002	"22050 Hz"
 	8003	"44100 Hz"
 	8004	"48000 Hz"
+	8010	"writing..."
+	8011	"reading %i%%..."
 // Video module: 9000
 	9000	"Overwrite saved state of system '%s'?"
 	9001	"Overwriting state"
@@ -395,6 +397,10 @@ BEGIN
 	9111	"Load state..."
 	9112	"Clear state..."
 	9120	"&Close"
+	9200	"Input text file..."
+	9201	"Type of encoding"
+	9202	"Recode contents of the file from Windows encoding?"
+	9210	"reading file %i%%..."
 // Configuration module: 10000
 	10000	"ROM files (*.rom)@*.rom@All files@*.*@"
 	10001	"Select ROM file"

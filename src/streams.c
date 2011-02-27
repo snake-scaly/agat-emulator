@@ -94,7 +94,7 @@ int  isread(ISTREAM*s,void*p,int nb)
 
 static int seek_modes[]={FILE_BEGIN,FILE_CURRENT,FILE_END};
 
-int  isseek(ISTREAM*s,int pos,int where)
+int  isseek(ISTREAM*s,long pos,int where)
 {
 	if (s->isres) {
 		switch (where) {
@@ -112,6 +112,15 @@ int  isseek(ISTREAM*s,int pos,int where)
 		SetFilePointer(s->h,pos,NULL,seek_modes[where]);
 	}
 	return 0;
+}
+
+long istell(ISTREAM*s)
+{
+	if (s->isres) {
+		return s->ofs;
+	} else {
+		return SetFilePointer(s->h,0,NULL,FILE_CURRENT);
+	}
 }
 
 

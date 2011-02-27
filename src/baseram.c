@@ -246,15 +246,16 @@ int ram1_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 			fill_rw_proc(sr->base_mem + (0xE000>>BASEMEM_BLOCK_SHIFT), 0x1000>>BASEMEM_BLOCK_SHIFT, ram1_read, ram1_write, st);
 			nb -= 2;
 		}
+		if (nb > 24) nb = 24;
 		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
-		{
+/*		{
 			FILE*f;
 			f = fopen("basic.rom", "rb");
 			if (f) {
 				fread(st->ram + st->ram_size - 0x1000, 1, 0x1000, f);
 				fclose(f);
 			}
-		}
+		}*/
 	}
 	return 0;
 }

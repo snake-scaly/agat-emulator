@@ -96,6 +96,7 @@
 #define IDC_CHOOSE_FW1                  1051
 #define IDC_CHOOSE_FW2                  1052
 #define IDC_PRINT_MODE                  1053
+#define IDC_INPUT_FILE                  1054
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -105,7 +106,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1054
+#define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

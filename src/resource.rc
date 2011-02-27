@@ -624,6 +624,9 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     3000                    "Русский"
+    3001                    "Внутренняя ошибка"
+    3002                    "Ошибка чтения"
+    3003                    "Ошибка записи"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -664,6 +667,8 @@ BEGIN
     8002                    "22050 Гц"
     8003                    "44100 Гц"
     8004                    "48000 Гц"
+    8010                    "запись..."
+    8011                    "чтение %i%%..."
 END
 
 STRINGTABLE DISCARDABLE 
@@ -704,6 +709,10 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     9120                    "&Закрыть"
+    9200                    "Ввод из текстового файла..."
+    9201                    "Тип кодировки"
+    9202                    "Перекодировать содержимое файла из кодировки Windows?"
+    9210                    "чтение файла %i%%..."
 END
 
 STRINGTABLE DISCARDABLE 

@@ -2,6 +2,8 @@
 #include "runmgrint.h"
 #include "runstate.h"
 
+#include "localize.h"
+
 #include "resource.h"
 
 
@@ -12,7 +14,7 @@ byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
 void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel); // C000-C0FF
 byte baseio_read(word adr, struct MEM_PROC*baseio_sel);	// C000-C0FF
 
-static byte keyb_read(word adr, struct SYS_RUN_STATE*sr);	// C000-C00F
+byte keyb_read(word adr, struct SYS_RUN_STATE*sr);	// C000-C00F
 byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr);	// C063
 void keyb_clear(struct SYS_RUN_STATE*sr);	// C010-C01F
 static byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr);	// C010-C01F
@@ -186,11 +188,10 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	r = init_video_window(sr);
 	if (r < 0) goto fail;
 	if (sr->name) {
-		TCHAR title[1024];
-		GetWindowText(sr->video_w, title, 1024);
-		lstrcat(title, TEXT(" — "));
-		lstrcat(title, sr->name);
-		SetWindowText(sr->video_w, title);
+		GetWindowText(sr->video_w, sr->title, 1024);
+		lstrcat(sr->title, TEXT(" — "));
+		lstrcat(sr->title, sr->name);
+		SetWindowText(sr->video_w, sr->title);
 	}
 
 	for (i = 0; i < NCONFTYPES; i++ ) {
@@ -303,6 +304,19 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 		if (sr->video_w) SetParent(sr->video_w, (HWND)param);
 		else r = -1;
 		break;
+	case SYS_COMMAND_SET_STATUS_TEXT:
+		if (sr->video_w) {
+			if (param) {
+				TCHAR title[1024];
+				lstrcpy(title, sr->title);
+				lstrcat(title, TEXT(": "));
+				lstrcat(title, (LPCTSTR)param);
+				SetWindowText(sr->video_w, title);
+			} else {
+				SetWindowText(sr->video_w, sr->title);
+			}
+		}
+		break;
 	}
 	return r;
 }
@@ -401,8 +415,45 @@ byte baseio_read(word adr, struct MEM_PROC*baseio_sel)	// C000-C0FF
 	return mem_proc_read(adr, baseio_sel + ind);
 }
 
+byte keyb_preview(word adr, struct SYS_RUN_STATE*sr)
+{
+	if (sr->input_data) return 1;
+	return sr->cur_key>>7;
+}
+
 byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 {
+	if (sr->input_data && sr->input_size) {
+		byte ch;
+		int n;
+		n = isread(sr->input_data, &ch, 1);
+//		printf("isread = %i, ch = %x: pos = %i, size = %i\n", n, ch, sr->input_pos, sr->input_size);
+		if (n != 1) {
+			MessageBeep(0);
+			cancel_input_file(sr);
+		} else {
+			sr->input_pos += n;
+			if (sr->input_recode) {
+				ch |= 0x80;
+				switch (ch) {
+				case 0x8A: ch = 0x8d; break;
+				}
+			}
+			sr->cur_key = ch;
+			if (sr->input_pos == sr->input_size) {
+				cancel_input_file(sr);
+			} else {
+				int pct = sr->input_pos * 100 / (sr->input_size - 1);
+				static int lpct = -1;
+				if (pct != lpct) {
+					TCHAR bufs[2][128];
+					lpct = pct;
+					wsprintf(bufs[1], localize_str(LOC_VIDEO, 210, bufs[0], sizeof(bufs[0])), pct);
+					system_command(sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)bufs[1]);
+				}	
+			}
+		}
+	}
 //	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 //	if (sr->cur_key&0x80) printf("cur_key = %x\n", sr->cur_key);
 	return sr->cur_key;

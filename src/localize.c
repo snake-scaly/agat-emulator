@@ -3,12 +3,12 @@
 
 #define LANG_DIR 	"lang"
 
-static HMODULE lang;
+static HMODULE lang, def_lang;
 static int need_free;
 
 int	localize_init()
 {
-	lang = GetModuleHandle(NULL);
+	lang = def_lang = GetModuleHandle(NULL);
 	need_free = 0;
 	return 0;
 }
@@ -53,13 +53,22 @@ void	localize_term()
 	cleanup_lib();
 }
 
-LPCTSTR localize_str(int modid, int strid, LPTSTR buf, int bufsize)
+
+static LPCTSTR get_string(HMODULE lang, int modid, int strid, LPTSTR buf, int bufsize)
 {
 	int r;
 	if (!lang) return NULL;
 	memset(buf, 0, bufsize);
 	r = LoadString(lang, strid + modid * N_MODULE_LANG_STR_ID + BASE_LANG_STR_ID, buf, bufsize / sizeof(buf[0]));
 	return r?buf:NULL;
+}
+
+LPCTSTR localize_str(int modid, int strid, LPTSTR buf, int bufsize)
+{
+	LPCTSTR res;
+	res = get_string(lang, modid, strid, buf, bufsize);
+	if (!res) res = get_string(def_lang, modid, strid, buf, bufsize);
+	return res;
 }
 
 HMODULE localize_get_lib()
