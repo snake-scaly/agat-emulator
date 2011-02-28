@@ -627,8 +627,14 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_DESTROY:
 		if (sr->base_w) {
-			ShowWindow(sr->base_w, SW_SHOWNORMAL);
-			SetActiveWindow(sr->base_w);
+			WINDOWPLACEMENT wp;
+			wp.length = sizeof(wp);
+			GetWindowPlacement(sr->base_w, &wp);
+			if (wp.showCmd == SW_SHOWMINIMIZED) ShowWindow(sr->base_w, SW_RESTORE);
+//			ShowWindow(sr->base_w, SW_SHOWNORMAL);
+			BringWindowToTop(sr->base_w);
+//			SetForegroundWindow(sr->base_w);
+//			SetActiveWindow(sr->base_w);
 		} else PostQuitMessage(0);
 		break;
 	case WM_ENTERMENULOOP:

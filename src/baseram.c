@@ -413,7 +413,7 @@ static void baseram9_write_psrom_mode(word adr,byte d,struct BASERAM_STATE*st);
 
 static void baseram9_psrom_setmodeprocs(struct BASERAM_STATE*st, int rd, int wr, int flags)
 {
-//	printf("baseram9_psrom_mode: %i %i\n", rd, wr);
+//	printf("baseram9_psrom_mode: r %i, w %i\n", rd, wr);
 	if (wr) { // write access
 		if (flags&1) fill_write_proc(st->sr->base_mem+26,2,baseram9_write_psrom, st);
 		if (flags&2) fill_write_proc(st->sr->base_mem+28,4,baseram9_write, st);
@@ -461,7 +461,7 @@ static void baseram9_restore_segment(struct BASERAM_STATE*st, int ind)
 void baseram9_write_psrom_mode(word adr,byte d, struct BASERAM_STATE*st)
 {
 	st->psrom9_mode=(adr&0x0F);
-//	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, st->psrom9_mode);
+//	printf("baseram9_write_psrom_mode(%x) = %x\n",adr, st->psrom9_mode);
 	if (st->psrom9_mode&8) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 	else st->psrom9_ofs=0;
 	switch (st->psrom9_mode&3) {
@@ -482,6 +482,7 @@ static int ram9_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 		system9_cancel_apple_mode(0, 0, st);
 		memcpy(st->ram9_mapping, startup_ram9_mapping, sizeof(st->ram9_mapping));
 		st->apple_rom_mode = 0xC0;
+		st->psrom9_ofs = 0;
 		baseram9_write_psrom_mode(1, 0, st);
 		break;
 	case SYS_COMMAND_BASEMEM9_RESTORE:
@@ -545,13 +546,13 @@ void baseram9_write_psrom(word adr,byte d, struct BASERAM_STATE*st)
 
 byte apple_read_psrom_d(word adr, struct BASERAM_STATE*st)
 {
-	return st->ram[get_addr_bank9(st, adr, 15) + 
+	return st->ram[get_addr_bank9(st, adr, 14) + 
 			st->psrom9_ofs - RAM9_BANK_SIZE/2];
 }
 
 byte apple_read_psrom_e(word adr, struct BASERAM_STATE*st)
 {
-	return st->ram[get_addr_bank9(st, adr, 14)];
+	return st->ram[get_addr_bank9(st, adr, 15)];
 }
 
 byte apple_read_lang_d(word adr, struct BASERAM_STATE*st)
@@ -577,13 +578,13 @@ void apple_write_lang_e(word adr, byte d, struct BASERAM_STATE*st)
 
 void apple_write_psrom_d(word adr, byte d, struct BASERAM_STATE*st)
 {
-	st->ram[get_addr_bank9(st, adr, 15) + 
+	st->ram[get_addr_bank9(st, adr, 14) + 
 			st->psrom9_ofs - RAM9_BANK_SIZE/2] = d;
 }
 
 void apple_write_psrom_e(word adr, byte d, struct BASERAM_STATE*st)
 {
-	st->ram[get_addr_bank9(st, adr, 14)] = d;
+	st->ram[get_addr_bank9(st, adr, 15)] = d;
 }
 
 
@@ -591,6 +592,7 @@ byte baseram9_read_mapping(word adr, struct BASERAM_STATE*st)
 {
 	int ind=(adr&0xF0)>>4;
 //	printf("baseram9_read_mapping[%x] = %i\n", adr, st->ram9_mapping[ind]);
+//	system_command(st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	return (adr&0xF0)|st->ram9_mapping[ind];
 }
 
@@ -607,6 +609,7 @@ byte baseram9_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	byte res = st->psrom9_mode|0xF0;
 	if (!(res & 3)) res |= 2;
 //	printf("baseram9_read_psrom_mode(%x) = %x\n",adr, st->psrom9_mode|(adr&0xF0)|4);
+//	system_command(st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	return res;
 }
 
@@ -679,7 +682,12 @@ void apple_write_psrom_mode(word adr, byte d, struct BASERAM_STATE*st)
 
 void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 {
+	extern int cpu_debug;
 	puts("apple mode");
+//	dump_mem(st->sr, 0, 0x10000, "before_apple.bin");
+//	dump_baseram(st->sr, "baseram_before_apple.bin");
+//	cpu_debug = 1;
+//	system_command(st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	st->sr->apple_emu = st->apple_emu = 1;
 	st->last_write = 0;
 	fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
@@ -689,6 +697,7 @@ void system9_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 	st->apple_rom_mode = 0xC1;
 	apple_set_ext_rom_mode(0, 1, 3, st);
 	system_command(st->sr, SYS_COMMAND_APPLEMODE, 1, 0);
+//	dump_mem(st->sr, 0, 0x10000, "after_apple.bin");
 }
 
 void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
@@ -702,6 +711,7 @@ void system9_cancel_apple_mode(word adr, byte d, struct BASERAM_STATE*st)
 	fill_rw_proc(st->sr->baseio_sel+8, 1, baseram9_read_psrom_mode, baseram9_write_psrom_mode, st);
 	fill_rw_proc(st->sr->io_sel+1, 1, baseram9_read_mapping, baseram9_write_mapping, st);
 	fill_write_proc(st->sr->baseio_sel + 15, 1, system9_apple_mode, st);
+	baseram9_write_psrom_mode(1, 0, st);
 	system_command(st->sr, SYS_COMMAND_APPLEMODE, 0, 0);
 }
 
@@ -759,3 +769,13 @@ int basemem_n_blocks(struct SYS_RUN_STATE*sr)
 	return st->ram_size>>BASEMEM_BLOCK_SHIFT;
 }
 
+
+int dump_baseram(struct SYS_RUN_STATE*sr, const char*fname)
+{
+	struct BASERAM_STATE *st = sr->slots[CONF_MEMORY].data;
+	FILE*f = fopen(fname, "wb");
+	if (!f) return -1;
+	fwrite(st->ram, 1, st->ram_size, f);
+	fclose(f);
+	return 0;
+}

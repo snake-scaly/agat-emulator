@@ -111,8 +111,8 @@ END
 //
 
 IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
-STYLE DS_ABSALIGN | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU | WS_THICKFRAME
+STYLE DS_ABSALIGN | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Agat v1.17"
 FONT 9, "Tahoma"
 BEGIN
@@ -709,6 +709,10 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     9120                    "&Закрыть"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
     9200                    "Ввод из текстового файла..."
     9201                    "Тип кодировки"
     9202                    "Перекодировать содержимое файла из кодировки Windows?"

@@ -515,7 +515,7 @@ static int change_item(HWND hwnd, struct SYSCONFIG* conf, HWND hlist, int ind, i
 	if ((!sub && id < CONF_EXT) || conf->slots[id].dev_type == DEV_NULL) {
 		int r;
 		struct SLOTCONFIG newslot = conf->slots[id];
-		r = devseldlg_run(hwnd, syst);
+		r = devseldlg_run(hwnd, syst, id);
 		if (r != -1) {
 			r = reset_slot_config(&newslot, r, syst);
 			r = slot_configure(hwnd, &newslot, 1);

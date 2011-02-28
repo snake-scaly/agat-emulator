@@ -64,7 +64,7 @@ void logprint(int lev,const char_t*fmt,...)
 	xvsprintf(buf,fmt,l);
 	va_end(l);
 	xsprintf(buf1,TEXT("log[%8i]: %s\n"),get_n_msec()-start_ticks,buf);
-	fprintf(stderr,"%s",buf1);
+	fprintf(stdout,"%s",buf1);
 	if (hlog) oswrite(hlog,buf1,s_len(buf1)*sizeof(buf1[0]));
 #ifdef CONSOLE
 	oswrite(hstdout,buf1,s_len(buf1));

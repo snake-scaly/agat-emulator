@@ -19,6 +19,11 @@ static struct RESIZE_DIALOG resize=
 	}
 };
 
+struct SELINFO {
+	int systype;
+	int slotid;
+};
+
 static int DevList_AddItem(HWND hlist, int id)
 {
 	return ListBox_AddStringData(hlist, get_devnames(id), id);
@@ -26,10 +31,10 @@ static int DevList_AddItem(HWND hlist, int id)
 
 static int dialog_init(HWND hwnd, void*p)
 {
-	int sysid = (int)p;
+	struct SELINFO*inf = p;
 	HWND hlist = GetDlgItem(hwnd, IDC_DEVLIST);
 	DevList_AddItem(hlist, DEV_NULL);
-	switch (sysid) {
+	switch (inf->systype) {
 	case SYSTEM_7: // agathe 7
 		DevList_AddItem(hlist, DEV_MEMORY_XRAM7);
 		DevList_AddItem(hlist, DEV_MEMORY_PSROM7);
@@ -41,13 +46,15 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
 		return 0;
 	case SYSTEM_9: // agathe 9
-		DevList_AddItem(hlist, DEV_MEMORY_XRAM9);
-		DevList_AddItem(hlist, DEV_FDD_TEAC);
-		DevList_AddItem(hlist, DEV_FDD_SHUGART);
-		DevList_AddItem(hlist, DEV_PRINTER9);
+		if (inf->slotid != CONF_SLOT1) {
+			DevList_AddItem(hlist, DEV_MEMORY_XRAM9);
+			DevList_AddItem(hlist, DEV_FDD_TEAC);
+			DevList_AddItem(hlist, DEV_FDD_SHUGART);
+			DevList_AddItem(hlist, DEV_PRINTER9);
+			DevList_AddItem(hlist, DEV_MOUSE_PAR);
+			DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
+		}
 		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
-		DevList_AddItem(hlist, DEV_MOUSE_PAR);
-		DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
 		return 0;
 	case SYSTEM_A: // apple ][
 	case SYSTEM_P: // apple ][
@@ -56,7 +63,9 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTERA);
 		DevList_AddItem(hlist, DEV_SOFTCARD);
-		DevList_AddItem(hlist, DEV_VIDEOTERM);
+		if (inf->slotid == CONF_SLOT3) {
+			DevList_AddItem(hlist, DEV_VIDEOTERM);
+		}
 		DevList_AddItem(hlist, DEV_THUNDERCLOCK);
 		DevList_AddItem(hlist, DEV_MOCKINGBOARD);
 		DevList_AddItem(hlist, DEV_A2RAMCARD);
@@ -123,7 +132,8 @@ static struct DIALOG_DATA dialog =
 };
 
 
-int devseldlg_run(HWND hpar, int systype)
+int devseldlg_run(HWND hpar, int systype, int slotid)
 {
-	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_DEVSEL), hpar, (void*)systype);
+	struct SELINFO inf = { systype, slotid };
+	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_DEVSEL), hpar, &inf);
 }
