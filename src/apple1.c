@@ -5,7 +5,7 @@
 
 #include "resource.h"
 
-#define TERM_WAIT 100
+#define TERM_WAIT 2000
 
 struct APPLE1_DATA
 {

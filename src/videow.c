@@ -290,31 +290,54 @@ void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
 	InvalidateRect(sr->video_w, NULL, TRUE);
 }
 
+static void calc_fullscr_params(struct SYS_RUN_STATE*sr, LPRECT d)
+{
+	RECT r, rb;
+	int wl, hl, ww, wh;
+	GetClientRect(sr->video_w, &r);
+	ww = r.right-r.left;
+	wh = r.bottom-r.top;
+	wl = wh * 4 / 3;
+//	printf("ww = %i, wh = %i, wl = %i\n", ww, wh, wl);
+	if (wl > ww) {
+		hl = ww * 3 / 4;
+		wl = 0;
+		hl = (wh - hl) / 2;
+	} else {
+		wl = (ww - wl) / 2;
+		hl = 0;
+	}
+	d->left = r.left + wl;
+	d->right = r.right - wl;
+	d->top = r.top + hl;
+	d->bottom = r.bottom - hl;
+//	printf("d = %i,%i,%i,%i\n", d->left, d->top, d->right, d->bottom);
+}
 
 static void scr_to_full(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
 {
 	RECT rw;
 	double k1, k2;
-	GetClientRect(sr->video_w, &rw);
+	calc_fullscr_params(sr, &rw);
 	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
 	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
-	d->left = s->left * k1;
-	d->top = s->top * k2;
-	d->right = (s->right + 1) * k1 - 1;
-	d->bottom = (s->bottom + 1) * k2 - 1;
+	d->left = rw.left + s->left * k1;
+	d->top = rw.top + s->top * k2;
+	d->right = rw.left + (s->right + 1) * k1 - 1;
+	d->bottom = rw.top + (s->bottom + 1) * k2 - 1;
 }
 
 static void full_to_scr(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
 {
 	RECT rw;
 	double k1, k2;
-	GetClientRect(sr->video_w, &rw);
+	calc_fullscr_params(sr, &rw);
 	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
 	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
-	d->left = s->left / k1;
-	d->top = s->top / k2;
-	d->right = (s->right + 1) / k1 - 1;
-	d->bottom = (s->bottom + 1) / k2 - 1;
+	d->left = (s->left - rw.left) / k1;
+	d->top = (s->top - rw.top) / k2;
+	d->right = (s->right - rw.left + 1) / k1 - 1;
+	d->bottom = (s->bottom - rw.top + 1) / k2 - 1;
 }
 
 
@@ -485,13 +508,31 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			HDC dc;
 			dc=BeginPaint(w,&ps);
 			if (sr->fullscreen) {
-				RECT r;
-				GetClientRect(w, &r);
+				RECT r, rb, rw;
+				HBRUSH bb = GetStockObject(BLACK_BRUSH);
+				GetClientRect(w, &rw);
+				calc_fullscr_params(sr, &r);
+				if (r.left) {
+					rb.left = rw.left;
+					rb.top = rw.top;
+					rb.right = r.left;
+					rb.bottom = rw.bottom;
+					FillRect(dc, &rb, bb);
+					rb.left = r.right;
+					rb.right = rw.right;
+					FillRect(dc, &rb, bb);
+				}
+				if (r.top) {
+					rb.left = r.left;
+					rb.top = rw.top;
+					rb.right = r.right;
+					rb.bottom = r.top;
+					FillRect(dc, &rb, bb);
+					rb.top = r.bottom;
+					rb.bottom = rw.bottom;
+					FillRect(dc, &rb, bb);
+				}
 				SetStretchBltMode(dc, COLORONCOLOR);
-//				printf("paint rect %i,%i -> %i,%i\n", ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
-//				full_to_scr(sr, &ps.rcPaint, &r);
-//				StretchBlt(dc,ps.rcPaint.left,ps.rcPaint.top,ps.rcPaint.right-ps.rcPaint.left,ps.rcPaint.bottom-ps.rcPaint.top,
-//					sr->mem_dc,r.left,r.top,r.right-r.left,r.bottom-r.top,SRCCOPY);
 				StretchBlt(dc,r.left,r.top,r.right-r.left,r.bottom-r.top,
 					sr->mem_dc,0,0,sr->v_size.cx,sr->v_size.cy,SRCCOPY);
 			} else {
@@ -587,7 +628,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			if (d==-1) {
 				sr->cur_key = 0;
-				system_command(sr, SYS_COMMAND_RESET, 0, 0);
+				system_command(sr, (GetKeyState(VK_MENU)&0x8000)?SYS_COMMAND_HRESET:SYS_COMMAND_RESET, 0, 0);
 			}
 		}
 		break;

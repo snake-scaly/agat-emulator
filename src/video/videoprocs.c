@@ -630,7 +630,7 @@ void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r)
 }
 
 
-void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+void apaint_gr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
@@ -684,6 +684,63 @@ void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	}
 }
 
+void apaint_gr_addr_mono(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int nb = (addr&0x3FF)>>7;
+	int bofs = addr&0x7F;
+	int bl = bofs / 40;
+	int y = (nb + bl * 8)*2;
+	int x = bofs % 40;
+	const byte*mem = ramptr(vs->sr);
+	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H/2+x*PIX_W*7/2));
+	byte d = mem[addr], c;
+	int xn, yn;
+	int clr[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
+	if (vs->ainf.combined&&y>=40) {
+		return;
+	}
+	r->left=x*PIX_W*7;
+	r->top=y*CHAR_H/2;
+	r->right=r->left+CHAR_W;
+	r->bottom=r->top+CHAR_H;
+	for (yn=8;yn;yn--) {
+		byte*p=ptr;
+		if (yn == 4) d >>= 4;
+		for (xn=4, c = d; xn;xn--,p++,c>>=1) {
+			byte px = clr[c&1];
+			px |= px<<4;
+#ifdef DOUBLE_X
+			if (xn > 1) {
+				p[0]=px;
+				p++;
+			}
+#endif
+			p[0]=px;
+#ifdef DOUBLE_Y
+			p[bmp_pitch]=px;
+#ifdef DOUBLE_X
+			if (xn > 1) {
+				p[bmp_pitch-1]=px;
+			}
+#endif
+#endif
+		}
+		ptr+=bmp_pitch;
+#ifdef DOUBLE_Y
+		ptr+=bmp_pitch;
+#endif
+	}
+}
+
+
+void apaint_gr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	if (vs->pal.cur_mono) apaint_gr_addr_mono(vs, addr, r);
+	else apaint_gr_addr_color(vs, addr, r);
+}
+
 void apaint_hgr_addr_mono(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
@@ -698,21 +755,39 @@ void apaint_hgr_addr_mono(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	int clr[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
-	byte b=mem[addr];
+	int apple = 0;//(vs->sr->cursystype == SYSTEM_A);
+	byte b=mem[addr], h, lc;
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);
 	if (vs->ainf.combined&&y>=160) {
 		return;
 	}
+	h = b>>7;
 	r->left=x*HGR_W;
 	r->top=y*HGR_H;
 	r->right=r->left+HGR_W*7;
 	r->bottom=r->top+HGR_H;
+	if (apple) {
+		if (h) {
+			r->left ++;
+			lc = ptr[0]>>4;
+		}
+	} else h = 0;
 	for (i=7;i;i--,b>>=1,ptr++) {
-		byte c;
-		c=clr[(b&1)?1:0];
-		c|=(c<<4);
+		byte c = clr[b&1];
+		if (h) {
+			c |= lc<<4;
+			lc = c;
+		} else {
+			c |= c<<4;
+		}
 		ptr[0]=c;
 		ptr[bmp_pitch]=c;
+	}
+	if (h && (ptr[0]&0x80)) {
+		byte c = (ptr[0]&0x0F) | (lc << 4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+		r->right ++;
 	}
 }
 
