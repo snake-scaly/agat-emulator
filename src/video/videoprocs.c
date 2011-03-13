@@ -679,8 +679,8 @@ void aepaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	r->right=r->left+CHAR_W;
 	r->bottom=r->top+CHAR_H;
 //	printf("%x: %i,%i\n",addr,x,y);
-	aepaint_t80_char(vs, x, y, mem[addr & ~0x10000], ptr);
-	aepaint_t80_char(vs, x + 1, y, mem[addr | 0x10000], ptr + PIX_W*2);
+	aepaint_t80_char(vs, x, y, mem[addr | 0x10000], ptr);
+	aepaint_t80_char(vs, x + 1, y, mem[addr & ~0x10000], ptr + PIX_W*2);
 }
 
 void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r)

@@ -64,6 +64,9 @@ struct BASERAM_STATE
 static byte ram_read(word adr,struct BASERAM_STATE*st);
 static void ram_write(word adr,byte d, struct BASERAM_STATE*st);
 
+static byte rame_read(word adr,struct BASERAM_STATE*st);
+static void rame_write(word adr,byte d, struct BASERAM_STATE*st);
+
 static byte ram7_read(word adr,struct BASERAM_STATE*st);
 static void ram7_write(word adr,byte d, struct BASERAM_STATE*st);
 
@@ -173,6 +176,7 @@ static int rama_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 	case SYS_COMMAND_HRESET:
 		apple_set_ext_rom_mode(0, 1, 3, st);
 		clear_block(st->ram, st->ram_size);
+		memset(&st->ram2e, 0, sizeof(st->ram2e));
 	}
 	return 0;
 }
@@ -226,7 +230,7 @@ int rame_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
 		if (nb > 24) nb = 24;
 //		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
-		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
+		fill_rw_proc(sr->base_mem, nb, rame_read, rame_write, st);
 	}
 
 	fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
@@ -429,6 +433,38 @@ static void ram_write(word adr,byte d,struct BASERAM_STATE*st)
 	byte ld = st->ram[adr];
 	if (ld == d) return;
 	st->ram[adr] = d;
+	vid_invalidate_addr(st->sr, adr);
+}
+
+static byte rame_read(word adr, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (adr < 0x300) { if (st->ram2e.altzp) ladr |= 0x10000; }
+	else if (adr >=0x400 && ladr < 0x800) {
+		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000; }
+		else { if (st->ram2e.ramrd) ladr |= 0x10000; }
+	} else if (adr >=0x2000 && adr < 0x4000) {
+		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C) && video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
+		else { if (st->ram2e.ramrd) ladr |= 0x10000; }
+	} else { if (st->ram2e.ramrd) ladr |= 0x10000; }
+	ladr &= (st->ram_size - 1);
+	return st->ram[ladr];
+}
+
+static void rame_write(word adr, byte d, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (adr < 0x300) { if (st->ram2e.altzp) ladr |= 0x10000; }
+	else if (adr >=0x400 && adr <= 0x800) {
+		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000; }
+		else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
+	} else if (adr >=0x2000 && adr <= 0x4000) {
+		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C) && video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
+		else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
+	} else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
+	ladr &= (st->ram_size - 1);
+	if (st->ram[ladr] == d) return;
+	st->ram[ladr] = d;
 	vid_invalidate_addr(st->sr, adr);
 }
 
@@ -816,6 +852,50 @@ int dump_baseram(struct SYS_RUN_STATE*sr, const char*fname)
 	return 0;
 }
 
+
+byte baseram_read_ext_state(word adr, struct SYS_RUN_STATE*sr)
+{
+	struct BASERAM_STATE*st = sr->slots[CONF_MEMORY].data;
+	switch (adr) {
+	case 0xC013: return st->ram2e.ramrd?0x80:0x00;
+	case 0xC014: return st->ram2e.ramwrt?0x80:0x00;
+	case 0xC016: return st->ram2e.altzp?0x80:0x00;
+	case 0xC018: return st->ram2e.store80?0x80:0x00;
+	}
+	return 0;
+}
+
+void baseram_write_ext_state(word adr, struct SYS_RUN_STATE*sr)
+{
+	struct BASERAM_STATE*st = sr->slots[CONF_MEMORY].data;
+//	printf("baseram_write_ext_state: %X\n", adr);
+	switch (adr) {
+	case 0xC000:
+		st->ram2e.store80 = 0;
+		break;
+	case 0xC001:
+		st->ram2e.store80 = 1;
+		break;
+	case 0xC002:
+		st->ram2e.ramrd = 0;
+		break;
+	case 0xC003:
+		st->ram2e.ramrd = 1;
+		break;
+	case 0xC004:
+		st->ram2e.ramwrt = 0;
+		break;
+	case 0xC005:
+		st->ram2e.ramwrt = 1;
+		break;
+	case 0xC008:
+		st->ram2e.altzp = 0;
+		break;
+	case 0xC009:
+		st->ram2e.altzp = 1;
+		break;
+	}
+}
 
 byte basemem_ext_bank(struct SYS_RUN_STATE*sr)
 {

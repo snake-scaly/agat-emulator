@@ -20,6 +20,9 @@ static int xio_control_2e(struct SYS_RUN_STATE*sr, int req);
 byte basemem_ext_bank(struct SYS_RUN_STATE*sr);
 byte basemem_ext_enabled_ram(struct SYS_RUN_STATE*sr);
 
+byte baseram_read_ext_state(word adr, struct SYS_RUN_STATE*sr);
+void baseram_write_ext_state(word adr, struct SYS_RUN_STATE*sr);
+
 
 static void write_C00X(word adr, byte data, struct SYS_RUN_STATE*sr)
 {	
@@ -29,21 +32,15 @@ static void write_C00X(word adr, byte data, struct SYS_RUN_STATE*sr)
 //	printf("set ext switch: %X = %i\n", adr, en);
 	a2e->ext_switches[sel>>1] = (en<<7);
 	switch (sel) {
-	case 0x00:
-		//enable access to video memory via PAGE2 switch
-		break;
-	case 0x02:
-		//read main/aux memory
-		break;
-	case 0x04:
-		//write main/aux memory
+	case 0x00: //enable access to video memory via PAGE2 switch
+	case 0x02: //read main/aux memory
+	case 0x04: //write main/aux memory
+	case 0x08: //select main/aux stack&zp
+		baseram_write_ext_state(adr, sr);
 		break;
 	case 0x06:
 		//select internal/external I/O ROM
 		update_xio_status(sr);
-		break;
-	case 0x08:
-		//select main/aux stack&zp
 		break;
 	case 0x0A:
 		//select internal/external ROM in slot 3
@@ -86,22 +83,16 @@ static byte read_C01X(word adr, struct SYS_RUN_STATE*sr)
 		r = basemem_ext_enabled_ram(sr);
 		break;
 	case 0x03: // read RAMRD switch
-		r = a2e->ext_switches[1];
-		break;
 	case 0x04: // read RAMWRT switch
-		r = a2e->ext_switches[2];
+	case 0x06: // read ALTZP switch
+	case 0x08: // read 80STORE switch
+		r = baseram_read_ext_state(adr, sr);
 		break;
 	case 0x05: // read SLOTCXROM switch
 		r = a2e->ext_switches[3];
 		break;
-	case 0x06: // read ALTZP switch
-		r = a2e->ext_switches[4];
-		break;
 	case 0x07: // read SLOTC3ROM switch
 		r = a2e->ext_switches[5];
-		break;
-	case 0x08: // read 80STORE switch
-		r = a2e->ext_switches[0];
 		break;
 	case 0x09: // read VBL
 	case 0x0A: // read text mode switch

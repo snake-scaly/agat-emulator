@@ -15,25 +15,29 @@ static int get_apple_mode_id(struct APPLE_INFO*ai)
 void update_video_ap(struct VIDEO_STATE*vs)
 {
 	struct APPLE_INFO*ai = &vs->ainf;
+	int page = ai->page;
+	if (baseram_read_ext_state(0xC018, vs->sr)) {
+		page = (vs->rb_cur.base_addr[0]==0x800) || (vs->rb_cur.base_addr[0]==0x4000);
+	}
 	if (ai->text_mode) {
 		if (ai->videoterm) {
 			set_video_active_range(vs, 0x10000, vs->vinf.ram_size, 1);
 			set_video_type(vs, 11);
 		} else {
 			if (ai->text80) {
-				set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
+				set_video_active_range(vs, (page+1)*0x400, 0x400, 1);
 				set_video_type(vs, 13);
 			} else {
-				set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
+				set_video_active_range(vs, (page+1)*0x400, 0x400, 1);
 				set_video_type(vs, 7);
 			}	
 		}
 	} else if (ai->hgr) {
-		if (basemem_n_blocks(vs->sr) < (ai->page+2) * 4) return;
-		set_video_active_range(vs, (ai->page+1)*0x2000, 0x2000, 1);
+		if (basemem_n_blocks(vs->sr) < (page+2) * 4) return;
+		set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
 		set_video_type(vs, 9);
 	} else {
-		set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
+		set_video_active_range(vs, (page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
 	}
 	vs->rb_cur.vmode = (vs->rb_cur.vmode & 0xFF) | (get_apple_mode_id(ai) << 8);
