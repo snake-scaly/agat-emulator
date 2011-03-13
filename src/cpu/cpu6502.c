@@ -1233,14 +1233,14 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(isc,absx,7)              //FF
 };
 
-int cpu_debug;
+int cpu_debug = 0;
 static void dumpregs(struct CPU_STATE*cs);
 
 static void op_disassemble(struct STATE_6502*st, struct CMD_6502*c)
 {
-	fprintf(stderr, "%04X\t%s\t", st->pc - 1, c->cmd_name);
-	c->printadr(st, stderr);
-	fprintf(stderr, "\n");
+	fprintf(stdout, "%04X\t%s\t", st->pc - 1, c->cmd_name);
+	c->printadr(st, stdout);
+	fprintf(stdout, "\n");
 }
 
 static int exec_6502(struct CPU_STATE*cs)

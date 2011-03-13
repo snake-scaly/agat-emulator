@@ -75,4 +75,6 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in);
 int update_xio_status(struct SYS_RUN_STATE*sr);
 int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en);
 
+byte system_read_rom(word adr,struct SYS_RUN_STATE*sr);
+
 #endif //RUNMGR_H

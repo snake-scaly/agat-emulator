@@ -229,7 +229,7 @@ void paint_t32_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte ch=mem[addr&~1];
 	byte atr=mem[addr|1];
 	int  tc, bc=vs->pal.c1_palette[0]; // text and back colors
-	byte*fnt=vs->font[ch];
+	byte*fnt=vs->font[vs->cur_font][ch];
 	int mask;
 	int xi, yi, xn, yn;
 	r->left=x*CHAR_W;
@@ -331,7 +331,7 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r, int tc, int bc)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
 	const byte*mem = ramptr(vs->sr);
 	byte ch=mem[addr];
-	byte*fnt=vs->font[ch];
+	byte*fnt=vs->font[vs->cur_font][ch];
 	int mask;
 	int xi, yi, xn, yn;
 	r->left=x*CHAR_W2;
@@ -573,20 +573,26 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
-	if (vs->sr->cursystype != SYSTEM_A && ch<0xA0) {
+	if (vs->sr->apple_emu && ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
 		ch+=0xA0;
 	}
-	fnt = vs->font[ch];
+	fnt = vs->font[vs->cur_font][ch];
 //	printf("%x -> (%i, %i)\n",addr, x, y);
 	r->left=x*PIX_W*7;
 	r->top=y*CHAR_H;
 	r->right=r->left+PIX_W*7;
 	r->bottom=r->top+CHAR_H;
-	switch(atr) {
-	case 1: if (!vs->pal.flash_mode) break; //flash
-	case 0: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
+	if (!vs->cur_font) {
+		switch(atr) {
+		case 1: if (!vs->pal.flash_mode) break; //flash
+		case 0: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
+		}
+	} else { // alternate font for apple //e
+		switch(atr) {
+		case 0: case 1: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
+		}
 	}
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
@@ -813,7 +819,7 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int i2;
 	int wasc = 0;
 	int npix = 7;
-	int fill = (vs->sr->cursystype == SYSTEM_A);
+	int fill = (vs->sr->cursystype != SYSTEM_9);
 //	byte fl;
 
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);

@@ -57,7 +57,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 			update_video_ap(vs);
 			return;
 		} else {
-			video_set_palette(vs, adr&7);
+//			video_set_palette(vs, adr&7);
 			return;
 		}
 	}
@@ -79,7 +79,7 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		break;
 	case 6: 
 		ai->videoterm = 0;
-		if (vs->sr->cursystype == SYSTEM_A) {
+		if (vs->sr->cursystype != SYSTEM_9) {
 			ai->hgr = 0;
 		} else {
 			ai->hgr = 1; // low-res emulation was not implemented in Agat

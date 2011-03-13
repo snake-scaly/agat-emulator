@@ -29,7 +29,9 @@ int  video_init(struct SYS_RUN_STATE*sr);
 void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword addr);
 void set_fullscreen(struct SYS_RUN_STATE*sr, int fs);
 const byte*video_get_font(struct SYS_RUN_STATE*sr);
+int video_select_font(struct SYS_RUN_STATE*sr, int fnt);
 int video_get_flash(struct SYS_RUN_STATE*sr);
+int video_get_flags(struct SYS_RUN_STATE*sr, word addr); // apple 2e flags
 
 
 #ifndef FLASH_INTERVAL

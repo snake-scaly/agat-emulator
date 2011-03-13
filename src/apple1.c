@@ -15,13 +15,19 @@ struct APPLE1_DATA
 	int lsz;
 };
 
+static int free_system_1(struct SYS_RUN_STATE*sr);
+static int restart_system_1(struct SYS_RUN_STATE*sr);
+static int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out);
+static int load_system_1(struct SYS_RUN_STATE*sr, ISTREAM*in);
+
+
 static void kbd_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d010
 {
 }
 
 static void kbdcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d011
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->kbd_cr = data;
 }
 
@@ -37,7 +43,7 @@ static void scroll_bitmap(struct SYS_RUN_STATE*sr)
 
 static void output_bitmap(struct SYS_RUN_STATE*sr, int x, int y, byte data, int inv)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
 	byte*ptr;
@@ -77,13 +83,13 @@ static void output_bitmap(struct SYS_RUN_STATE*sr, int x, int y, byte data, int 
 
 void flash_system_1(struct SYS_RUN_STATE*sr)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
 }
 
 static void video_clear(struct SYS_RUN_STATE*sr)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
 	memset(bmp_bits, 0, bmp_pitch * CHAR_H * 24);
@@ -93,7 +99,7 @@ static void video_clear(struct SYS_RUN_STATE*sr)
 
 static void video_write(byte data, struct SYS_RUN_STATE*sr)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 //	printf("output char: %i\n", data);
 	switch (data) {
 	case 0xDF: // backspace
@@ -142,7 +148,7 @@ void apaint_apple1(struct VIDEO_STATE*vs, dword addr, RECT*r)
 
 static void dsp_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d012
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->dsp_cr |= 0x80;
 	a1->remains = TERM_WAIT;
 //	printf("video_write: %X: lsz = %i\n", data, a1->lsz);
@@ -151,7 +157,7 @@ static void dsp_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d012
 
 static void dspcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d013
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->dsp_cr = data;
 }
 
@@ -165,7 +171,7 @@ static byte kbd_read(word adr, struct SYS_RUN_STATE*sr) // d010
 
 static byte kbdcr_read(word adr, struct SYS_RUN_STATE*sr) // d011
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	if (!keyb_preview(adr, sr)) a1->kbd_cr &= ~0x80;
 	else a1->kbd_cr |= 0x80;
 	return a1->kbd_cr;
@@ -173,7 +179,7 @@ static byte kbdcr_read(word adr, struct SYS_RUN_STATE*sr) // d011
 
 static byte dsp_read(word adr, struct SYS_RUN_STATE*sr) // d012
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	byte r = a1->dsp_cr;
 	if (!a1->remains) a1->dsp_cr &= ~0x80;
 	else -- a1->remains;
@@ -221,15 +227,18 @@ static byte d000_read(word adr, struct SYS_RUN_STATE*sr) // d000-d7ff
 	return empty_read(adr, sr);
 }
 
-void io_write(word adr, byte data, struct MEM_PROC*io_sel); // C000-C7FF
-byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
-
 int init_system_1(struct SYS_RUN_STATE*sr)
 {
 	struct APPLE1_DATA*p;
 	p = calloc(1, sizeof(*p));
 	if (!p) return -1;
-	sr->ptr = p;
+
+	sr->sys.ptr = p;
+	sr->sys.free_system = free_system_1;
+	sr->sys.restart_system = restart_system_1;
+	sr->sys.save_system = save_system_1;
+	sr->sys.load_system = load_system_1;
+
 	fill_read_proc(sr->base_mem, BASEMEM_NBLOCKS, empty_read, NULL);
 	fill_write_proc(sr->base_mem, BASEMEM_NBLOCKS, empty_write, NULL);
 	fill_rw_proc(sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), 1, d000_read, d000_write, sr);
@@ -244,16 +253,16 @@ int init_system_1(struct SYS_RUN_STATE*sr)
 }
 
 
-int free_system_1(struct SYS_RUN_STATE*sr)
+static int free_system_1(struct SYS_RUN_STATE*sr)
 {
-	if (sr->ptr) free(sr->ptr);
-	sr->ptr = NULL;
+	if (sr->sys.ptr) free(sr->sys.ptr);
+	sr->sys.ptr = NULL;
 	return 0;
 }
 
-int restart_system_1(struct SYS_RUN_STATE*sr)
+static int restart_system_1(struct SYS_RUN_STATE*sr)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
 	memset(a1, 0, sizeof(*a1));
@@ -261,9 +270,9 @@ int restart_system_1(struct SYS_RUN_STATE*sr)
 	return 0;
 }
 
-int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out)
+static int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
 	oswrite(out, a1, sizeof(*a1));
@@ -273,9 +282,9 @@ int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out)
 	return 0;
 }
 
-int load_system_1(struct SYS_RUN_STATE*sr, ISTREAM*in)
+static int load_system_1(struct SYS_RUN_STATE*sr, ISTREAM*in)
 {
-	struct APPLE1_DATA*a1 = sr->ptr;
+	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
 	isread(in, a1, sizeof(*a1));

@@ -6,22 +6,9 @@
 
 #include "resource.h"
 
-
-void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f
-byte io6_read(word adr, struct MEM_PROC*io6_sel); // c060-c06f
-void io_write(word adr, byte data, struct MEM_PROC*io_sel); // C000-C7FF
-byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
-void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel); // C000-C0FF
-byte baseio_read(word adr, struct MEM_PROC*baseio_sel);	// C000-C0FF
-
-byte keyb_read(word adr, struct SYS_RUN_STATE*sr);	// C000-C00F
-byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr);	// C063
-void keyb_clear(struct SYS_RUN_STATE*sr);	// C010-C01F
-static byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr);	// C010-C01F
-static void keyb_clear_w(word adr, byte d, struct SYS_RUN_STATE*sr);	// C010-C01F
-
 extern int init_system_1(struct SYS_RUN_STATE*sr);
-extern int free_system_1(struct SYS_RUN_STATE*sr);
+extern int init_system_2e(struct SYS_RUN_STATE*sr);
+extern int init_systems(struct SYS_RUN_STATE*sr); // other systems
 
 
 
@@ -132,34 +119,6 @@ int free_slot_state(struct SLOT_RUN_STATE*st)
 	else return -1;
 }
 
-static int init_systems(struct SYS_RUN_STATE*sr)
-{
-	fill_read_proc(sr->base_mem, BASEMEM_NBLOCKS - 6, empty_read, NULL);
-	fill_read_proc(sr->base_mem + BASEMEM_NBLOCKS - 6, 6, empty_read_addr, NULL);
-	fill_write_proc(sr->base_mem, BASEMEM_NBLOCKS, empty_write, NULL);
-	fill_read_proc(sr->baseio_sel, 16, empty_read, NULL);
-	fill_write_proc(sr->baseio_sel, 16, empty_write, NULL);
-	fill_read_proc(sr->io_sel, 8, empty_read, NULL);
-	fill_write_proc(sr->io_sel, 8, empty_write, NULL);
-	fill_read_proc(sr->io6_sel, 16, empty_read, NULL);
-	fill_write_proc(sr->io6_sel, 16, empty_write, NULL);
-
-	fill_read_proc(sr->base_mem + 24, 1, io_read, sr->io_sel);
-	fill_write_proc(sr->base_mem + 24, 1, io_write, sr->io_sel);
-	fill_read_proc(sr->io_sel, 1, baseio_read, sr->baseio_sel);
-	fill_write_proc(sr->io_sel, 1, baseio_write, sr->baseio_sel);
-	fill_read_proc(sr->baseio_sel + 6, 1, io6_read, sr->io6_sel);
-	fill_write_proc(sr->baseio_sel + 6, 1, io6_write, sr->io6_sel);
-
-	fill_read_proc(sr->baseio_sel + 0, 1, keyb_read, sr);
-	fill_read_proc(sr->io6_sel + 3, 1, keyb_reg_read, sr);
-	fill_read_proc(sr->baseio_sel + 1, 1, keyb_clear_r, sr);
-	fill_write_proc(sr->baseio_sel + 1, 1, keyb_clear_w, sr);
-
-	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
-	return 0;
-}
-
 
 
 struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name)
@@ -174,16 +133,22 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	sr->cursystype = c->systype;
 	sr->base_w = hmain;
 
-	switch (sr->cursystype) {
-	case SYSTEM_1:
-		init_system_1(sr);
-		break;
-	default:
-		init_systems(sr);
-		break;
-	}
+	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
 
 	set_run_state_ptr(sr->name, sr);
+
+	switch (sr->cursystype) {
+	case SYSTEM_1:
+		r = init_system_1(sr);
+		break;
+	case SYSTEM_E:
+		r = init_system_2e(sr);
+		break;
+	default:
+		r = init_systems(sr);
+		break;
+	}
+	if (r < 0) goto fail;
 
 	r = init_video_window(sr);
 	if (r < 0) goto fail;
@@ -208,6 +173,8 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	r = video_init(sr);
 	if (r < 0) goto fail;
 
+	update_xio_status(sr);
+
 	system_command(sr, SYS_COMMAND_INITMENU, 0, (long)sr->popup_menu);
 	system_command(sr, SYS_COMMAND_INIT_DONE, 0, 0);
 
@@ -228,14 +195,7 @@ fail:
 		}
 		term_video_window(sr);
 
-		switch (sr->cursystype) {
-		case SYSTEM_1:
-			free_system_1(sr);
-			break;
-		default:
-//			free_systems(sr);
-			break;
-		}
+		if (sr->sys.free_system) sr->sys.free_system(sr);
 		if (sr->name) free((void*)sr->name);
 		free(sr);
 		return NULL;
@@ -258,18 +218,10 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 
 	term_video_window(sr);
 
-	switch (sr->cursystype) {
-	case SYSTEM_1:
-		free_system_1(sr);
-		break;
-	default:
-//		free_systems(sr);
-		break;
-	}
-
 	for (i = 0; i < NCONFTYPES; i++) {
 		free_slot_state(sr->slots + i);
 	}
+	if (sr->sys.free_system) sr->sys.free_system(sr);
 	if (sr->name) free((void*)sr->name);
 	free(sr);
 	return 0;
@@ -295,6 +247,11 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 	case SYS_COMMAND_STOP:
 		and_run_state_flags(sr->name, ~RUNSTATE_RUNNING);
 		PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
+		break;
+	case SYS_COMMAND_HRESET:
+		if (sr->sys.restart_system)
+			sr->sys.restart_system(sr);
+		update_xio_status(sr);
 		break;
 	case SYS_COMMAND_ACTIVATE:
 		ShowWindow(sr->video_w, SW_SHOWNORMAL);
@@ -377,124 +334,17 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 	return r;
 }
 
-// ===================================================================
-
-static void io6_write(word adr, byte data, struct MEM_PROC*io6_sel) // c060-c06f
-{
-	int ind = adr & 0x0F;
-	mem_proc_write(adr, data, io6_sel + ind);
-}
-
-static byte io6_read(word adr, struct MEM_PROC*io6_sel) // c060-c06f
-{
-	int ind = adr & 0x0F;
-	return mem_proc_read(adr, io6_sel + ind);
-}
-
-void io_write(word adr, byte data, struct MEM_PROC*io_sel) // C000-C7FF
-{
-	int ind = (adr>>8) & 7;
-	mem_proc_write(adr, data, io_sel + ind);
-}
-
-byte io_read(word adr, struct MEM_PROC*io_sel) // C000-C7FF
-{
-	int ind = (adr>>8) & 7;
-	return mem_proc_read(adr, io_sel + ind);
-}
-
-void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel) // C000-C0FF
-{
-	int ind = (adr>>4) & 0x0F;
-	mem_proc_write(adr, data, baseio_sel + ind);
-}
-
-byte baseio_read(word adr, struct MEM_PROC*baseio_sel)	// C000-C0FF
-{
-	int ind = (adr>>4) & 0x0F;
-	return mem_proc_read(adr, baseio_sel + ind);
-}
-
-byte keyb_preview(word adr, struct SYS_RUN_STATE*sr)
-{
-	if (sr->input_data) return 1;
-	return sr->cur_key>>7;
-}
-
-byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
-{
-	if (sr->input_data && sr->input_size && ! sr->cur_key) {
-		byte ch;
-		int n;
-		static int cntr = 10;
-		if (cntr) { -- cntr; goto ret; }
-		cntr = 10;
-		n = isread(sr->input_data, &ch, 1);
-//		printf("isread = %i, ch = %x: pos = %i, size = %i\n", n, ch, sr->input_pos, sr->input_size);
-		if (n != 1) {
-			MessageBeep(0);
-			cancel_input_file(sr);
-		} else {
-			sr->input_pos += n;
-			if (sr->input_recode) {
-				ch |= 0x80;
-				switch (ch) {
-				case 0x8A: ch = 0x8d; break;
-				}
-			}
-			sr->cur_key = ch;
-			if (sr->input_pos == sr->input_size) {
-				cancel_input_file(sr);
-			} else {
-				int pct = sr->input_pos * 100 / (sr->input_size - 1);
-				static int lpct = -1;
-				if (pct != lpct) {
-					TCHAR bufs[2][128];
-					lpct = pct;
-					wsprintf(bufs[1], localize_str(LOC_VIDEO, 210, bufs[0], sizeof(bufs[0])), pct);
-					system_command(sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)bufs[1]);
-				}	
-			}
-		}
-	}
-ret:
-//	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
-//	if (sr->cur_key&0x80) printf("cur_key = %x\n", sr->cur_key);
-	return sr->cur_key;
-}
-
-byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr)	// C063
-{
-	return sr->keyreg;
-}
-
-void keyb_clear(struct SYS_RUN_STATE*sr)	// C010-C01F
-{
-	sr->cur_key = 0;
-}
-
-byte keyb_clear_r(word adr, struct SYS_RUN_STATE*sr)	// C010-C01F
-{
-	keyb_clear(sr);
-	return empty_read(adr, NULL);
-}
-
-void keyb_clear_w(word adr, byte d, struct SYS_RUN_STATE*sr)	// C010-C01F
-{
-	keyb_clear(sr);
-}
-
 
 // ======================================================
 
 void mem_write(word adr, byte data, struct SYS_RUN_STATE*sr)
 {
 	int ind=adr>>0x0B;
-/*	if (adr == 0x87) {
-		logprint(0, "mem_write(%04X, %02X)", adr, data);
-		system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
-		if (access("memdump1.bin", 0)) dump_mem(sr, 0, 0x10000, "memdump1.bin");
-	}*/
+//	if (adr == 0x87) {
+//		logprint(0, "mem_write(%04X, %02X)", adr, data);
+//		system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+//		if (access("memdump1.bin", 0)) dump_mem(sr, 0, 0x10000, "memdump1.bin");
+//	}
 	mem_proc_write(adr, data, sr->base_mem + ind);
 }
 
@@ -510,6 +360,12 @@ byte mem_read(word adr, struct SYS_RUN_STATE*sr)
 int update_xio_status(struct SYS_RUN_STATE*sr)
 {
 	int i;
+	if (sr->sys.xio_control) {
+		if (!sr->sys.xio_control(sr, 1)) {
+			sr->sys.xio_control(sr, 0);
+			return -1;
+		}
+	}
 	for (i = 0; i < NCONFTYPES; ++i) {
 		if (sr->slots[i].xio_en) {
 			sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT] = sr->slots[i].xio_sel;
@@ -518,8 +374,11 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 		}
 	}
 //	printf("disabled all xrom\n");
-	sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].read = empty_read;
-	sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].write = empty_write;
+	if (sr->sys.xio_control) sr->sys.xio_control(sr, 0);
+	else {
+		sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].read = empty_read;
+		sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].write = empty_write;
+	}	
 	return -1;
 }
 

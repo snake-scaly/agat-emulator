@@ -30,10 +30,13 @@ static byte rom1_read(word adr,struct BASEROM_STATE*st);
 static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
 {
 	struct BASEROM_STATE*st = ss->data;
-	int nb = st->rom_size>>BASEMEM_BLOCK_SHIFT;
-//	printf("rom_size = %i (%x); nb = %i\n", st->rom_size, st->rom_size, nb);
 	if (ss->sr->cursystype != SYSTEM_1) {
-		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - st->rom_size) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
+		int sz = st->rom_size;
+		int nb;
+		if (sz > 0x3000) sz = 0x3000;
+		nb = sz>>BASEMEM_BLOCK_SHIFT;
+//		printf("rom_size = %i (%x); nb = %i\n", sz, sz, nb);
+		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - sz) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
 		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
 	} else {
 		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-1, 1, rom1_read, st);
@@ -106,7 +109,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 	ss->free = rom_free;
 	ss->command = rom_command;
 
-	if (sr->config->systype == SYSTEM_9) {
+	if (sr->config->systype == SYSTEM_9) { // to conform to the real Agat-9
 		st->rom_size <<= 1;
 	}
 
@@ -117,7 +120,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 
 static byte rom_read(word adr,struct BASEROM_STATE*st)
 {
-//	printf("rom_read from addr %x: %x\n", adr, st->rom[(adr & st->rom_mask) - st->rom_ofs]);
+//	printf("rom_read from addr %x(%x): %x\n", adr, (adr & st->rom_mask) - st->rom_ofs, st->rom[(adr & st->rom_mask) - st->rom_ofs]);
 	return st->rom[(adr & st->rom_mask) - st->rom_ofs];
 }
 
@@ -128,3 +131,9 @@ static byte rom1_read(word adr,struct BASEROM_STATE*st)
 	if (adr >= 0xFF00) return st->rom[(adr & st->rom_mask) - st->rom_ofs];
 	else return empty_read(adr, st);
 }
+
+byte system_read_rom(word adr,struct SYS_RUN_STATE*sr)
+{
+	return rom_read(adr, sr->slots[CONF_ROM].data);
+}
+

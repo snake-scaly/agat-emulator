@@ -82,6 +82,8 @@ struct VTERM_INFO
 	const byte*font;
 };
 
+#define MAX_N_FONTS 2
+
 struct VIDEO_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -92,7 +94,9 @@ struct VIDEO_STATE
 	int rb_enabled;
 
 	RECT inv_area;
-	byte font[256][8];
+	byte font[MAX_N_FONTS][256][8];
+	int  cur_font;
+	int  num_fonts;
 
 	struct APPLE_INFO ainf;
 	struct PAL_INFO pal;

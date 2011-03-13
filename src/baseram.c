@@ -98,11 +98,8 @@ static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 	memcpy(&st0, st, sizeof(st0));
 	WRITE_FIELD(out, st0);
 	oswrite(out, st->ram, st->ram_size);
-	switch (ss->sr->config->systype) {
-	case SYSTEM_1:
-		save_system_1(ss->sr, out);
-		break;	
-	}
+	if (ss->sr->sys.save_system)
+		ss->sr->sys.save_system(ss->sr, out);
 	return 0;
 }
 
@@ -142,15 +139,14 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 			system9_cancel_apple_mode(0, 0, st);
 		}
 	}
+	if (ss->sr->sys.load_system)
+		ss->sr->sys.load_system(ss->sr, in);
 	switch (ss->sr->config->systype) {
 	case SYSTEM_9:
 		if (!st->apple_emu) break;
 	case SYSTEM_A:
 		upd_apple(st, 3);
 		break;
-	case SYSTEM_1:
-		load_system_1(ss->sr, in);
-		break;	
 	}
 	return 0;
 }
@@ -181,6 +177,7 @@ int rama_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 
 	{
 		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
+		if (nb > 24) nb = 24;
 //		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
 		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
 	}
@@ -198,7 +195,30 @@ int rama_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 	return 0;
 }
 
-extern int restart_system_1(struct SYS_RUN_STATE*sr);
+int rame_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCONFIG*sc)
+{
+
+	struct BASERAM_STATE*st;
+
+	st = ram_init(sr, ss, sc);
+	if (!st) return -1;
+
+	ss->data = st;
+	ss->free = ram_free;
+	ss->command = rama_command;
+
+	{
+		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
+		if (nb > 24) nb = 24;
+//		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
+		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
+	}
+
+	fill_rw_proc(st->sr->baseio_sel+8, 1, apple_read_psrom_mode, apple_write_psrom_mode, st);
+	st->apple_rom_mode = 0xC1;
+	apple_set_ext_rom_mode(0, 1, 3, st);
+	return 0;
+}
 
 static int ram1_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 {
@@ -206,7 +226,6 @@ static int ram1_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 	switch (cmd) {
 	case SYS_COMMAND_HRESET:
 		clear_block(st->ram, st->ram_size);
-		restart_system_1(ss->sr);
 		break;
 	}
 	return 0;
@@ -753,6 +772,8 @@ int ram_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 		return rama_install(sr, ss, sc);
 	case SYSTEM_1:
 		return ram1_install(sr, ss, sc);
+	case SYSTEM_E:
+		return rame_install(sr, ss, sc);
 	}
 	return -1;
 }

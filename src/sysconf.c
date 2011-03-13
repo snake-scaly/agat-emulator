@@ -205,6 +205,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGART13.ROM"));
 			break;
 		case SYSTEM_P:
+		case SYSTEM_E:
 			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGARTA.ROM"));
 			c->cfgint[CFG_INT_DRV_ROM_RES] = 24;
 			break;
@@ -340,7 +341,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
-				c->cfgint[CFG_INT_ROM_OFS] = 0x2000;
+				c->cfgint[CFG_INT_ROM_OFS] = 0;
 				return 0;
 			}
 			break;
@@ -350,7 +351,6 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_7:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\AGATHE7.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 1;
-				c->cfgint[CFG_INT_ROM_SIZE] = 0x800;
 				return 0;
 			case SYSTEM_9:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\AGATHE9.FNT"));
@@ -369,8 +369,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_RES] = 3;
 				return 0;
 			case SYSTEM_E:
-				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\APPLESM.FNT"));
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\APPLE2E.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 3;
+				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
 				return 0;
 			}
 			break;

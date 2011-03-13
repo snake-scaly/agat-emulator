@@ -94,7 +94,8 @@ static int  joy_status_mouse(struct JOYDATA*j, int no, unsigned dt)
 
 static int  joy_button_mouse(struct JOYDATA*j, int no)
 {
-	if (!j->joy_present) return 0x7F;
+//	printf("read_button_mouse: %X\n", j->sr->mousebtn);
+//	if (!j->joy_present) return 0x7F;
 	switch (no) {
 	case 0:	return (j->sr->mousebtn&1)?0xFF:0x7F; break;
 	case 1:	return (j->sr->mousebtn&2)?0xFF:0x7F; break;

@@ -595,7 +595,6 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
 			break;
 		}
-		break;
 	case WM_KEYDOWN:
 		{
 			int d;
@@ -606,6 +605,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 #endif
 
 		switch (wp) {
+		case VK_SCROLL:
+			if (GetKeyState(wp)&1) {
+				system_command(sr, SYS_COMMAND_STOP, 0, 0);
+			} else {
+				system_command(sr, SYS_COMMAND_START, 0, 0);
+			}	
+			break;
 		case VK_ESCAPE:
 			cancel_input_file(sr);
 			break;
@@ -622,6 +628,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 //			printf("d=%x\n",d);
 			if (d) {
 				sr->cur_key=d|0x80;
+				sr->key_down = wp;
 #ifndef SYNC_SCREEN_UPDATE
 				InvalidateRect(w,NULL,FALSE);
 #endif
@@ -804,3 +811,15 @@ void toggle_ints(struct SYS_RUN_STATE*sr)
 		enable_ints(sr);
 }
 
+
+byte keyb_is_pressed(struct SYS_RUN_STATE*sr, int vk)
+{
+	return (GetKeyState(vk)&0x8000)?0x80:0x00;
+}
+
+byte keyb_apple_state(struct SYS_RUN_STATE*sr, int lr)
+{
+	int keys[2] = {VK_LMENU, VK_RMENU};
+	printf("apple_state[%i]\n", lr);
+	return keyb_is_pressed(sr, keys[lr]);
+}

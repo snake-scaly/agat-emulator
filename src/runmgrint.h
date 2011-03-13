@@ -5,6 +5,16 @@
 #define BASEMEM_BLOCK_SHIFT	11
 #define BASEMEM_NBLOCKS		0x20
 
+struct SYS_CONTROL_INFO
+{
+	void*ptr; // pointer to external information
+	int (*free_system)(struct SYS_RUN_STATE*sr);
+	int (*restart_system)(struct SYS_RUN_STATE*sr); // hardware restart
+	int (*save_system)(struct SYS_RUN_STATE*sr, OSTREAM*out);
+	int (*load_system)(struct SYS_RUN_STATE*sr, ISTREAM*in);
+	int (*xio_control)(struct SYS_RUN_STATE*sr, int req); 	// req=1 - request if it is possible to acquire ROM, 
+								// req=0 - restore ROM at C800.CFFF
+};
 
 struct SYS_RUN_STATE
 {
@@ -41,16 +51,29 @@ struct SYS_RUN_STATE
 	int mousebtn;
 	int keyreg;
 	int cur_key;
+	int key_down;
 
 	int ints_enabled;
 
 	int pause_inactive; // pause execution when window is inactive
 	int apple_emu;
 
-	void*ptr;
+	struct SYS_CONTROL_INFO sys;
 
 	ISTREAM*input_data;
 	int input_recode;
 	int input_size, input_pos;
 };
 
+void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f
+byte io6_read(word adr, struct MEM_PROC*io6_sel); // c060-c06f
+void io_write(word adr, byte data, struct MEM_PROC*io_sel); // C000-C7FF
+byte io_read(word adr, struct MEM_PROC*io_sel); // C000-C7FF
+void baseio_write(word adr, byte data, struct MEM_PROC*baseio_sel); // C000-C0FF
+byte baseio_read(word adr, struct MEM_PROC*baseio_sel);	// C000-C0FF
+
+byte keyb_read(word adr, struct SYS_RUN_STATE*sr);	// C000-C00F
+byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr);	// C063
+byte keyb_apple_state(struct SYS_RUN_STATE*sr, int lr); // left or right
+byte keyb_is_pressed(struct SYS_RUN_STATE*sr, int vk);
+void keyb_clear(struct SYS_RUN_STATE*sr);	// C010-C01F

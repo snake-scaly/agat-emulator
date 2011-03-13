@@ -1,8 +1,8 @@
 #include "videoint.h"
 
-static int load_font_res(int no, void*buf)
+static int load_font_res(int no, void*buf, int sz)
 {
-	return load_buf_res(no, buf, 256*8);
+	return load_buf_res(no, buf, sz);
 }
 
 static int video_term(struct SLOT_RUN_STATE*st)
@@ -210,8 +210,10 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	case SYSTEM_1:
 	case SYSTEM_A:
 	case SYSTEM_P:
-	case SYSTEM_E:
 		set_rb_count(vs, 1, 0);
+		break;
+	case SYSTEM_E:
+		set_rb_count(vs, 1, 4);
 		break;
 	}
 	return 0;
@@ -221,8 +223,20 @@ const byte*video_get_font(struct SYS_RUN_STATE*sr)
 {
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
 	struct VIDEO_STATE*vs = st->data;
-	return vs->font[0];
+	return vs->font[vs->cur_font][0];
 }
+
+int video_select_font(struct SYS_RUN_STATE*sr, int fnt)
+{
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+	fnt %= vs->num_fonts;
+	if (vs->cur_font == fnt) return vs->cur_font;
+	vs->cur_font = fnt;
+	if (vs->ainf.text_mode) video_repaint_screen(vs);
+	return vs->cur_font;
+}
+
 
 int video_get_flash(struct SYS_RUN_STATE*sr)
 {
@@ -237,6 +251,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	ISTREAM*s;
 	struct VIDEO_STATE*vs;
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	const struct SLOTCONFIG*ch = st->sc;
 
 	puts("video_init");
 
@@ -250,12 +265,15 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	vs->pal.prev_pal = -1;
 	vs->rb_enabled = 1;
 
-	puts(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
-	s=isfopen(sr->config->slots[CONF_CHARSET].cfgstr[CFG_STR_ROM]);
+	vs->num_fonts = ch->cfgint[CFG_INT_ROM_SIZE] >> 11;
+
+	printf("font file: %s, font size: %i bytes\n",
+		ch->cfgstr[CFG_STR_ROM], ch->cfgint[CFG_INT_ROM_SIZE]);
+	s=isfopen(ch->cfgstr[CFG_STR_ROM]);
 	if (!s) {
-		load_font_res(sr->config->slots[CONF_CHARSET].cfgint[CFG_INT_ROM_RES], vs->font[0]);
+		load_font_res(ch->cfgint[CFG_INT_ROM_RES], vs->font[0][0], ch->cfgint[CFG_INT_ROM_SIZE]);
 	} else {
-		if (isread(s,vs->font[0],sizeof(vs->font))!=sizeof(vs->font)) {
+		if (isread(s,vs->font[0],ch->cfgint[CFG_INT_ROM_SIZE])!=ch->cfgint[CFG_INT_ROM_SIZE]) {
 			WIN_ERROR(GetLastError(),TEXT("can't read font file"));
 		}
 		isclose(s);
@@ -306,4 +324,27 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		break;
 	}
 	return 0;
+}
+
+int video_get_flags(struct SYS_RUN_STATE*sr, word addr)
+{
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+
+	switch (addr) {
+	case 0xC019:
+//		printf("rbi = %i\n", vs->rbi);
+		return (vs->rbi<0)?0x80:0x00;
+	case 0xC01A:
+		return vs->ainf.text_mode?0x80:0x00;
+	case 0xC01B:
+		return vs->ainf.combined?0x80:0x00;
+	case 0xC01C:
+		return vs->ainf.page?0x80:0x00;
+	case 0xC01D:
+		return vs->ainf.hgr?0x80:0x00;
+	case 0xC01F:
+		return vs->ainf.videoterm?0x80:0x00;
+	}
+	return 0x00;
 }
