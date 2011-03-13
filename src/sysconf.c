@@ -271,7 +271,14 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			}
 			break;
 		case CONF_CPU:
-			c->dev_type = DEV_6502;
+			switch (systype) {
+			case SYSTEM_E:
+				c->dev_type = DEV_65C02;
+				break;
+			default:
+				c->dev_type = DEV_6502;
+				break;
+			}
 			c->cfgint[CFG_INT_CPU_SPEED] = 100;
 			c->cfgint[CFG_INT_CPU_EXT] = 1;
 			return 0;
@@ -439,6 +446,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		}
 		return 0;
 	case DEV_6502:
+	case DEV_65C02:
 	case DEV_M6502:
 		wsprintf(buf, 
 			localize_str(LOC_SYSCONF, 501, lbuf, sizeof(lbuf)), //TEXT("Частота %i%%"), 

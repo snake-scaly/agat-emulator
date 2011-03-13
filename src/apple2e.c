@@ -47,6 +47,8 @@ static void write_C00X(word adr, byte data, struct SYS_RUN_STATE*sr)
 		break;
 	case 0x0C:
 		//select 40/80 col display
+		if (basemem_n_blocks(sr) > 32)
+			video_select_80col(sr, en);
 		break;
 	case 0x0E:
 		video_select_font(sr, en);
@@ -99,10 +101,10 @@ static byte read_C01X(word adr, struct SYS_RUN_STATE*sr)
 	case 0x0B: // read mixed switch
 	case 0x0C: // read PAGE2 switch
 	case 0x0D: // read HIRES switch
+	case 0x0E: // read font charset
 	case 0x0F: // read 80col switch
 		r = video_get_flags(sr, adr);
-	case 0x0E: // read font charset
-		r = a2e->ext_switches[7];
+		break;
 	}
 	r |=  (sr->cur_key&0x7F);
 //	printf("get ext switch: %X = %x\n", adr, r);

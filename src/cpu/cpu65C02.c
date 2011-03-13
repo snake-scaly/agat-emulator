@@ -1262,7 +1262,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 		printf("undocumented command: %02X (%s %s)\n", b, c->cmd_name, c->adr_name);
 		return -1;
 	}
-	if (cpu_debug || (c->flags & CMD_NEW)) {
+	if (cpu_debug/* || (c->flags & CMD_NEW)*/) {
 		op_disassemble(st, c);
 	}
 	if (c->adr) c->adr(st);

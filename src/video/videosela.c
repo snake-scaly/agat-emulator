@@ -8,6 +8,7 @@ static int get_apple_mode_id(struct APPLE_INFO*ai)
 	if (ai->page) res |= 4;
 	if (ai->hgr) res |= 8;
 	if (ai->videoterm) res |= 16;
+	if (ai->text80) res |= 32;
 	return res;
 }
 
@@ -19,8 +20,13 @@ void update_video_ap(struct VIDEO_STATE*vs)
 			set_video_active_range(vs, 0x10000, vs->vinf.ram_size, 1);
 			set_video_type(vs, 11);
 		} else {
-			set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
-			set_video_type(vs, 7);
+			if (ai->text80) {
+				set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
+				set_video_type(vs, 13);
+			} else {
+				set_video_active_range(vs, (ai->page+1)*0x400, 0x400, 1);
+				set_video_type(vs, 7);
+			}	
 		}
 	} else if (ai->hgr) {
 		if (basemem_n_blocks(vs->sr) < (ai->page+2) * 4) return;

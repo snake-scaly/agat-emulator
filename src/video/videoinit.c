@@ -343,8 +343,21 @@ int video_get_flags(struct SYS_RUN_STATE*sr, word addr)
 		return vs->ainf.page?0x80:0x00;
 	case 0xC01D:
 		return vs->ainf.hgr?0x80:0x00;
+	case 0xC01E:
+		return vs->cur_font?0x80:0x00;
 	case 0xC01F:
-		return vs->ainf.videoterm?0x80:0x00;
+		return vs->ainf.text80?0x80:0x00;
 	}
 	return 0x00;
+}
+
+int video_select_80col(struct SYS_RUN_STATE*sr, int set)
+{
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+	if (vs->ainf.text80 == set) return 1;
+	vs->ainf.text80 = set;
+	update_video_ap(vs);
+	video_update_mode(vs);
+	return 0;
 }

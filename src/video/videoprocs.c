@@ -573,7 +573,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*fnt;
 	int mask;
 	int xi, yi, xn, yn;
-	if (vs->sr->apple_emu && ch<0xA0) {
+	if (vs->sr->cursystype == SYSTEM_9 && ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
 		ch+=0xA0;
@@ -620,6 +620,67 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 		ptr+=bmp_pitch;
 #endif
 	}
+}
+
+void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte atr = ch>>6;
+	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
+	const byte*fnt = vs->font[vs->cur_font][ch];
+	int mask;
+	int xi, yi, xn, yn;
+	if (!vs->cur_font) {
+		switch(atr) {
+		case 1: if (!vs->pal.flash_mode) break; //flash
+		case 0: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
+		}
+	} else { // alternate font for apple //e
+		switch(atr) {
+		case 0: case 1: bc=vs->pal.c2_palette[1]; tc=vs->pal.c2_palette[0]; break; // inverse
+		}
+	}
+//	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
+	for (yn=8;yn;yn--,fnt++) {
+		byte*p=ptr;
+		for (xn=8,mask=0x80;xn;xn--,mask>>=1,p++) {
+			byte cl;
+			byte c1, c2;
+			c1=((*fnt)&mask)?tc:bc;
+			mask>>=1;
+			xn--;
+			c2=((*fnt)&mask)?tc:bc;
+			cl=c2|(c1<<4);
+			p[0]=cl;
+#ifdef DOUBLE_Y
+			p[bmp_pitch]=cl;
+#endif
+		}
+		ptr+=bmp_pitch;
+#ifdef DOUBLE_Y
+		ptr+=bmp_pitch;
+#endif
+	}
+}
+
+void aepaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int nb = (addr&0x3FF)>>7;
+	int bofs = addr&0x7F;
+	int bl = bofs / 40;
+	int y = nb + bl * 8;
+	int x = bofs % 40;
+	const byte*mem = ramptr(vs->sr);
+	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*PIX_W*4));
+	r->left=x*CHAR_W;
+	r->top=y*CHAR_H;
+	r->right=r->left+CHAR_W;
+	r->bottom=r->top+CHAR_H;
+//	printf("%x: %i,%i\n",addr,x,y);
+	aepaint_t80_char(vs, x, y, mem[addr & ~0x10000], ptr);
+	aepaint_t80_char(vs, x + 1, y, mem[addr | 0x10000], ptr + PIX_W*2);
 }
 
 void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r)
@@ -972,4 +1033,5 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 	paint_t64_addr_i, //10 inverse
 	apaint_t80_addr, //11
 	apaint_apple1, //12
+	aepaint_t80_addr, // 13
 };

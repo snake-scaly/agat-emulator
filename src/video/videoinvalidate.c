@@ -21,13 +21,15 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 {
 	struct VIDEO_STATE*vs = get_video_state(sr);
 	struct RASTER_BLOCK*rb;
+	dword sadr = adr;
 	int i, j;
+	if (sr->cursystype == SYSTEM_E) sadr &= 0xFFFF;
 //	printf("video_invalidate: adr = %x; n_rb = %i\n", adr, vs->n_rb);
 	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
 //		printf("i = %i; n_ranges = %i\n", i, rb->n_ranges);
 		for (j = rb->n_ranges - 1; j >= 0; --j) {
 //			printf("j = %i; base_addr = %x; mem_size = %x\n", j, rb->base_addr[j], rb->mem_size[j]);
-			if (adr>=rb->base_addr[j]&&adr<rb->base_addr[j]+rb->mem_size[j]) {
+			if (sadr>=rb->base_addr[j]&&sadr<rb->base_addr[j]+rb->mem_size[j]) {
 				RECT r;
 				if (vs->video_mode == VIDEO_MODE_AGAT && rb->vmode != vs->rb_cur.vmode) {
 					rb->dirty = 1;
@@ -44,5 +46,5 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 		}
 	}
 	if (vs->video_mode==VIDEO_MODE_APPLE)
-		vid_invalidate_addr_comb(vs, adr);
+		vid_invalidate_addr_comb(vs, sadr);
 }
