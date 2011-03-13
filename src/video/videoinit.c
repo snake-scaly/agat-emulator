@@ -30,6 +30,11 @@ static int video_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	WRITE_FIELD(out, vs->ainf.page);
 	WRITE_FIELD(out, vs->ainf.hgr);
 
+	if (st->sr->cursystype == SYSTEM_E) {
+		WRITE_FIELD(out, vs->cur_font);
+		WRITE_FIELD(out, vs->ainf.text80);
+	}
+
 	return 0;
 }
 
@@ -51,6 +56,11 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	READ_FIELD(in, vs->ainf.combined);
 	READ_FIELD(in, vs->ainf.page);
 	READ_FIELD(in, vs->ainf.hgr);
+
+	if (st->sr->cursystype == SYSTEM_E) {
+		READ_FIELD(in, vs->cur_font);
+		READ_FIELD(in, vs->ainf.text80);
+	}
 
 	video_update_mode(vs);
 	video_repaint_screen(vs);

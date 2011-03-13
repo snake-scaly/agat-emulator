@@ -39,6 +39,11 @@ struct BASERAM_STATE_SAV
 	byte  apple_rom_mode;
 };
 
+struct RAM2E_STATE
+{
+	int ramrd, ramwrt, store80, altzp;
+};
+
 struct BASERAM_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -51,6 +56,7 @@ struct BASERAM_STATE
 	byte *ram;
 	byte  apple_rom_mode;
 	int   last_write;
+	struct RAM2E_STATE ram2e;
 };
 
 
@@ -100,6 +106,11 @@ static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 	oswrite(out, st->ram, st->ram_size);
 	if (ss->sr->sys.save_system)
 		ss->sr->sys.save_system(ss->sr, out);
+	switch (ss->sr->config->systype) {
+	case SYSTEM_E:
+		WRITE_FIELD(out, st->ram2e);
+		break;
+	}
 	return 0;
 }
 
@@ -144,7 +155,11 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 	switch (ss->sr->config->systype) {
 	case SYSTEM_9:
 		if (!st->apple_emu) break;
+	case SYSTEM_E:
+		READ_FIELD(in, st->ram2e);
+		break;
 	case SYSTEM_A:
+	case SYSTEM_P:
 		upd_apple(st, 3);
 		break;
 	}
@@ -799,4 +814,17 @@ int dump_baseram(struct SYS_RUN_STATE*sr, const char*fname)
 	fwrite(st->ram, 1, st->ram_size, f);
 	fclose(f);
 	return 0;
+}
+
+
+byte basemem_ext_bank(struct SYS_RUN_STATE*sr)
+{
+	struct BASERAM_STATE*st = sr->slots[CONF_MEMORY].data;
+	return st->psrom9_ofs?0x80:0;
+}
+
+byte basemem_ext_enabled_ram(struct SYS_RUN_STATE*sr)
+{
+	struct BASERAM_STATE*st = sr->slots[CONF_MEMORY].data;
+	return (st->apple_rom_mode&2)?0x80:0;
 }

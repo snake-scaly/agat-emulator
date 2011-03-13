@@ -17,6 +17,9 @@ static int save_system_2e(struct SYS_RUN_STATE*sr, OSTREAM*out);
 static int load_system_2e(struct SYS_RUN_STATE*sr, ISTREAM*in);
 static int xio_control_2e(struct SYS_RUN_STATE*sr, int req);
 
+byte basemem_ext_bank(struct SYS_RUN_STATE*sr);
+byte basemem_ext_enabled_ram(struct SYS_RUN_STATE*sr);
+
 
 static void write_C00X(word adr, byte data, struct SYS_RUN_STATE*sr)
 {	
@@ -76,8 +79,12 @@ static byte read_C01X(word adr, struct SYS_RUN_STATE*sr)
 		sr->cur_key &= ~0x80;
 		if (sr->key_down) r = keyb_is_pressed(sr, sr->key_down);
 		break;
-//	case 0x01:  //read BANK2
-//	case 0x02:  //read HIGHRAM
+	case 0x01:  //read BANK2
+		r = basemem_ext_bank(sr);
+		break;
+	case 0x02:  //read HIGHRAM
+		r = basemem_ext_enabled_ram(sr);
+		break;
 	case 0x03: // read RAMRD switch
 		r = a2e->ext_switches[1];
 		break;
