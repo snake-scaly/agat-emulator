@@ -174,6 +174,7 @@ static int rama_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 	struct BASERAM_STATE*st = ss->data;
 	switch (cmd) {
 	case SYS_COMMAND_HRESET:
+		st->psrom9_ofs = 0;
 		apple_set_ext_rom_mode(0, 1, 3, st);
 		clear_block(st->ram, st->ram_size);
 		memset(&st->ram2e, 0, sizeof(st->ram2e));
@@ -714,7 +715,7 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	int hi = adr & 8;
 	int mde = adr & 3;
 	byte last_mode = st->apple_rom_mode;
-	printf("apple_read_psrom_mode(%x)\n", adr);
+//	printf("apple_read_psrom_mode(%x)\n", adr);
 	if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 	else st->psrom9_ofs=0;
 	switch (mde) {

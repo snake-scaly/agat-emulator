@@ -116,7 +116,7 @@ static void io_write_e(word adr, byte data, struct SYS_RUN_STATE*sr) // C000-C7F
 
 //	printf("io_write_e: %X, %X\n", adr, data);
 	if ((ind && (a2e->ext_switches[3] >= 0x80)) || 
-		((ind==3) && (a2e->ext_switches[5] >= 0x80))) return;
+		((ind==3) && (a2e->ext_switches[5] < 0x80))) return;
 	mem_proc_write(adr, data, sr->io_sel + ind);
 }
 
@@ -126,7 +126,7 @@ static byte io_read_e(word adr, struct SYS_RUN_STATE*sr) // C000-C7FF
 	int ind = (adr>>8) & 7;
 //	printf("io_read_e: %X: switches %X, %X\n", adr, a2e->ext_switches[3], a2e->ext_switches[5]);
 	if ((ind && (a2e->ext_switches[3] >= 0x80)) || 
-		((ind==3) && (a2e->ext_switches[5] >= 0x80))) {
+		((ind==3) && (a2e->ext_switches[5] < 0x80))) {
 			return system_read_rom(adr, sr);
 	}
 	return mem_proc_read(adr, sr->io_sel + ind);
