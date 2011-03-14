@@ -387,6 +387,11 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_1:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("KEYB\\APPLE1.BIN"));
 				break;
+			case SYSTEM_A:
+			case SYSTEM_P:
+			case SYSTEM_E:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("KEYB\\APPLE2.BIN"));
+				return 0;
 			default:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("KEYB\\DEFAULT.BIN"));
 				break;

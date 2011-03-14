@@ -442,10 +442,10 @@ static byte rame_read(word adr, struct BASERAM_STATE*st)
 	dword ladr = adr;
 	if (adr < 0x200) { if (st->ram2e.altzp) ladr |= 0x10000; }
 	else if (st->ram2e.store80) {
-		if (video_get_flags(st->sr, 0xC01C)) {
-			if (adr >=0x400 && adr < 0x800) ladr |= 0x10000;
-			else if (adr >=0x2000 && adr < 0x4000) { if (video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
-		}
+		if ((adr >=0x400 && adr < 0x800) || 
+			(adr >=0x2000 && adr < 0x4000 && video_get_flags(st->sr, 0xC01D))) {
+			if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000;
+		} else if (st->ram2e.ramrd) ladr |= 0x10000;
 	} else { if (st->ram2e.ramrd) ladr |= 0x10000; }
 	ladr &= (st->ram_size - 1);
 	return st->ram[ladr];
@@ -456,15 +456,15 @@ static void rame_write(word adr, byte d, struct BASERAM_STATE*st)
 	dword ladr = adr;
 	if (adr < 0x200) { if (st->ram2e.altzp) ladr |= 0x10000; }
 	else if (st->ram2e.store80) {
-		if (video_get_flags(st->sr, 0xC01C)) {
-			if (adr >=0x400 && adr < 0x800) ladr |= 0x10000;
-			else if (adr >=0x2000 && adr < 0x4000) { if (video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
-		}
+		if ((adr >=0x400 && adr < 0x800) || 
+			(adr >=0x2000 && adr < 0x4000 && video_get_flags(st->sr, 0xC01D))) {
+			if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000;
+		} else if (st->ram2e.ramwrt) ladr |= 0x10000;
 	} else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
 	ladr &= (st->ram_size - 1);
 	if (st->ram[ladr] == d) return;
 	st->ram[ladr] = d;
-	vid_invalidate_addr(st->sr, adr);
+	vid_invalidate_addr(st->sr, ladr);
 }
 
 
@@ -624,27 +624,6 @@ byte apple_read_psrom_e(word adr, struct BASERAM_STATE*st)
 	return st->ram[get_addr_bank9(st, adr, 15)];
 }
 
-byte apple_read_lang_d(word adr, struct BASERAM_STATE*st)
-{
-	return st->ram[adr + st->psrom9_ofs - RAM9_BANK_SIZE/2];
-}
-
-byte apple_read_lang_e(word adr, struct BASERAM_STATE*st)
-{
-	return st->ram[adr];
-}
-
-void apple_write_lang_d(word adr, byte d, struct BASERAM_STATE*st)
-{
-	st->ram[adr + st->psrom9_ofs - RAM9_BANK_SIZE/2] = d;
-}
-
-void apple_write_lang_e(word adr, byte d, struct BASERAM_STATE*st)
-{
-	st->ram[adr] = d;
-}
-
-
 void apple_write_psrom_d(word adr, byte d, struct BASERAM_STATE*st)
 {
 	st->ram[get_addr_bank9(st, adr, 14) + 
@@ -655,6 +634,40 @@ void apple_write_psrom_e(word adr, byte d, struct BASERAM_STATE*st)
 {
 	st->ram[get_addr_bank9(st, adr, 15)] = d;
 }
+
+
+byte apple_read_lang_d(word adr, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (st->ram2e.altzp) ladr |= 0x10000;
+	ladr &= (st->ram_size - 1);
+	return st->ram[ladr + st->psrom9_ofs - RAM9_BANK_SIZE/2];
+}
+
+byte apple_read_lang_e(word adr, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (st->ram2e.altzp) ladr |= 0x10000;
+	ladr &= (st->ram_size - 1);
+	return st->ram[ladr];
+}
+
+void apple_write_lang_d(word adr, byte d, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (st->ram2e.altzp) ladr |= 0x10000;
+	ladr &= (st->ram_size - 1);
+	st->ram[ladr + st->psrom9_ofs - RAM9_BANK_SIZE/2] = d;
+}
+
+void apple_write_lang_e(word adr, byte d, struct BASERAM_STATE*st)
+{
+	dword ladr = adr;
+	if (st->ram2e.altzp) ladr |= 0x10000;
+	ladr &= (st->ram_size - 1);
+	st->ram[ladr] = d;
+}
+
 
 
 byte baseram9_read_mapping(word adr, struct BASERAM_STATE*st)

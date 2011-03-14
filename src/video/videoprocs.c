@@ -597,7 +597,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
 		byte*p=ptr;
-		for (xn=7,mask=0x40;xn;xn--,mask>>=1,p++) {
+		for (xn=7,mask=0x80;xn;xn--,mask>>=1,p++) {
 			byte cl;
 #ifdef DOUBLE_X
 			byte c=((*fnt)&mask)?tc:bc;
@@ -622,7 +622,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	}
 }
 
-void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr)
+void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr, int odd)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte atr = ch>>6;
@@ -643,10 +643,27 @@ void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr)
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
 		byte*p=ptr;
-		for (xn=8,mask=0x80;xn;xn--,mask>>=1,p++) {
+		int xodd = odd;
+		for (xn=7,mask=0x80;xn;xn--,mask>>=1,p++) {
 			byte cl;
 			byte c1, c2;
 			c1=((*fnt)&mask)?tc:bc;
+			if (xodd) {
+				cl = (p[0] & 0xF0) | c1;
+				p[0] = cl;
+#ifdef DOUBLE_Y
+				p[bmp_pitch] = cl;
+#endif
+				xodd = 0;
+				continue;
+			} else if (xn == 1) {
+				cl = (p[0] & 0x0F) | (c1<<4);
+				p[0] = cl;
+#ifdef DOUBLE_Y
+				p[bmp_pitch] = cl;
+#endif
+				continue;
+			}
 			mask>>=1;
 			xn--;
 			c2=((*fnt)&mask)?tc:bc;
@@ -673,14 +690,14 @@ void aepaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int y = nb + bl * 8;
 	int x = bofs % 40;
 	const byte*mem = ramptr(vs->sr);
-	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*PIX_W*4));
-	r->left=x*CHAR_W;
+	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*PIX_W*7/2));
+	r->left=x*CHAR_W*7/8;
 	r->top=y*CHAR_H;
-	r->right=r->left+CHAR_W;
+	r->right=r->left+CHAR_W*7/8;
 	r->bottom=r->top+CHAR_H;
 //	printf("%x: %i,%i\n",addr,x,y);
-	aepaint_t80_char(vs, x, y, mem[addr | 0x10000], ptr);
-	aepaint_t80_char(vs, x + 1, y, mem[addr & 0xFFFF], ptr + PIX_W*2);
+	aepaint_t80_char(vs, x, y, mem[addr | 0x10000], ptr, 0);
+	aepaint_t80_char(vs, x + 1, y, mem[addr & 0xFFFF], ptr + PIX_W*2-1, 1);
 }
 
 void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r)
