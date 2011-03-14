@@ -36,15 +36,13 @@ void update_video_ap(struct VIDEO_STATE*vs)
 				set_video_type(vs, 7);
 			}	
 		}
+	} else if (ai->dhgr) {
+		set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
+		set_video_type(vs, 14);
 	} else if (hgr) {
 		if (basemem_n_blocks(vs->sr) < (page+2) * 4) return;
-		if (ai->dhgr/* && vs->sr->cursystype == SYSTEM_E*/) {
-			set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
-			set_video_type(vs, 14);
-		} else {
 			set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
 			set_video_type(vs, 9);
-		}	
 	} else {
 		set_video_active_range(vs, (page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
