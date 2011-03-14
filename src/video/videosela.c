@@ -16,8 +16,10 @@ void update_video_ap(struct VIDEO_STATE*vs)
 {
 	struct APPLE_INFO*ai = &vs->ainf;
 	int page = ai->page;
+	int hgr = ai->hgr;
 	if (baseram_read_ext_state(0xC018, vs->sr)) {
 		page = (vs->rb_cur.base_addr[0]==0x800) || (vs->rb_cur.base_addr[0]==0x4000);
+		hgr = (vs->rb_cur.base_addr[0] >= 0x2000);
 	}
 	if (ai->text_mode) {
 		if (ai->videoterm) {
@@ -32,7 +34,7 @@ void update_video_ap(struct VIDEO_STATE*vs)
 				set_video_type(vs, 7);
 			}	
 		}
-	} else if (ai->hgr) {
+	} else if (hgr) {
 		if (basemem_n_blocks(vs->sr) < (page+2) * 4) return;
 		set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
 		set_video_type(vs, 9);

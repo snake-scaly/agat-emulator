@@ -439,13 +439,12 @@ static void ram_write(word adr,byte d,struct BASERAM_STATE*st)
 static byte rame_read(word adr, struct BASERAM_STATE*st)
 {
 	dword ladr = adr;
-	if (adr < 0x300) { if (st->ram2e.altzp) ladr |= 0x10000; }
-	else if (adr >=0x400 && ladr < 0x800) {
-		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000; }
-		else { if (st->ram2e.ramrd) ladr |= 0x10000; }
-	} else if (adr >=0x2000 && adr < 0x4000) {
-		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C) && video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
-		else { if (st->ram2e.ramrd) ladr |= 0x10000; }
+	if (adr < 0x200) { if (st->ram2e.altzp) ladr |= 0x10000; }
+	else if (st->ram2e.store80) {
+		if (video_get_flags(st->sr, 0xC01C)) {
+			if (adr >=0x400 && adr < 0x800) ladr |= 0x10000;
+			else if (adr >=0x2000 && adr < 0x4000) { if (video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
+		}
 	} else { if (st->ram2e.ramrd) ladr |= 0x10000; }
 	ladr &= (st->ram_size - 1);
 	return st->ram[ladr];
@@ -454,13 +453,12 @@ static byte rame_read(word adr, struct BASERAM_STATE*st)
 static void rame_write(word adr, byte d, struct BASERAM_STATE*st)
 {
 	dword ladr = adr;
-	if (adr < 0x300) { if (st->ram2e.altzp) ladr |= 0x10000; }
-	else if (adr >=0x400 && adr <= 0x800) {
-		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C)) ladr |= 0x10000; }
-		else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
-	} else if (adr >=0x2000 && adr <= 0x4000) {
-		if (st->ram2e.store80) { if (video_get_flags(st->sr, 0xC01C) && video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
-		else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
+	if (adr < 0x200) { if (st->ram2e.altzp) ladr |= 0x10000; }
+	else if (st->ram2e.store80) {
+		if (video_get_flags(st->sr, 0xC01C)) {
+			if (adr >=0x400 && adr < 0x800) ladr |= 0x10000;
+			else if (adr >=0x2000 && adr < 0x4000) { if (video_get_flags(st->sr, 0xC01D)) ladr |= 0x10000; }
+		}
 	} else { if (st->ram2e.ramwrt) ladr |= 0x10000; }
 	ladr &= (st->ram_size - 1);
 	if (st->ram[ladr] == d) return;
@@ -716,7 +714,7 @@ byte apple_read_psrom_mode(word adr, struct BASERAM_STATE*st)
 	int hi = adr & 8;
 	int mde = adr & 3;
 	byte last_mode = st->apple_rom_mode;
-//	printf("apple_read_psrom_mode(%x)\n", adr);
+	printf("apple_read_psrom_mode(%x)\n", adr);
 	if (hi) st->psrom9_ofs=RAM9_BANK_SIZE/2;
 	else st->psrom9_ofs=0;
 	switch (mde) {
@@ -900,7 +898,7 @@ void baseram_write_ext_state(word adr, struct SYS_RUN_STATE*sr)
 byte basemem_ext_bank(struct SYS_RUN_STATE*sr)
 {
 	struct BASERAM_STATE*st = sr->slots[CONF_MEMORY].data;
-	return st->psrom9_ofs?0x80:0;
+	return st->psrom9_ofs?0x0:0x80;
 }
 
 byte basemem_ext_enabled_ram(struct SYS_RUN_STATE*sr)
