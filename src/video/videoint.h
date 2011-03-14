@@ -56,6 +56,7 @@ struct APPLE_INFO
 	int hgr;// = 1;
 	int videoterm; // = 0;
 	int text80; // = 0;
+	int dhgr;
 	byte hgr_flags[40][192]; // first and last color of byte
 };
 

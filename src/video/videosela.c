@@ -9,6 +9,7 @@ static int get_apple_mode_id(struct APPLE_INFO*ai)
 	if (ai->hgr) res |= 8;
 	if (ai->videoterm) res |= 16;
 	if (ai->text80) res |= 32;
+	if (ai->dhgr) res |= 64;
 	return res;
 }
 
@@ -21,6 +22,7 @@ void update_video_ap(struct VIDEO_STATE*vs)
 		page = (vs->rb_cur.base_addr[0]==0x800) || (vs->rb_cur.base_addr[0]==0x4000);
 		hgr = (vs->rb_cur.base_addr[0] >= 0x2000);
 	}
+//	printf("hgr = %i, page = %i, dhgr = %i\n", hgr, page, ai->dhgr);
 	if (ai->text_mode) {
 		if (ai->videoterm) {
 			set_video_active_range(vs, 0x10000, vs->vinf.ram_size, 1);
@@ -36,8 +38,13 @@ void update_video_ap(struct VIDEO_STATE*vs)
 		}
 	} else if (hgr) {
 		if (basemem_n_blocks(vs->sr) < (page+2) * 4) return;
-		set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
-		set_video_type(vs, 9);
+		if (ai->dhgr/* && vs->sr->cursystype == SYSTEM_E*/) {
+			set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
+			set_video_type(vs, 14);
+		} else {
+			set_video_active_range(vs, (page+1)*0x2000, 0x2000, 1);
+			set_video_type(vs, 9);
+		}	
 	} else {
 		set_video_active_range(vs, (page+1)*0x400, 0x400, 1);
 		set_video_type(vs, 8);
@@ -53,28 +60,8 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 	struct APPLE_INFO*ai = &vs->ainf;
 	struct VTERM_INFO*vi = &vs->vinf;
 //	printf("apple video select: %x\n", adr);
-	if (adr&8) {
-		if (vi->ram) {
-			switch (adr&0x0F) {
-			case 8:
-				if (ai->videoterm) puts("videoterm disabled");
-				ai->videoterm = 0;
-				break;
-			case 9:
-				if (!ai->videoterm) puts("videoterm enabled");
-				ai->videoterm = 1;
-				break;
-			}
-			video_update_mode(vs);
-			update_video_ap(vs);
-			return;
-		} else {
-//			video_set_palette(vs, adr&7);
-			return;
-		}
-	}
 	video_set_mode(vs, VIDEO_MODE_APPLE);
-	adr&=7;
+	adr&=15;
 //	printf("vs->page = %i\n", vs->page);
 	switch(adr) {
 	case 0: ai->text_mode = 0; 
@@ -99,6 +86,20 @@ void vsel_ap(struct VIDEO_STATE*vs, word adr)
 		break;
 	case 7: ai->hgr = 1; 
 		ai->videoterm = 0;
+		break;
+	case 8:
+		if (ai->videoterm) puts("videoterm disabled");
+		ai->videoterm = 0;
+		break;
+	case 9:
+		if (!ai->videoterm) puts("videoterm enabled");
+		if (vi->ram) ai->videoterm = 1;
+		break;
+	case 14:
+		if (vs->sr->cursystype == SYSTEM_E) ai->dhgr = 1;
+		break;
+	case 15:
+		ai->dhgr = 0;
 		break;
 	}
 	update_video_ap(vs);

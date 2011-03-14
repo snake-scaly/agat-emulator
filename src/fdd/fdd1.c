@@ -369,9 +369,10 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	if (!d->present) return 0;
 	if (!d->disk) { d->error = 1; return rand()%0x80; }
 
-	if (!(data->time&3)) r = 0;
+	if (!(data->time&7)) r = 0;
 	else {
 		r = d->TrackData[d->TrackIndex];
+//		printf("TrackData[%i] = %X\n", d->TrackIndex, r);
 		fdd_rot(d);
 	}
 	data->time++;
@@ -817,11 +818,13 @@ static void fdd_load_track(struct FDD_DATA*data)
 }
 
 
-static void fdd_select_phase(struct FDD_DATA*data, int p)
+static void fdd_select_phase(struct FDD_DATA*data, int p, int en)
 {
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+//	printf("fdd1: %s phase %i, cur_phase %i, phase %i, track %i\n", en?"enable":"disable", p, data->state.CurrentPhase, data->drives[data->drv].Phase, data->drives[data->drv].Track);
+	if (!en) return;
 	if (data->state.CurrentPhase==p) return;
-	if (((data->state.CurrentPhase+1)&3)==p) {
-		struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	if (((d->Phase+1)&3)==p) {
 		if (d->Phase<110) {
 			d->Phase++;
 			if (d->Track!=d->Phase/2) {
@@ -832,8 +835,7 @@ static void fdd_select_phase(struct FDD_DATA*data, int p)
 			}	
 		}
 	}
-	if (((data->state.CurrentPhase-1)&3)==p) {
-		struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	if (((d->Phase-1)&3)==p) {
 		if (d->Phase>0) {
 			d->Phase--;
 			if (d->Track!=d->Phase/2) {
@@ -862,8 +864,9 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 	a&=0x0F;
 	if (!data->initialized) return 0;
 	switch (a) {
+	case 0: case 2: case 4: case 6:
 	case 1: case 3: case 5: case 7:
-		fdd_select_phase(data, a>>1);
+		fdd_select_phase(data, a >> 1, a & 1);
 		break;
 	case 8:
 		if (data->use_fast) system_command(data->sr, SYS_COMMAND_FAST, 0, 0);
