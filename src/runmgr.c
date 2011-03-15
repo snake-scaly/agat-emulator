@@ -125,12 +125,20 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 {
 	struct SYS_RUN_STATE*sr;
 	int i, r;
+	static const int sys_types[NSYSTYPES] = {
+		SYSTEM_7,
+		SYSTEM_9,
+		SYSTEM_A, // original apple 2
+		SYSTEM_A, // apple 2 plus -> apple 2
+		SYSTEM_E, // apple 2e
+		SYSTEM_1, // apple 1
+	};
 
 	sr = calloc(1, sizeof(*sr));
 	if (!sr) return NULL;
 	sr->name = name?_tcsdup(name):NULL;
 	sr->config = c;
-	sr->cursystype = c->systype;
+	sr->cursystype = sys_types[c->systype]; // translate compatible system type
 	sr->base_w = hmain;
 
 	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
@@ -211,6 +219,7 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 	if (sr->popup_menu)
 		system_command(sr, SYS_COMMAND_FREEMENU, 0, (long)sr->popup_menu);
 
+	system_command(sr, SYS_COMMAND_STOP, 0, 0);
 	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 
 	and_run_state_flags(sr->name, ~RUNSTATE_RUNNING);

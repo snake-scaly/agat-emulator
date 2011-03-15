@@ -26,6 +26,14 @@ WORD get_keyb_language()
 	return PRIMARYLANGID(LOWORD(GetKeyboardLayout(0)));
 }
 
+void update_alt_state(struct SYS_RUN_STATE*sr)
+{
+	if (keyb_is_pressed(sr, VK_LMENU)) sr->mousebtn|=1;
+	else sr->mousebtn&=~1;
+	if (keyb_is_pressed(sr, VK_RMENU)) sr->mousebtn|=2;
+	else sr->mousebtn&=~2;
+}
+
 int register_video_window()
 {
 	WNDCLASS cl;
@@ -148,7 +156,7 @@ int init_video_window(struct SYS_RUN_STATE*sr)
 		sr->v_size.cx = 32 * CHAR_W;
 		sr->v_size.cy = 32 * CHAR_H;
 		break;
-	case SYSTEM_A:
+	default:
 		sr->v_size.cx = 35 * CHAR_W;
 		sr->v_size.cy = 24 * CHAR_H;
 		break;
@@ -592,12 +600,15 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			break;
 		case VK_PAUSE:
+			system_command(sr, SYS_COMMAND_STOP, 0, 0);
 			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
+			system_command(sr, SYS_COMMAND_START, 0, 0);
 			break;
 		}
 	case WM_KEYDOWN:
 		{
 			int d;
+			if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 #ifdef KEY_SCANCODES
 			d=decode_key(lp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
 #else
@@ -635,11 +646,18 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			if (d==-1) {
 				sr->cur_key = 0;
-				system_command(sr, (GetKeyState(VK_MENU)&0x8000)?SYS_COMMAND_HRESET:SYS_COMMAND_RESET, 0, 0);
+				if (GetKeyState(VK_MENU)&0x8000) {
+					system_command(sr, SYS_COMMAND_STOP, 0, 0);
+					system_command(sr, SYS_COMMAND_HRESET, 0, 0);
+					system_command(sr, SYS_COMMAND_START, 0, 0);
+				} else {
+					system_command(sr, SYS_COMMAND_RESET, 0, 0);
+				}
 			}
 		}
 		break;
 	case WM_KEYUP:
+		if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 		switch (wp) {
 		case VK_APPS:
 			system_command(sr, SYS_COMMAND_FAST, 0, 0);
@@ -705,7 +723,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			system_command(sr, SYS_COMMAND_NMI, 0, 0);
 			break;
 		case IDC_HRESET:
+			system_command(sr, SYS_COMMAND_STOP, 0, 0);
 			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
+			system_command(sr, SYS_COMMAND_START, 0, 0);
 			break;
 		case IDCLOSE:
 			PostMessage(w,WM_CLOSE,0,0);

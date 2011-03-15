@@ -369,7 +369,7 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	if (!d->present) return 0;
 	if (!d->disk) { d->error = 1; return rand()%0x80; }
 
-	if (!(data->time&7)) r = 0;
+	if (!(data->time&3)) r = 0;
 	else {
 		r = d->TrackData[d->TrackIndex];
 //		printf("TrackData[%i] = %X\n", d->TrackIndex, r);

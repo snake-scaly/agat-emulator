@@ -714,13 +714,13 @@ static void op_pla(struct STATE_65C02 *st)
 static void op_plx(struct STATE_65C02 *st)
 {
 	st->x=pop_stack(st);
-	check_flags_log(st, st->a);
+	check_flags_log(st, st->x);
 }
 
 static void op_ply(struct STATE_65C02 *st)
 {
 	st->y=pop_stack(st);
-	check_flags_log(st, st->a);
+	check_flags_log(st, st->y);
 }
 
 static void op_plp(struct STATE_65C02 *st)

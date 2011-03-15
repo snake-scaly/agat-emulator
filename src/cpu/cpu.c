@@ -86,10 +86,13 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 static int cpu_term(struct SLOT_RUN_STATE*st)
 {
 	struct CPU_STATE*cs = st->data;
+	DWORD res;
 	cs->term_req = 1;
 	cs->sleep_req = 0;
 	SetEvent(cs->wakeup);
-	WaitForSingleObject(cs->th, 1000);
+	if (GetExitCodeThread(cs->th, &res) && res != STILL_ACTIVE) {
+		WaitForSingleObject(cs->th, 1000);
+	}
 	TerminateThread(cs->th, 0);
 	CloseHandle(cs->th);
 	CloseHandle(cs->wakeup);
@@ -217,7 +220,7 @@ int cpu_pause(struct CPU_STATE*st, int p)
 		if (st->sleep_req) return 1;
 		ResetEvent(st->wakeup);
 		st->sleep_req = 1;
-		WaitForSingleObject(st->response, 5000);
+		WaitForSingleObject(st->response, 1000);
 		return 0;
 	} else {
 		if (!st->sleep_req) return 1;

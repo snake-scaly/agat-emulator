@@ -29,7 +29,7 @@ static void write_C00X(word adr, byte data, struct SYS_RUN_STATE*sr)
 	struct APPLE2E_DATA*a2e = sr->sys.ptr;
 	int en = adr & 1;
 	int sel = adr&0x0E;
-//	printf("set ext switch: %X = %i\n", adr, en);
+//	printf("set ext switch: %X\n", adr);
 	a2e->ext_switches[sel>>1] = (en<<7);
 	switch (sel) {
 	case 0x00: //enable access to video memory via PAGE2 switch

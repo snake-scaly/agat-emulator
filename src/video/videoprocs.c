@@ -597,7 +597,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 //	printf("%x [%x, %x]: %i,%i\n",addr,video_base_addr,video_base_addr+video_mem_size,x,y);
 	for (yn=8;yn;yn--,fnt++) {
 		byte*p=ptr;
-		for (xn=7,mask=0x80;xn;xn--,mask>>=1,p++) {
+		for (xn=7,mask=0x40;xn;xn--,mask>>=1,p++) {
 			byte cl;
 #ifdef DOUBLE_X
 			byte c=((*fnt)&mask)?tc:bc;
@@ -644,7 +644,7 @@ void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr, in
 	for (yn=8;yn;yn--,fnt++) {
 		byte*p=ptr;
 		int xodd = odd;
-		for (xn=7,mask=0x80;xn;xn--,mask>>=1,p++) {
+		for (xn=7,mask=0x40;xn;xn--,mask>>=1,p++) {
 			byte cl;
 			byte c1, c2;
 			c1=((*fnt)&mask)?tc:bc;
