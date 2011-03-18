@@ -2,6 +2,14 @@
 
 #include "localize.h"
 
+//#define CPU_DEBUG
+
+#ifdef CPU_DEBUG
+#define _CMSG(s) puts(__FUNCTION__ ": " s)
+#else
+#define _CMSG(s)
+#endif
+
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs);
 
@@ -87,18 +95,25 @@ static int cpu_term(struct SLOT_RUN_STATE*st)
 {
 	struct CPU_STATE*cs = st->data;
 	DWORD res;
+	_CMSG("start");
 	cs->term_req = 1;
 	cs->sleep_req = 0;
+	_CMSG("setting wakeup event");
 	SetEvent(cs->wakeup);
-	if (GetExitCodeThread(cs->th, &res) && res != STILL_ACTIVE) {
-		WaitForSingleObject(cs->th, 1000);
+	_CMSG("wakeup event set");
+	if (!GetExitCodeThread(cs->th, &res) || res == STILL_ACTIVE) {
+		_CMSG("waiting");
+		WaitForSingleObject(cs->th, 5000);
+		_CMSG("end of waiting");
 	}
+	_CMSG("terminating thread");
 	TerminateThread(cs->th, 0);
 	CloseHandle(cs->th);
 	CloseHandle(cs->wakeup);
 	CloseHandle(cs->response);
 	cs->free(cs);
 	free(cs);
+	_CMSG("finished");
 	return 0;
 }
 
@@ -142,6 +157,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 {
 	struct CPU_STATE*cs;
 
+	_CMSG("start");
 	cs = calloc(1, sizeof(*cs));
 	if (!cs) return -1;
 	cs->sr = sr;
@@ -173,20 +189,33 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 		free(cs);
 		return -1;
 	}
-	WaitForSingleObject(cs->response, 5000);
+	_CMSG("waiting for response");
+	if (WaitForSingleObject(cs->response, 5000) != WAIT_OBJECT_0) {
+		_CMSG("no response");
+		TerminateThread(cs->th, 1);
+		cs->free(cs);
+		CloseHandle(cs->th);
+		free(cs);
+		_CMSG("exit, failure");
+		return -1;
+	}
+	_CMSG("got response");
 
 	st->data = cs;
 	st->free = cpu_term;
 	st->save = cpu_save;
 	st->load = cpu_load;
 	st->command = cpu_command;
+	_CMSG("exit, ok");
 	return 0;
 }
 
 
 int cpu_hreset(struct CPU_STATE*st)
 {
+	_CMSG("start");
 	st->intr(st, CPU_INTR_HRESET);
+	_CMSG("end");
 	return 0;
 }
 
@@ -216,17 +245,36 @@ int cpu_intr(struct CPU_STATE*st, int t, int nticks)
 
 int cpu_pause(struct CPU_STATE*st, int p)
 {
+	_CMSG("start");
+	if (st->term_req) {
+		_CMSG("going to terminate");
+		return 2;
+	}
 	if (p) {
-		if (st->sleep_req) return 1;
+		_CMSG("set pause");
+		if (st->sleep_req) {
+			_CMSG("already paused");
+			return 1;
+		}
+		_CMSG("reset wakeup event");
 		ResetEvent(st->wakeup);
+		ResetEvent(st->response);
 		st->sleep_req = 1;
-		WaitForSingleObject(st->response, 1000);
+		_CMSG("waiting for response");
+		WaitForSingleObject(st->response, 5000);
+		_CMSG("got response");
 		return 0;
 	} else {
-		if (!st->sleep_req) return 1;
+		_CMSG("unpause");
+		if (!st->sleep_req) {
+			_CMSG("already unpaused");
+			return 1;
+		}
 		st->sleep_req = 0;
 		SetEvent(st->wakeup);
+		_CMSG("set wakeup event");
 	}
+	_CMSG("exit");
 	return 0;
 }
 
@@ -279,15 +327,23 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 	TCHAR bufs[2][256];
 	unsigned t0=get_n_msec();
 	long long n_ticks = 0;
+	_CMSG("start");
 	PulseEvent(cs->response);
+	_CMSG("pulsed response event");
 	while (!cs->term_req) {
 		int r, t, rt;
 		while (cs->sleep_req) {
 			unsigned ta = get_n_msec();
-			PulseEvent(cs->response);
+			SetEvent(cs->response);
+			_CMSG("pulsed response event on sleep request");
+			_CMSG("waiting for wakeup event");
 			WaitForSingleObject(cs->wakeup, INFINITE);
+			_CMSG("got wakeup event");
 			t0 += get_n_msec() - ta;
-			if (cs->term_req) return 0;
+			if (cs->term_req) {
+				_CMSG("got terminate request after wakeup");
+				return 0;
+			}
 		}
 //		puts("exec_op");
 		if  (cs->hook_proc) {
@@ -310,6 +366,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 //					lstrcat(title, TEXT(" (неактивен)"));
 					system_command(cs->sr, SYS_COMMAND_SET_STATUS_TEXT, -1, (long)localize_str(LOC_CPU, 2, bufs[0], sizeof(bufs[0])));
 					cs->term_req = 1;
+					_CMSG("execution aborted after bad command");
 					break;
 				}
 		}
@@ -327,6 +384,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			}
 		}
 	}
+	_CMSG("exit");
 	return 0;
 }
 

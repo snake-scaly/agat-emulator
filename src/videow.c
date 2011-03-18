@@ -201,6 +201,7 @@ void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
 
 int term_video_window(struct SYS_RUN_STATE*sr)
 {
+	puts("free_video_window: entry");
 	if (sr->input_data) {
 		isclose(sr->input_data);
 		sr->input_data = NULL;
@@ -210,6 +211,7 @@ int term_video_window(struct SYS_RUN_STATE*sr)
 	WaitForSingleObject(sr->h, INFINITE);
 	CloseHandle(sr->h);
 	free_video_buffer(sr);
+	puts("free_video_window: exit");
 	return 0;
 }
 
@@ -551,11 +553,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		break;
 	case WM_CLOSE:
-		if (sr->fullscreen) set_fullscreen(sr, 0);
-		UpdateWindow(w);
-		system_command(sr, SYS_COMMAND_STOP, 0, 0);
-		free_config(sr->config);
-		free_system_state(sr);
+		{
+			struct SYSCONFIG*c = sr->config;
+//			if (sr->fullscreen) set_fullscreen(sr, 0);
+			UpdateWindow(w);
+			free_system_state(sr);
+			free_config(c);
+		}	
 		break;
 	case WM_ACTIVATE:
 		switch (wp) {

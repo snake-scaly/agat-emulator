@@ -22,6 +22,7 @@ struct STATE_65C02
 
 	word ea;
 	byte ints_req;
+	int  addt;
 };
 
 #define CMD_ILL		1
@@ -147,6 +148,13 @@ static void check_flags_log(struct STATE_65C02 *st, byte b)
 
 /////////////////////////////////////////////////////////
 
+static word add_timing_page(struct STATE_65C02*st, word a, int ofs)
+{
+	word r = a + ofs;
+	if ((r&~0xFF) != (a&~0xFF)) ++st->addt;
+	return r;
+}
+
 static void ea_get_imm(struct STATE_65C02 *st)
 {
 	st->ea=st->pc;
@@ -175,13 +183,13 @@ static void ea_get_zpy(struct STATE_65C02*st)
 
 static void ea_get_absx(struct STATE_65C02*st)
 {
-	word ad=fetch_cmd_word(st)+st->x;
+	word ad=add_timing_page(st, fetch_cmd_word(st), st->x);
 	st->ea=ad;
 }
 
 static void ea_get_absy(struct STATE_65C02*st)
 {
-	word ad=fetch_cmd_word(st)+st->y;
+	word ad=add_timing_page(st, fetch_cmd_word(st), st->y);
 	st->ea=ad;
 }
 
@@ -207,7 +215,7 @@ static void ea_get_ind16x(struct STATE_65C02*st)
 static void ea_get_indy(struct STATE_65C02*st)
 {
 	register byte addr=fetch_cmd_byte(st);
-	st->ea=mem_read_word_page(st, addr)+st->y;
+	st->ea=add_timing_page(st, mem_read_word_page(st, addr), st->y);
 }
 
 static void ea_get_ind(struct STATE_65C02*st)
@@ -449,14 +457,16 @@ static void op_bcc(struct STATE_65C02 *st)
 	if (st->f&FLAG_C) {
 		st->pc++;
 	} else {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	}
 }
 
 static void op_bcs(struct STATE_65C02 *st)
 {
 	if (st->f&FLAG_C) {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	} else {
 		st->pc++;
 	}
@@ -465,7 +475,8 @@ static void op_bcs(struct STATE_65C02 *st)
 static void op_beq(struct STATE_65C02 *st)
 {
 	if (st->f&FLAG_Z) {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	} else {
 		st->pc++;
 	}
@@ -484,7 +495,8 @@ static void op_bit(struct STATE_65C02 *st)
 static void op_bmi(struct STATE_65C02 *st)
 {
 	if (st->f&FLAG_N) {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	} else {
 		st->pc++;
 	}
@@ -495,7 +507,8 @@ static void op_bne(struct STATE_65C02 *st)
 	if (st->f&FLAG_Z) {
 		st->pc++;
 	} else {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	}
 }
 
@@ -505,13 +518,14 @@ static void op_bpl(struct STATE_65C02 *st)
 	if (st->f&FLAG_N) {
 		st->pc++;
 	} else {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	}
 }
 
 static void op_bra(struct STATE_65C02 *st)
 {
-	st->pc+=(signed char)fetch_cmd_byte(st);
+	st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
 }
 
 static void op_brk(struct STATE_65C02 *st)
@@ -528,14 +542,16 @@ static void op_bvc(struct STATE_65C02 *st)
 	if (st->f&FLAG_V) {
 		st->pc++;
 	} else {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	}
 }
 
 static void op_bvs(struct STATE_65C02 *st)
 {
 	if (st->f&FLAG_V) {
-		st->pc+=(signed char)fetch_cmd_byte(st);
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+		++st->addt;
 	} else {
 		st->pc++;
 	}
@@ -1284,9 +1300,11 @@ static int exec_65c02(struct CPU_STATE*cs)
 	if (cpu_debug/* || (c->flags & CMD_NEW)*/) {
 		op_disassemble(st, c);
 	}
+	st->addt = 0;
 	if (c->adr) c->adr(st);
 	if (c->cmd) c->cmd(st); else n++;
-	n += c->ticks;
+	if (c->ticks >= 6) st->addt = 0;
+	n += c->ticks + st->addt;
 	return n;
 }
 

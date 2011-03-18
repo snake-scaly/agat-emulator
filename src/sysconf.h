@@ -25,6 +25,7 @@ enum {
 	SYSTEM_P, // apple 2 plus
 	SYSTEM_E, // apple 2e
 	SYSTEM_1, // apple 1
+	SYSTEM_EE, // apple 2e enhanced
 
 	NSYSTYPES
 };

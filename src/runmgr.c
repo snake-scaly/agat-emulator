@@ -6,6 +6,14 @@
 
 #include "resource.h"
 
+//#define RUNMGR_DEBUG
+
+#ifdef RUNMGR_DEBUG
+#define _RMSG(s) puts(__FUNCTION__ ": " s)
+#else
+#define _RMSG(s)
+#endif
+
 extern int init_system_1(struct SYS_RUN_STATE*sr);
 extern int init_system_2e(struct SYS_RUN_STATE*sr);
 extern int init_systems(struct SYS_RUN_STATE*sr); // other systems
@@ -132,10 +140,16 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		SYSTEM_A, // apple 2 plus -> apple 2
 		SYSTEM_E, // apple 2e
 		SYSTEM_1, // apple 1
+		SYSTEM_E, // apple 2ee -> apple 2e
 	};
 
+	_RMSG("entry");
+
 	sr = calloc(1, sizeof(*sr));
-	if (!sr) return NULL;
+	if (!sr) {
+		_RMSG("memory allocation error");
+		return NULL;
+	}
 	sr->name = name?_tcsdup(name):NULL;
 	sr->config = c;
 	sr->cursystype = sys_types[c->systype]; // translate compatible system type
@@ -145,6 +159,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 
 	set_run_state_ptr(sr->name, sr);
 
+	_RMSG("init_system");
 	switch (sr->cursystype) {
 	case SYSTEM_1:
 		r = init_system_1(sr);
@@ -156,16 +171,24 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		r = init_systems(sr);
 		break;
 	}
-	if (r < 0) goto fail;
+	if (r < 0) {
+		_RMSG("init_system failed");
+		goto fail;
+	}
 
+	_RMSG("init_video_window");
 	r = init_video_window(sr);
-	if (r < 0) goto fail;
+	if (r < 0) {
+		_RMSG("init_video_window failed");
+		goto fail;
+	}
 	if (sr->name) {
 		GetWindowText(sr->video_w, sr->title, 1024);
 		lstrcat(sr->title, TEXT(" — "));
 		lstrcat(sr->title, sr->name);
 		SetWindowText(sr->video_w, sr->title);
 	}
+	_RMSG("video title set");
 
 	for (i = 0; i < NCONFTYPES; i++ ) {
 		sr->slots[i].sc = c->slots + i;
@@ -174,22 +197,32 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 			sr->slots[i].baseio_sel = sr->baseio_sel + i + 8;
 			sr->slots[i].io_sel = sr->io_sel + i;
 		}
+		_RMSG("calling init_slot_state");
 		r = init_slot_state(sr, sr->slots + i, c->slots + i);
-		if (r < 0) goto fail;
+		if (r < 0) {
+			_RMSG("init_slot_state failed");
+			goto fail;
+		}
 	}
 
+	_RMSG("calling video_init");
 	r = video_init(sr);
-	if (r < 0) goto fail;
+	if (r < 0) {
+		_RMSG("video_init failed");
+		goto fail;
+	}
 
+	_RMSG("calling update_xio_status");
 	update_xio_status(sr);
 
 	system_command(sr, SYS_COMMAND_INITMENU, 0, (long)sr->popup_menu);
 	system_command(sr, SYS_COMMAND_INIT_DONE, 0, 0);
 
 	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
+	_RMSG("exit");
 	return sr;
 fail:
-	puts("failure");
+	_RMSG("failure");
 	{
 		int j;
 
@@ -216,23 +249,33 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 
 	if (!sr) return -1;
 
+	_RMSG("entry");
+
 	if (sr->popup_menu)
 		system_command(sr, SYS_COMMAND_FREEMENU, 0, (long)sr->popup_menu);
 
+	_RMSG("stopping system");
 	system_command(sr, SYS_COMMAND_STOP, 0, 0);
+	_RMSG("updating base window");
 	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 
 	and_run_state_flags(sr->name, ~RUNSTATE_RUNNING);
 	set_run_state_ptr(sr->name, NULL);
 
+	_RMSG("starting video window termination");
 	term_video_window(sr);
+	_RMSG("end of video window termination");
 
+	_RMSG("freeing slots configurations");
 	for (i = 0; i < NCONFTYPES; i++) {
 		free_slot_state(sr->slots + i);
 	}
+	_RMSG("end of freeing slots configurations");
+	_RMSG("freeing system");
 	if (sr->sys.free_system) sr->sys.free_system(sr);
 	if (sr->name) free((void*)sr->name);
 	free(sr);
+	_RMSG("exit");
 	return 0;
 }
 

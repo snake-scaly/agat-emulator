@@ -20,7 +20,7 @@ void update_video_ap(struct VIDEO_STATE*vs)
 	int hgr = ai->hgr;
 	if (baseram_read_ext_state(0xC018, vs->sr)) {
 		page = (vs->rb_cur.base_addr[0]==0x800) || (vs->rb_cur.base_addr[0]==0x4000);
-		hgr = (vs->rb_cur.base_addr[0] >= 0x2000);
+//		hgr = (vs->rb_cur.base_addr[0] >= 0x2000);
 	}
 //	printf("hgr = %i, page = %i, dhgr = %i\n", hgr, page, ai->dhgr);
 	if (ai->text_mode) {

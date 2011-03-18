@@ -47,6 +47,9 @@ IDB_APPLE2E_LOGO        BITMAP  DISCARDABLE     "bmps\\apple2e_logo.bmp"
 IDB_AGAT7_LOGO          BITMAP  DISCARDABLE     "bmps\\agat7_logo.bmp"
 IDB_AGAT9_LOGO          BITMAP  DISCARDABLE     "bmps\\agat9_logo.bmp"
 IDB_APPLE1_LOGO         BITMAP  DISCARDABLE     "bmps\\apple1_logo.bmp"
+IDB_APPLE2EE            BITMAP  DISCARDABLE     "bmps\\apple2ee.bmp"
+IDB_APPLE2EE_LOGO       BITMAP  DISCARDABLE     "bmps\\apple2ee_logo.bmp"
+IDB_UNKNOWN             BITMAP  DISCARDABLE     "bmps\\unknown.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -320,38 +323,19 @@ BEGIN
                     WS_TABSTOP,88,78,82,10
 END
 
-IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 295, 275
+IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 239, 147
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Выбор системы"
 FONT 9, "Tahoma"
 BEGIN
-    CONTROL         "Агат-&7",IDC_AGAT_7,"Button",BS_AUTORADIOBUTTON | 
-                    WS_GROUP,36,121,38,10
-    CONTROL         "Агат-&9",IDC_AGAT_9,"Button",BS_AUTORADIOBUTTON,128,121,
-                    38,10
-    CONTROL         "&Apple ][",IDC_APPLE_2,"Button",BS_AUTORADIOBUTTON,220,
-                    121,42,10
-    CONTROL         "Apple II Plus",IDC_APPLE_2P,"Button",BS_AUTORADIOBUTTON,
-                    25,236,57,10
-    CONTROL         "Apple IIe",IDC_APPLE_2E,"Button",BS_AUTORADIOBUTTON,129,
-                    236,46,10
-    CONTROL         "&Apple I",IDC_APPLE_1,"Button",BS_AUTORADIOBUTTON,221,
-                    236,39,10
-    DEFPUSHBUTTON   "OK",IDOK,84,254,50,14,WS_DISABLED
-    PUSHBUTTON      "Отмена",IDCANCEL,151,254,50,14
+    DEFPUSHBUTTON   "OK",IDOK,61,126,50,14,WS_DISABLED
+    PUSHBUTTON      "Отмена",IDCANCEL,128,126,50,14
     LTEXT           "Выберите тип системы:",IDC_STATIC,7,7,83,8
-    CONTROL         109,11,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE | WS_GROUP,7,23,92,93
-    CONTROL         110,12,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE,101,23,92,93
-    CONTROL         108,13,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE,195,23,92,93
-    CONTROL         118,14,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE | WS_GROUP,8,138,92,93
-    CONTROL         IDI_DISK,15,"Static",SS_BITMAP | SS_NOTIFY | 
-                    SS_CENTERIMAGE | SS_REALSIZEIMAGE,102,138,92,93
-    CONTROL         119,16,"Static",SS_BITMAP | SS_NOTIFY | SS_CENTERIMAGE | 
-                    SS_REALSIZEIMAGE,196,138,92,93
+    CONTROL         123,IDC_SYSVIEW,"Static",SS_BITMAP | SS_NOTIFY | 
+                    SS_CENTERIMAGE | SS_REALSIZEIMAGE | WS_GROUP,140,23,92,
+                    93
+    LISTBOX         IDC_SYSLIST,7,23,116,93, LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_TAPECFG DIALOG DISCARDABLE  0, 0, 187, 117
@@ -540,12 +524,10 @@ BEGIN
     IDD_SYSCHOOSE, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 288
+        RIGHTMARGIN, 232
         TOPMARGIN, 7
-        BOTTOMMARGIN, 268
+        BOTTOMMARGIN, 140
         HORZGUIDE, 23
-        HORZGUIDE, 116
-        HORZGUIDE, 131
     END
 
     IDD_TAPECFG, DIALOG
@@ -910,6 +892,7 @@ STRINGTABLE DISCARDABLE
 BEGIN
     12304                   "Apple IIe"
     12305                   "Apple I"
+    12306                   "Enhanced Apple IIe"
 END
 
 STRINGTABLE DISCARDABLE 

@@ -46,8 +46,8 @@ struct CPU_STATE
 	int min_msleep; //=10;
 	int lim_fetches; // =5000
 	int need_cpusleep;
-	int term_req;
-	int sleep_req;
+	volatile int term_req;
+	volatile int sleep_req;
 	HANDLE wakeup, response;
 
 	int int_ticks[2];

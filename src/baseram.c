@@ -109,7 +109,7 @@ static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 	oswrite(out, st->ram, st->ram_size);
 	if (ss->sr->sys.save_system)
 		ss->sr->sys.save_system(ss->sr, out);
-	switch (ss->sr->config->systype) {
+	switch (ss->sr->cursystype) {
 	case SYSTEM_E:
 		WRITE_FIELD(out, st->ram2e);
 		break;
@@ -155,12 +155,11 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 	}
 	if (ss->sr->sys.load_system)
 		ss->sr->sys.load_system(ss->sr, in);
-	switch (ss->sr->config->systype) {
+	switch (ss->sr->cursystype) {
 	case SYSTEM_9:
 		if (!st->apple_emu) break;
 	case SYSTEM_E:
 		READ_FIELD(in, st->ram2e);
-		break;
 	case SYSTEM_A:
 	case SYSTEM_P:
 		upd_apple(st, 3);
@@ -825,7 +824,7 @@ int ram_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 {
 	ss->save = baseram_save;
 	ss->load = baseram_load;
-	switch (sr->config->systype) {
+	switch (sr->cursystype) {
 	case SYSTEM_7:
 		return ram7_install(sr, ss, sc);
 	case SYSTEM_9:

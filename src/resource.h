@@ -2,6 +2,7 @@
 // Microsoft Developer Studio generated include file.
 // Used by resource.rc
 //
+#define IDC_SYSVIEW                     11
 #define IDD_MAIN                        101
 #define IDD_ABOUT                       102
 #define IDD_CONFIG                      103
@@ -32,6 +33,9 @@
 #define IDB_APPLE2P                     118
 #define IDB_APPLE1                      119
 #define IDB_APPLE1_LOGO                 120
+#define IDB_APPLE2EE                    121
+#define IDB_APPLE2EE_LOGO               122
+#define IDB_UNKNOWN                     123
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -97,6 +101,7 @@
 #define IDC_CHOOSE_FW2                  1052
 #define IDC_PRINT_MODE                  1053
 #define IDC_INPUT_FILE                  1054
+#define IDC_SYSLIST                     1055
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -104,9 +109,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        121
+#define _APS_NEXT_RESOURCE_VALUE        124
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1055
+#define _APS_NEXT_CONTROL_VALUE         1056
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

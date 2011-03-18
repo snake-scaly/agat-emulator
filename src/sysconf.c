@@ -11,8 +11,9 @@ char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1}
+	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 };
 
 
@@ -81,6 +82,7 @@ int reset_config(struct SYSCONFIG*c, int systype)
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
 	case SYSTEM_E:
+	case SYSTEM_EE:
 		reset_slot_config(c->slots+CONF_SLOT1, DEV_PRINTERA, systype);
 		reset_slot_config(c->slots+CONF_SLOT0, DEV_MEMORY_XRAMA, systype);
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
@@ -97,7 +99,9 @@ int reset_config(struct SYSCONFIG*c, int systype)
 int reset_sysicon(struct SYSCONFIG*c, int systype)
 {
 	HBITMAP bmp;
-	int codes[]={IDB_AGAT7_LOGO, IDB_AGAT9_LOGO, IDB_APPLE2_LOGO, IDB_APPLE2P_LOGO, IDB_APPLE2E_LOGO, IDB_APPLE1_LOGO};
+	int codes[]={IDB_AGAT7_LOGO, IDB_AGAT9_LOGO, IDB_APPLE2_LOGO, 
+		IDB_APPLE2P_LOGO, IDB_APPLE2E_LOGO, IDB_APPLE1_LOGO, 
+		IDB_APPLE2EE_LOGO};
 	HDC dc;
 	int r;
 	bmp = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(codes[systype]));
@@ -206,6 +210,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			break;
 		case SYSTEM_P:
 		case SYSTEM_E:
+		case SYSTEM_EE:
 			_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\SHUGARTA.ROM"));
 			c->cfgint[CFG_INT_DRV_ROM_RES] = 24;
 			break;
@@ -251,7 +256,11 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_MEM_MASK] = 32;
 				return 0;
 			case SYSTEM_E:
-				c->cfgint[CFG_INT_MEM_SIZE] = 6;
+				c->cfgint[CFG_INT_MEM_SIZE] = 7;
+				c->cfgint[CFG_INT_MEM_MASK] = 64 | 128;
+				return 0;
+			case SYSTEM_EE:
+				c->cfgint[CFG_INT_MEM_SIZE] = 7;
 				c->cfgint[CFG_INT_MEM_MASK] = 64 | 128;
 				return 0;
 			}
@@ -266,13 +275,14 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_A:
 			case SYSTEM_P:
 			case SYSTEM_E:
+			case SYSTEM_EE:
 				c->dev_type = DEV_COLOR;
 				return 0;
 			}
 			break;
 		case CONF_CPU:
 			switch (systype) {
-			case SYSTEM_E:
+			case SYSTEM_EE:
 				c->dev_type = DEV_65C02;
 				break;
 			default:
@@ -293,6 +303,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_A:
 			case SYSTEM_P:
 			case SYSTEM_E:
+			case SYSTEM_EE:
 			case SYSTEM_1:
 				c->dev_type = DEV_TAPE_FILE;
 				break;
@@ -350,6 +361,13 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
 				return 0;
+			case SYSTEM_EE:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\APPLE2EE.ROM"));
+				c->cfgint[CFG_INT_ROM_RES] = 13;
+				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
+				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
+				c->cfgint[CFG_INT_ROM_OFS] = 0;
+				return 0;
 			}
 			break;
 		case CONF_CHARSET:
@@ -380,6 +398,11 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_RES] = 3;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
 				return 0;
+			case SYSTEM_EE:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\APPLE2EE.FNT"));
+				c->cfgint[CFG_INT_ROM_RES] = 3;
+				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
+				return 0;
 			}
 			break;
 		case CONF_KEYBOARD:
@@ -390,6 +413,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_A:
 			case SYSTEM_P:
 			case SYSTEM_E:
+			case SYSTEM_EE:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("KEYB\\APPLE2.BIN"));
 				return 0;
 			default:
@@ -405,6 +429,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_A:
 			case SYSTEM_P:
 			case SYSTEM_E:
+			case SYSTEM_EE:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("PALETTE\\APPLE2.PAL"));
 				return 0;
 			default:

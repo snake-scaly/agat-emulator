@@ -109,7 +109,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 	ss->free = rom_free;
 	ss->command = rom_command;
 
-	if (sr->config->systype == SYSTEM_9) { // to conform to the real Agat-9
+	if (sr->cursystype == SYSTEM_9) { // to conform to the real Agat-9
 		st->rom_size <<= 1;
 	}
 

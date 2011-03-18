@@ -59,6 +59,7 @@ static int dialog_init(HWND hwnd, void*p)
 	case SYSTEM_A: // apple ][
 	case SYSTEM_P: // apple ][
 	case SYSTEM_E: // apple ][
+	case SYSTEM_EE: // apple ][
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTERA);
