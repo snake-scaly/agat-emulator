@@ -328,7 +328,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 	unsigned t0=get_n_msec();
 	long long n_ticks = 0;
 	_CMSG("start");
-	PulseEvent(cs->response);
+	SetEvent(cs->response);
 	_CMSG("pulsed response event");
 	while (!cs->term_req) {
 		int r, t, rt;

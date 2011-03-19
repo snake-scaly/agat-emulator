@@ -597,6 +597,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F11:
 			dump_mem(sr, 0, 0x10000, "memdump.bin");
 			break;
+		case VK_F4:
+			goto def;
 		case VK_RETURN:
 			if (GetKeyState(VK_MENU)&0x8000) {
 				set_fullscreen(sr, !sr->fullscreen);
@@ -689,6 +691,12 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		sr->mousebtn&=~1;
 		sr->mousechanged|=1;
 		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 1, 0);
+		break;
+	case WM_NCLBUTTONDBLCLK:
+		if (wp == HTCAPTION) {
+			set_fullscreen(sr, 1);
+			return 0;
+		}
 		break;
 	case WM_RBUTTONUP:
 		sr->mousebtn&=~2;
@@ -794,6 +802,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		sr->keyreg = (PRIMARYLANGID(LOWORD(lp))==LANG_RUSSIAN) ? 0x7F: 0xFF;
 		break;
 	}
+def:
 	return DefWindowProc(w,msg,wp,lp);
 }
 
