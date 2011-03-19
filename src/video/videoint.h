@@ -57,7 +57,7 @@ struct APPLE_INFO
 	int videoterm; // = 0;
 	int text80; // = 0;
 	int dhgr;
-	byte hgr_flags[40][192]; // first and last color of byte
+//	byte hgr_flags[40][192]; // first and last color of byte
 };
 
 struct PAL_INFO

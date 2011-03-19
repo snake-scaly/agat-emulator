@@ -1292,7 +1292,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 
 	b=fetch_cmd_byte(st);
 	c=cmds+b;
-	if (!c->cmd || (c->flags & CMD_ILL)) {
+	if ((!cs->undoc) && (!c->cmd || (c->flags & CMD_ILL))) {
 		op_disassemble(st, c);
 		printf("undocumented command: %02X (%s %s)\n", b, c->cmd_name, c->adr_name);
 		return -1;

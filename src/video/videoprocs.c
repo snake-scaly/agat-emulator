@@ -1087,7 +1087,7 @@ void aepaint_dhgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	static const byte gr_pal[16] = {0, 4, 2, 6, 8, 12, 10, 14, 1, 5, 3, 7, 9, 13, 11, 15};
 	byte b0=mem[addr|0x10000]&0x7F, b1=mem[addr&0xFFFF]&0x7F;
-	word w = b0 | (b1<<7); // 14 bits
+	dword w = b0 | (b1<<7); // 14 bits
 
 	r->left=x*HGR_W;
 	r->top=y*HGR_H;
@@ -1102,29 +1102,46 @@ void aepaint_dhgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 		w<<=2;
 		bx = mem[(addr-1)&0xFFFF]>>5;
 		w |= (bx & 3);
+		w |= mem[(addr+1)|0x10000]<<16;
 		-- ptr;
 		r->left -= HGR_W;
 	} else { // add 2 bits at end
-		w |= ((word)mem[(addr+1)|0x10000])<<14;
+		w |= mem[(addr+1)|0x10000]<<14;
 		r->right += HGR_W;
 	}
 	for (i = 4; i; --i, ptr+=2) {
-		byte c = gr_pal[w&15];
-		w>>=4;
+		byte c = gr_pal[w&15], cc, c0 = c;
 		c |= c<<4;
 		ptr[0]=c;
-		ptr[1]=c;
 		ptr[bmp_pitch]=c;
+		w>>=2;
+		cc = w & 15;
+		if ((cc == 15) || (!cc)) { c = gr_pal[cc]; c |= c<<4;}
+//		c = gr_pal[w&15];
+//		c |= c<<4;
+		ptr[1]=c;
 		ptr[bmp_pitch+1]=c;
-/*		w >>= 1; c <<= 4;
-		c |= gr_pal[w&15];
+		w>>=2;
+/*		w >>= 1; //c <<= 4;
+		cc = w & 15;
+		if ((cc == 15) || (!cc)) { c<<=4; c |= gr_pal[cc]; f = 1; }
+		else 
+		c |= c<<4;
 		ptr[0]=c;
 		ptr[bmp_pitch]=c;
-		w >>= 1; c = gr_pal[w&15];
-		w >>= 1; c <<= 4;
-		c |= gr_pal[w&15];
+		w >>= 1;
+		cc = w & 15;
+		if ((cc == 15) || (!cc)) { c = gr_pal[cc] << 4; }
+		else 
+		{ c = c0 << 4; }
+		w >>= 1;
+		cc = w & 15;
+		if ((cc == 15) || (!cc)) { c |= gr_pal[cc]; }
+		else 
+		{ c |= c0; }
 		ptr[1]=c;
-		ptr[bmp_pitch+1]=c;*/
+		ptr[bmp_pitch+1]=c;
+		w >>= 1;*/
 	}
 }
 

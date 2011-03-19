@@ -103,10 +103,10 @@ int create_video_buffer(struct SYS_RUN_STATE*sr)
 
 int free_video_buffer(struct SYS_RUN_STATE*sr)
 {
+	sr->bmp_bits = NULL;
 	SelectObject(sr->mem_dc, sr->old_bmp);
 	DeleteObject(sr->mem_bmp);
 	DeleteDC(sr->mem_dc);
-	sr->bmp_bits = NULL;
 	return 0;
 }
 
@@ -124,7 +124,7 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 	DWORD s=WS_VISIBLE|WS_POPUP;
 	DWORD sex=WS_EX_TOPMOST;
 #else
-	DWORD s=WS_VISIBLE|WS_OVERLAPPED|WS_SYSMENU|WS_DLGFRAME|WS_MINIMIZEBOX|WS_CAPTION;
+	DWORD s=WS_VISIBLE|WS_OVERLAPPED|WS_SYSMENU|WS_DLGFRAME|WS_MINIMIZEBOX|WS_CAPTION|WS_MAXIMIZEBOX;
 	DWORD sex=0;
 #endif
 	RECT r={0,0,sr->v_size.cx,sr->v_size.cy};
@@ -208,8 +208,8 @@ int term_video_window(struct SYS_RUN_STATE*sr)
 		sr->input_size = sr->input_pos = 0;
 	}
 	DestroyWindow(sr->video_w);
-	WaitForSingleObject(sr->h, INFINITE);
-	CloseHandle(sr->h);
+//	WaitForSingleObject(sr->h, INFINITE);
+//	CloseHandle(sr->h);
 	free_video_buffer(sr);
 	puts("free_video_window: exit");
 	return 0;
@@ -555,7 +555,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_CLOSE:
 		{
 			struct SYSCONFIG*c = sr->config;
-//			if (sr->fullscreen) set_fullscreen(sr, 0);
+			if (sr->fullscreen) set_fullscreen(sr, 0);
 			UpdateWindow(w);
 			free_system_state(sr);
 			free_config(c);
@@ -743,6 +743,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case IDC_CLEARSTATE:
 			on_clear_state(w, sr);
 			break;
+		case SC_MAXIMIZE:
+			set_fullscreen(sr, 1);
+			return 0;
 		case IDC_INPUT_FILE:
 			on_input_file(w, sr);
 		default:

@@ -33,6 +33,7 @@ static int video_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 	if (st->sr->cursystype == SYSTEM_E) {
 		WRITE_FIELD(out, vs->cur_font);
 		WRITE_FIELD(out, vs->ainf.text80);
+		WRITE_FIELD(out, vs->ainf.dhgr);
 	}
 
 	return 0;
@@ -60,6 +61,7 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	if (st->sr->cursystype == SYSTEM_E) {
 		READ_FIELD(in, vs->cur_font);
 		READ_FIELD(in, vs->ainf.text80);
+		READ_FIELD(in, vs->ainf.dhgr);
 	}
 
 	video_update_mode(vs);

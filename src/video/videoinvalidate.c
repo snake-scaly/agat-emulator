@@ -4,6 +4,7 @@ static void vid_invalidate_addr_comb(struct VIDEO_STATE*vs, dword adr)
 {
 	dword badr = (vs->ainf.page+1)*0x400;
 	if (vs->ainf.text_mode||!vs->ainf.combined) return;
+	if (!vs->sr->bmp_bits) return;
 	if (adr>=badr&&adr<badr+0x400) 
 	{
 		RECT r;
@@ -24,6 +25,7 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 	dword sadr = adr;
 	int i, j;
 	if (sr->cursystype == SYSTEM_E) sadr &= 0xFFFF;
+	if (!vs->sr->bmp_bits) return;
 //	printf("video_invalidate: adr = %x; n_rb = %i\n", adr, vs->n_rb);
 	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
 //		printf("i = %i; n_ranges = %i\n", i, rb->n_ranges);

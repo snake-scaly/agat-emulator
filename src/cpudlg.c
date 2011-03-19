@@ -54,7 +54,7 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETRANGE, FALSE, MAKELONG(1, 500));
 	SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETPOS, TRUE, conf->cfgint[CFG_INT_CPU_SPEED]);
 	SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETTICFREQ, 10, 0);
-	EnableDlgItem(hwnd, IDC_UNDOC, (ComboBox_GetItemData(hlist, ComboBox_GetCurSel(hlist)) == DEV_6502));
+	EnableDlgItem(hwnd, IDC_UNDOC, (conf->dev_type == DEV_6502) || (conf->dev_type == DEV_65C02));
 	update_controls(hwnd);
 	return 0;
 }
@@ -65,6 +65,7 @@ static void dialog_destroy(HWND hwnd, void*p)
 
 static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 {
+	int n;
 	switch (id) {
 	case IDC_RESET:
 		SendDlgItemMessage(hwnd, IDC_CPUFREQ, TBM_SETPOS, TRUE, 100);
@@ -72,7 +73,8 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 		update_controls(hwnd);
 		return 0;
 	case IDC_CPU_TYPE:
-		EnableDlgItem(hwnd, IDC_UNDOC, (ComboBox_GetItemData(ctl, ComboBox_GetCurSel(ctl)) == DEV_6502));
+		n = ComboBox_GetItemData(ctl, ComboBox_GetCurSel(ctl));
+		EnableDlgItem(hwnd, IDC_UNDOC, (n == DEV_6502) || (n == DEV_65C02));
 		return 0;
 	}
 	return 1;
