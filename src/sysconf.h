@@ -78,9 +78,11 @@ enum {
 	DEV_MOUSE_PAR,
 	DEV_MOUSE_NIPPEL,
 	DEV_MOUSE_APPLE,
-	
+
 	DEV_ACI, // cassette interface for Apple I
 
+	DEV_SCSI_CMS,
+	
 	NDEVTYPES
 };
 

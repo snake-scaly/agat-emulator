@@ -99,6 +99,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_ACI:
 		puts("aci_init");
 		return aci_init(sr, st, sc);
+	case DEV_SCSI_CMS:
+		puts("cms_init");
+		return cms_init(sr, st, sc);
 	}
 	return 0;
 }

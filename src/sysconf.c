@@ -190,6 +190,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		return 0;
 	case DEV_MOUSE_NIPPEL:
 		return 0;
+	case DEV_SCSI_CMS:
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\SCSI_CMS.ROM"));
+		return 0;
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
@@ -539,6 +542,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_MOUSE_NIPPEL: // no parameters
 		return 0;
 	case DEV_MOUSE_APPLE:
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		return 0;
+	case DEV_SCSI_CMS:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_PRINTER9:

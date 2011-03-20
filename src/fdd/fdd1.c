@@ -56,6 +56,7 @@ struct FDD_DRIVE_DATA
 	char_t	disk_name[1024];
 	IOSTREAM *disk;
 	int	rawfmt; // 1 if disk in raw (nibble) format
+	int	prodos; // 1 if sectors in prodos order
 	byte	disk_header[256];
 	int	error;
 	int	readonly;
@@ -154,6 +155,10 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 		puts("using nibble format");
 		drv->rawfmt = 1;
 	} else drv->rawfmt = 0;
+	if (strstr(name,".po") || strstr(name,".PO")) {
+		puts("using ProDOS order");
+		drv->prodos = 1;
+	} else drv->prodos = 0;
 	drv->error = 0;
 	return 0;
 }
@@ -516,14 +521,25 @@ static const byte DecodeTabl[0x80]={
 	0x00,0x00,0x33,0x34,0x35,0x36,0x37,0x38,0x00,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F
 };
 
-static const byte ren[]={
+static const byte ren[]={ // dos sector -> file order
 	0x00,0x07,0x0E,0x06,0x0D,0x05,0x0C,0x04,
 	0x0B,0x03,0x0A,0x02,0x09,0x01,0x08,0x0F
 };
 
-static const byte ren1[]={
+static const byte ren1[]={ // file order -> dos sector
 	0x00,0x0D,0x0B,0x09,0x07,0x05,0x03,0x01,
 	0x0E,0x0C,0x0A,0x08,0x06,0x04,0x02,0x0F
+};
+
+
+static const byte pren[]={// dos sector -> file order
+	0x00,0x08,0x01,0x09,0x02,0x0A,0x03,0x0B,
+	0x04,0x0C,0x05,0x0D,0x06,0x0E,0x07,0x0F
+};
+
+static const byte pren1[]={
+	0x00,0x02,0x04,0x06,0x08,0x0A,0x0C,0x0E,
+	0x01,0x03,0x05,0x07,0x09,0x0B,0x0D,0x0F
 };
 
 
@@ -722,7 +738,7 @@ static void fdd_save_track(struct FDD_DATA*data)
 //		dump_buf(sbuf + 3, 0x157);
 //		dump_buf(buf, 256);
 //		printf("buf: %x %x %x %x %x (%s)\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf);
-		osseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + ren[vtscs[2]]) *
+		osseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + (d->prodos?pren[vtscs[2]]:ren[vtscs[2]])) *
 			FDD_SECTOR_DATA_SIZE, SSEEK_SET);
 		if (oswrite(d->disk, buf, FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't write sector"));
@@ -778,7 +794,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 		drv->TrackData[dl] = 0x96; dl++;
 		buf[0] = drv->volume;
 		buf[1] = drv->Track;
-		buf[2] = ren1[i];
+		buf[2] = drv->prodos?pren1[i]:ren1[i];
 		buf[3] = fdd_check_sum(buf,3);
 		for (j=0; j<4; j++) {
 			fdd_code_fm(buf[j], a2);

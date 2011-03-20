@@ -73,6 +73,7 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_RAMFACTOR);
 		DevList_AddItem(hlist, DEV_MEMORY_SATURN);
 		DevList_AddItem(hlist, DEV_MOUSE_APPLE);
+		DevList_AddItem(hlist, DEV_SCSI_CMS);
 		return 0;
 	case SYSTEM_1: // apple I
 		DevList_AddItem(hlist, DEV_ACI);
