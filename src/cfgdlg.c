@@ -250,7 +250,8 @@ int select_disk(HWND hpar, TCHAR fname[CFGSTRLEN], int*readonly)
 //	PathRemoveFileSpec(path);
 	ofn.lpstrInitialDir = path;
 	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_READONLY | OFN_NOCHANGEDIR;
-	if (readonly&&!*readonly) ofn.Flags &= ~OFN_READONLY;
+	if (!readonly) ofn.Flags |= OFN_HIDEREADONLY;
+	if (!readonly||!*readonly) ofn.Flags &= ~OFN_READONLY;
 	if (!GetOpenFileName(&ofn)) return FALSE;
 	if (readonly) {
 		*readonly = (ofn.Flags & OFN_READONLY) ? 1: 0;
@@ -475,6 +476,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return prnadlg_run(hwnd, slot);
 	case DEV_MOUSE_APPLE:
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+	case DEV_SCSI_CMS:
+		return scsicfgdlg_run(hwnd, slot);
 	}
 
 	switch (slot->slot_no) {

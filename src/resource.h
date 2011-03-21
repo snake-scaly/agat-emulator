@@ -36,6 +36,7 @@
 #define IDB_APPLE2EE                    121
 #define IDB_APPLE2EE_LOGO               122
 #define IDB_UNKNOWN                     123
+#define IDD_SCSIDLG                     124
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -66,6 +67,8 @@
 #define IDC_IMGSEL1                     1021
 #define IDC_IMG2                        1022
 #define IDC_IMGSEL2                     1023
+#define IDC_DEVNAME3                    1024
+#define IDC_DEVSEL3                     1025
 #define IDC_IMGROM                      1027
 #define IDC_IMGROMSEL                   1028
 #define IDC_RO1                         1029
@@ -102,6 +105,16 @@
 #define IDC_PRINT_MODE                  1053
 #define IDC_INPUT_FILE                  1054
 #define IDC_SYSLIST                     1055
+#define IDC_DEVNO1                      1056
+#define IDC_DEVNO2                      1057
+#define IDC_DEVNO3                      1058
+#define IDC_DEVNAME1                    1059
+#define IDC_DEVNAME2                    1060
+#define IDC_DEVSEL1                     1061
+#define IDC_DEVSEL2                     1062
+#define IDC_SIZE1                       1063
+#define IDC_SIZE2                       1064
+#define IDC_SIZE3                       1065
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -109,9 +122,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        124
+#define _APS_NEXT_RESOURCE_VALUE        125
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1056
+#define _APS_NEXT_CONTROL_VALUE         1063
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

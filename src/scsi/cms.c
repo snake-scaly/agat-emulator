@@ -55,6 +55,14 @@ static const char*phnames[N_PHASES] = {
 	"DMA_RECV"
 };
 
+struct DSK_INFO
+{
+	int	no;
+	byte	mask;
+	unsigned nblk;
+	char	name[256];
+};
+
 struct CMS_STATE
 {
 	struct SLOT_RUN_STATE*st;
@@ -67,6 +75,9 @@ struct CMS_STATE
 	byte	reg_odr;
 
 	byte	devices; // bit mask
+	struct DSK_INFO disks[MAX_DEVICES];
+	FILE	*img;
+
 	int	dev_selected; // selected device number or (-1)
 
 
@@ -79,6 +90,7 @@ struct CMS_STATE
 	int	recv_index, recv_len;
 	byte	res_cmd, res_msg;
 	int	dma_index, dma_len;
+
 };
 
 enum {
@@ -146,9 +158,13 @@ static byte input_response_byte(struct CMS_STATE*cms);
 static void cms_phase(struct CMS_STATE*cms, int phase);
 
 
+static int open_device(struct CMS_STATE*cms, int dev);
+static void close_device(struct CMS_STATE*cms);
 
 static int cms_term(struct SLOT_RUN_STATE*st)
 {
+	struct CMS_STATE*cms = st->data;
+	if (cms->img) fclose(cms->img);
 	free(st->data);
 	return 0;
 }
@@ -170,18 +186,19 @@ static int cms_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 static int cms_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 {
 	struct CMS_STATE*cms = st->data;
-	int phase;
+	int phase, dev;
 	READ_ARRAY(in, cms->ram);
 	READ_ARRAY(in, cms->regs);
 	READ_FIELD(in, cms->reg_odr);
 
 	READ_FIELD(in, cms->rom_page);
 	READ_FIELD(in, cms->rom_enabled);
-	READ_FIELD(in, cms->dev_selected);
+	READ_FIELD(in, dev);
 	READ_FIELD(in, phase);
 	cms->phase = -1;
 	cms_phase(cms, phase);
 	if (cms->rom_enabled) enable_slot_xio(cms->st, 1);
+	open_device(cms, dev);
 	return 0;
 }
 
@@ -361,32 +378,61 @@ static int get_cmd_len(struct CMS_STATE*cms, byte cmd)
 	return cllens[(cmd>>5)&3];
 }
 
+static int open_device(struct CMS_STATE*cms, int dev)
+{
+	if (dev == cms->dev_selected) return 1;
+	if (dev == -1) { close_device(cms); return 2; }
+	if (cms->img) fclose(cms->img);
+	cms->img = fopen(cms->disks[dev].name, "r+b");
+	if (!cms->img) cms->img = fopen(cms->disks[dev].name, "w+b");
+	if (!cms->img) {
+		MessageBeep(MB_ICONEXCLAMATION);
+		cms->dev_selected = -1;
+		return -1;
+	}
+	cms->dev_selected = dev;
+	return 0;
+}
+
+static void close_device(struct CMS_STATE*cms)
+{
+	cms->dev_selected = -1;
+	if (cms->img) fclose(cms->img);
+	cms->img = NULL;
+}
+
+
 static int scsi_read_block(struct CMS_STATE*cms, unsigned long lba, byte*data, int len)
 {
-	FILE*in;
-	in = fopen("scsi.dsk", "rb");
-	if (!in) return 3;
+	if (!cms->img) return 3;
 	printf("scsi: read block with LBA=%i, size=%i\n", lba, len);
-	fseek(in, lba * 512, SEEK_SET);
-	fread(data, 1, len, in);
-	fclose(in);
-//	memset(data, 0x00, len);
-//	data[0] = 1;
+	fseek(cms->img, lba * 512, SEEK_SET);
+	fread(data, 1, len, cms->img);
 	return 0;
 }
 
 
 static int scsi_write_block(struct CMS_STATE*cms, unsigned long lba, const byte*data, int len)
 {
-	FILE*in;
 	printf("scsi: write block with LBA=%i, size=%i\n", lba, len);
-	in = fopen("scsi.dsk", "r+b");
-	if (!in) return 3;
-	fseek(in, lba * 512, SEEK_SET);
-	fwrite(data, 1, len, in);
-	fclose(in);
+	if (!cms->img) return 3;
+	fseek(cms->img, lba * 512, SEEK_SET);
+	fwrite(data, 1, len, cms->img);
 	return 0;
 }
+
+static int scsi_format(struct CMS_STATE*cms, unsigned nb)
+{
+	char buf[512];
+	printf("scsi: formatting device\n");
+	if (!cms->img) return 3;
+	memset(buf, 0, sizeof(buf));
+	for (; nb; --nb) {
+		fwrite(buf, 1, sizeof(buf), cms->img);
+	}
+	return 0;
+}
+
 
 static int finish_command(struct CMS_STATE*cms, byte*packet, int len, byte*data, int dlen)
 {
@@ -412,7 +458,12 @@ static int finish_command(struct CMS_STATE*cms, byte*packet, int len, byte*data,
 static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 {
 	int res = 0;
+	unsigned nb;
 	int phase = PHASE_STATUS;
+	if (cms->dev_selected == -1) {
+		cms_phase(cms, PHASE_IDLE);
+		return;
+	}
 /*	int i;
 	printf("SCSI COMMAND: {");
 	for (i = 0; i < len; ++i) {
@@ -430,13 +481,19 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 		cms->res_data[2] = 1; // or 6
 		break;
 	case 0x04: // format drive
+		res = scsi_format(cms, cms->disks[cms->dev_selected].nblk);
 		break;
 	case 0x08: // read
 		cms->res_len = packet[4] * 0x200;
-		res = scsi_read_block(cms, packet[3] | (packet[2]<<8) | ((packet[1]&0x1F) << 16), cms->res_data, cms->res_len);
+		if (cms->res_len > MAX_RES_LEN) res = 0x22;
+		else res = scsi_read_block(cms, packet[3] | (packet[2]<<8) | ((packet[1]&0x1F) << 16), cms->res_data, cms->res_len);
 		break;
 	case 0x0A: // write
 		cms->recv_len = packet[4] * 0x200;
+		if (cms->recv_len > MAX_RES_LEN) {
+			res = 0x22;
+			cms->recv_len = 0;
+		}
 		break;
 	case 0x12: // inqury
 		cms->res_len = packet[4];
@@ -452,10 +509,11 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 	case 0x25: // capacity
 		cms->res_len = 8;
 		memset(cms->res_data, 0, cms->res_len);
-		cms->res_data[0] = 0x00;
-		cms->res_data[1] = 0x00;
-		cms->res_data[2] = 0xA0;
-		cms->res_data[3] = 0x00;
+		nb = cms->disks[cms->dev_selected].nblk;
+		cms->res_data[0] = (nb>>24)&0xFF;
+		cms->res_data[1] = (nb>>16)&0xFF;
+		cms->res_data[2] = (nb>>8)&0xFF;
+		cms->res_data[3] = nb&0xFF;
 
 		cms->res_data[4] = 0x00;
 		cms->res_data[5] = 0x00;
@@ -500,15 +558,15 @@ static void select_device(struct CMS_STATE*cms, byte mask)
 	printf("cms: selecting device %02X\n", mask);
 	if (mask & cms->devices & 0x7F) {
 		extern int cpu_debug;
-		int i;
+		int i, dev = -1;
 //		cpu_debug = 1;
-		cms->dev_selected = -1;
-		for (i = 0; i < MAX_DEVICES; ++i, mask >>= 1) {
-			if (mask & 0x01) {
-				cms->dev_selected = i;
+		for (i = 0; i < MAX_DEVICES; ++i) {
+			if (cms->disks[i].mask & mask) {
+				dev = i;
 			}
 		}
-		printf("cms: selected device %i\n", cms->dev_selected);
+		printf("cms: selected device %i\n", dev);
+		open_device(cms, dev);
 	}	
 }
 
@@ -881,7 +939,30 @@ int  cms_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cms->st = st;
 	cms->sr = sr;
 
-	cms->devices = 0x07;
+	cms->devices = 0;
+	if (cf->cfgint[CFG_INT_SCSI_NO1]) cms->devices |= 1<<(cf->cfgint[CFG_INT_SCSI_NO1]-1);
+	if (cf->cfgint[CFG_INT_SCSI_NO2]) cms->devices |= 1<<(cf->cfgint[CFG_INT_SCSI_NO2]-1);
+	if (cf->cfgint[CFG_INT_SCSI_NO3]) cms->devices |= 1<<(cf->cfgint[CFG_INT_SCSI_NO3]-1);
+
+	if (cf->cfgint[CFG_INT_SCSI_NO1]) {
+		cms->disks[0].no = cf->cfgint[CFG_INT_SCSI_NO1];
+		cms->disks[0].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO1]-1);
+		cms->disks[0].nblk = cf->cfgint[CFG_INT_SCSI_SZ1] * 2048;
+		strcpy(cms->disks[0].name, cf->cfgstr[CFG_STR_SCSI_NAME1]);
+	}
+	if (cf->cfgint[CFG_INT_SCSI_NO2]) {
+		cms->disks[1].no = cf->cfgint[CFG_INT_SCSI_NO2];
+		cms->disks[1].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO2]-1);
+		cms->disks[1].nblk = cf->cfgint[CFG_INT_SCSI_SZ2] * 2048;
+		strcpy(cms->disks[1].name, cf->cfgstr[CFG_STR_SCSI_NAME2]);
+	}
+	if (cf->cfgint[CFG_INT_SCSI_NO3]) {
+		cms->disks[2].no = cf->cfgint[CFG_INT_SCSI_NO3];
+		cms->disks[2].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO3]-1);
+		cms->disks[2].nblk = cf->cfgint[CFG_INT_SCSI_SZ3] * 2048;
+		strcpy(cms->disks[2].name, cf->cfgstr[CFG_STR_SCSI_NAME3]);
+	}
+
 	cms->dev_selected = -1;
 	cms->cmd_index = -1;
 	cms->res_index = -1;

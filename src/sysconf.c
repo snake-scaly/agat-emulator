@@ -445,6 +445,8 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	return 0;
 }
 
+int format_scsi_comment(TCHAR*buf, int len, struct SLOTCONFIG*c);
+
 int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 {
 	TCHAR lbuf[256];
@@ -544,9 +546,6 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 	case DEV_MOUSE_APPLE:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
-	case DEV_SCSI_CMS:
-		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
-		return 0;
 	case DEV_PRINTER9:
 		localize_str(LOC_PRINTER, c->cfgint[CFG_INT_PRINT_MODE], buf, 1024);
 		_tcscat(buf, TEXT("; "));
@@ -592,6 +591,8 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 			break;
 		}
 		return 0;
+	case DEV_SCSI_CMS:
+		return format_scsi_comment(buf, 256, c);
 	}
 	return 0;
 }

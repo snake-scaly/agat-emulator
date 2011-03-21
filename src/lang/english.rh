@@ -324,6 +324,44 @@ BEGIN
     LTEXT           "Output mode:",102,7,40,68,8
 END
 
+
+IDD_SCSIDLG DIALOG DISCARDABLE  0, 0, 227, 185
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "SCSI Properties"
+FONT 8, "MS Sans Serif"
+BEGIN
+    COMBOBOX        IDC_DEVNO1,53,7,50,93,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    EDITTEXT        IDC_SIZE1,170,7,50,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DEVNAME1,53,23,148,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_DEVSEL1,205,23,15,12
+    COMBOBOX        IDC_DEVNO2,53,48,50,93,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    EDITTEXT        IDC_SIZE2,170,49,50,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DEVNAME2,53,64,148,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_DEVSEL2,205,64,15,12
+    COMBOBOX        IDC_DEVNO3,53,90,50,93,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    EDITTEXT        IDC_SIZE3,170,90,50,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DEVNAME3,53,106,148,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_DEVSEL3,205,106,15,12
+    EDITTEXT        IDC_IMGROM,7,142,194,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_IMGROMSEL,205,142,15,12
+    DEFPUSHBUTTON   "OK",IDOK,48,164,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,164,50,14
+    LTEXT           "ROM image:",17,7,127,87,9
+    LTEXT           "Drive 1:",IDC_STATIC,7,9,31,8
+    LTEXT           "File name:",IDC_STATIC,7,25,42,8
+    LTEXT           "Drive 2:",IDC_STATIC,7,50,31,8
+    LTEXT           "File name:",IDC_STATIC,7,66,42,8
+    LTEXT           "Drive 3:",IDC_STATIC,7,92,31,8
+    LTEXT           "File name:",IDC_STATIC,7,108,42,8
+    LTEXT           "Size (MB):",IDC_STATIC,120,9,44,8
+    LTEXT           "Size (MB):",IDC_STATIC,120,51,44,8
+    LTEXT           "Size (MB):",IDC_STATIC,120,92,44,8
+END
+
+
 STRINGTABLE
 BEGIN
 // Generic text: 3000
@@ -563,5 +601,21 @@ BEGIN
 	14010	"Not plugged in"
 	14011	"MM-8031 mouse"
 	14012	"""Martian"" mouse"
+
+	15000   "SCSI Controller"
+	15001   "Non-unique device numbers"
+        15002   "Invalid number"
+	15003   "No disk image file name specified"
+	15004   "No ROM image file name specified"
+	15005   "No disk size specified"
+	
+        15010   "Empty"
+	
+        15020   "No drives; "
+	15021   "One drive; "
+	15022   "Two drives; "
+	15023   "Three drives; "
+	
+	15030   "ROM: "
 END
 

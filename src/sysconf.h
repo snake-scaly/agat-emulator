@@ -255,4 +255,20 @@ enum {
 	CFG_INT_MOUSE_TYPE,
 };
 
+
+enum {
+	CFG_INT_SCSI_NO1 = 3, // device number of drive #1
+	CFG_INT_SCSI_NO2, // device number of drive #2
+	CFG_INT_SCSI_NO3, // device number of drive #3
+	CFG_INT_SCSI_SZ1, // number of blocks for drive #1
+	CFG_INT_SCSI_SZ2, // number of blocks for drive #2
+	CFG_INT_SCSI_SZ3, // number of blocks for drive #3
+};
+
+enum {
+	CFG_STR_SCSI_NAME1 = 2, // image file name of drive #1
+	CFG_STR_SCSI_NAME2, // image file name of drive #2
+	CFG_STR_SCSI_NAME3, // image file name of drive #3
+};
+
 #endif //SYSCONF_H
