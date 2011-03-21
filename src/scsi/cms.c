@@ -25,12 +25,35 @@
 
 #define MAX_DEVICES	7
 #define MAX_CMD_LEN	32
-#define MAX_RES_LEN	1024
+#define MAX_RES_LEN	8192
 
 #define CLEAR_BIT(d,b) ((d)&=~(b))
 #define SET_BIT(d,b) ((d)|=(b))
 #define IS_SET(d,b) ((d)&(b))
 
+
+enum {
+	PHASE_IDLE,
+	PHASE_RESET,
+	PHASE_ARBITER,
+	PHASE_SELECT,
+	PHASE_WAIT, // device is waiting for command
+	PHASE_COMMAND, // device is receiving command
+	PHASE_DATA_SEND, // device is waiting for data
+	PHASE_DATA_RECV, // device is ready to transfer data
+	PHASE_STATUS, // device is ready to transfer status
+	PHASE_MESSAGE, // device is ready to transfer message
+	PHASE_DMA_SEND, // dma transfer from host to device in progress
+	PHASE_DMA_RECV, // dma transfer from device to host in progress
+
+	N_PHASES
+};
+
+static const char*phnames[N_PHASES] = {
+	"IDLE", "RESET", "ARBITER", "SELECT", "WAIT", "COMMAND",
+	"DATA_SEND", "DATA_RECV", "STATUS", "MESSAGE", "DMA_SEND",
+	"DMA_RECV"
+};
 
 struct CMS_STATE
 {
@@ -46,19 +69,21 @@ struct CMS_STATE
 	byte	devices; // bit mask
 	int	dev_selected; // selected device number or (-1)
 
+
+	int	phase;
+
 	int	cmd_index, cmd_len;
 	byte	cmd_data[MAX_CMD_LEN];
 	int	res_index, res_len;
 	byte	res_data[MAX_RES_LEN];
 	int	recv_index, recv_len;
 	byte	res_cmd, res_msg;
-	int	cmd_finished;
 	int	dma_index, dma_len;
 };
 
 enum {
-	REG_ODR,
-	REG_CSD = REG_ODR,
+	_REG_ODR,
+	REG_CSD = _REG_ODR,
 	REG_ICR,
 	REG_MR2,
 	REG_TCR,
@@ -116,6 +141,9 @@ enum {
 #define BIT_BSR_ACK	0x01
 
 
+static void output_byte(struct CMS_STATE*cms, byte data);
+static byte input_response_byte(struct CMS_STATE*cms);
+static void cms_phase(struct CMS_STATE*cms, int phase);
 
 
 
@@ -128,13 +156,32 @@ static int cms_term(struct SLOT_RUN_STATE*st)
 static int cms_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 {
 	struct CMS_STATE*cms = st->data;
+	WRITE_ARRAY(out, cms->ram);
+	WRITE_ARRAY(out, cms->regs);
+	WRITE_FIELD(out, cms->reg_odr);
+
+	WRITE_FIELD(out, cms->rom_page);
+	WRITE_FIELD(out, cms->rom_enabled);
+	WRITE_FIELD(out, cms->dev_selected);
+	WRITE_FIELD(out, cms->phase);
 	return 0;
 }
 
 static int cms_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 {
 	struct CMS_STATE*cms = st->data;
+	int phase;
+	READ_ARRAY(in, cms->ram);
+	READ_ARRAY(in, cms->regs);
+	READ_FIELD(in, cms->reg_odr);
 
+	READ_FIELD(in, cms->rom_page);
+	READ_FIELD(in, cms->rom_enabled);
+	READ_FIELD(in, cms->dev_selected);
+	READ_FIELD(in, phase);
+	cms->phase = -1;
+	cms_phase(cms, phase);
+	if (cms->rom_enabled) enable_slot_xio(cms->st, 1);
 	return 0;
 }
 
@@ -191,32 +238,119 @@ static void cms_xrom_w(word adr, byte data, struct CMS_STATE*cms) // C800-C87F
 
 static void select_rom_bank(struct CMS_STATE*cms, int no)
 {
-	cms_xrom_enable(cms, 1);
 	cms->rom_page = no;
+}
+
+
+static void cms_phase(struct CMS_STATE*cms, int phase)
+{
+	if (cms->phase == phase) return;
+	cms->phase = phase;
+	printf("PHASE: %s\n", phnames[phase]);
+	switch (phase) {
+	case PHASE_RESET:
+		cms->regs[REG_CSB] = BIT_CSB_RST;
+		cms->regs[REG_BSR] = 0;
+		cms->regs[REG_ICR] = IS_SET(cms->regs[REG_ICR], BIT_ICR_RST);
+		cms->regs[REG_MR2] = IS_SET(cms->regs[REG_MR2], BIT_MR2_TARG);
+		break;
+	case PHASE_IDLE:
+		cms->regs[REG_CSB] = 0;
+		cms->regs[REG_BSR] = BIT_BSR_PHSM;
+		break;
+	case PHASE_ARBITER:
+		cms->regs[REG_ICR] = IS_SET(cms->regs[REG_ICR], BIT_ICR_RST);
+		cms->regs[REG_MR2] = IS_SET(cms->regs[REG_MR2], BIT_MR2_TARG);
+		cms->regs[REG_CSB] = BIT_CSB_BSY;
+		cms->dev_selected = -1;
+		break;
+	case PHASE_SELECT:
+		cms->regs[REG_CSB] = BIT_CSB_SEL | BIT_CSB_BSY;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		break;
+	case PHASE_WAIT:
+		cms->regs[REG_CSB] = 0;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->cmd_index = cms->recv_index = cms->res_index = cms->dma_index = -1;
+		break;
+	case PHASE_COMMAND:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_REQ | BIT_CSB_CD;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->cmd_index = 0;
+		cms->cmd_len = 0;
+		cms->recv_index = cms->res_index = cms->dma_index = -1;
+		break;
+	case PHASE_DATA_SEND:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_REQ;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->recv_index = 0;
+		cms->cmd_index = cms->res_index = cms->dma_index = -1;
+		break;
+	case PHASE_DATA_RECV:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_IO | BIT_CSB_REQ;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->res_index = 0;
+		cms->cmd_index = cms->recv_index = cms->dma_index = -1;
+		cms->regs[REG_CSD] = input_response_byte(cms);
+		break;
+	case PHASE_STATUS:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_IO | BIT_CSB_CD | BIT_CSB_REQ;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->res_index = cms->cmd_index = cms->recv_index = cms->dma_index = -1;
+		cms->regs[REG_CSD] = input_response_byte(cms);
+		break;
+	case PHASE_MESSAGE:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_IO | BIT_CSB_MSG | BIT_CSB_CD | BIT_CSB_REQ;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
+		cms->res_index = cms->cmd_index = cms->recv_index = cms->dma_index = -1;
+		cms->regs[REG_CSD] = input_response_byte(cms);
+		break;
+	case PHASE_DMA_SEND:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_REQ;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM | BIT_BSR_DRQ | BIT_BSR_EDMA);
+		cms->dma_index = cms->recv_index;
+		cms->dma_len = cms->recv_len;
+		cms->res_index = cms->cmd_index = cms->recv_index = -1;
+		break;
+	case PHASE_DMA_RECV:
+		cms->regs[REG_CSB] = BIT_CSB_BSY | BIT_CSB_IO;
+		SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM | BIT_BSR_DRQ | BIT_BSR_EDMA);
+		cms->dma_index = cms->res_index;
+		cms->dma_len = cms->res_len;
+		cms->res_index = cms->cmd_index = cms->recv_index = -1;
+		break;
+	}
 }
 
 static void cms_rst(struct CMS_STATE*cms, int reset) // RST signal
 {
+	printf("cms: set RST = %i\n", reset?1:0);
 	if (reset) {
+		extern int cpu_debug;
+//		cpu_debug = 1;
 		puts("cms: reset registers");
-		cms->regs[REG_ICR] = IS_SET(cms->regs[REG_ICR], BIT_ICR_RST);
-		cms->regs[REG_MR2] = IS_SET(cms->regs[REG_MR2], BIT_MR2_TARG);
-		cms->regs[REG_CSB] = BIT_CSB_RST;
 		cms->dev_selected = -1;
+		cms->cmd_index = -1;
+		cms->cmd_len = 0;
+		cms->res_index = -1;
+		cms->recv_index = -1;
+		cms->dma_index = -1;
+		cms_phase(cms, PHASE_RESET);
 	} else {
-		CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_RST);
+		cms_phase(cms, PHASE_IDLE);
 	}
 }
 
 static void cms_arb(struct CMS_STATE*cms, int arb, byte mask) // ARB signal
 {
+	printf("cms: set ARB = %i\n", arb?1:0);
 	if (arb) {
 		extern int cpu_debug;
 //		cpu_debug = 1;
 		printf("cms: arbiter %X\n", mask);
-		cms->regs[REG_ICR] = IS_SET(cms->regs[REG_ICR], BIT_ICR_RST);
-		cms->regs[REG_MR2] = IS_SET(cms->regs[REG_MR2], BIT_MR2_TARG);
-		cms->regs[REG_CSB] = 0;
+		cms->regs[REG_CSD] = mask;
+		cms_phase(cms, PHASE_ARBITER);
+	} else {
 	}
 }
 
@@ -257,73 +391,88 @@ static int scsi_write_block(struct CMS_STATE*cms, unsigned long lba, const byte*
 static int finish_command(struct CMS_STATE*cms, byte*packet, int len, byte*data, int dlen)
 {
 	int res = 0;
-	int i;
+	extern int cpu_debug;
+/*	int i;
 	printf("SCSI DATA: {");
 	for (i = 0; i < dlen; ++i) {
 		printf("%02X ", data[i]);
 	}
-	printf("}\n");
+	printf("}\n");*/
 	switch (packet[0]) {
 	case 0x0A: // write
 		res = scsi_write_block(cms, packet[3] | (packet[2]<<8) | ((packet[1]&0x1F) << 16), data, dlen);
+		break;
+	case 0x15: // mode select
+//		cpu_debug = 1;
 		break;
 	}
 	return res;
 }
 
-static int process_command(struct CMS_STATE*cms, byte*packet, int len)
+static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 {
 	int res = 0;
-	int i;
+	int phase = PHASE_STATUS;
+/*	int i;
 	printf("SCSI COMMAND: {");
 	for (i = 0; i < len; ++i) {
 		printf("%02X ", packet[i]);
 	}
-	printf("}\n");
-	cms->cmd_index = -1;
-	cms->res_index = 0;
-	cms->recv_index = -1;
+	printf("}\n");*/
+	cms->res_len = 0;
+	cms->recv_len = 0;
 	switch (packet[0]) {
 	case 0x00: // test unit ready
-		cms->res_len = 0;
 		break;
 	case 0x03: // request sense
 		cms->res_len = packet[4];
 		memset(cms->res_data, 0, cms->res_len);
 		cms->res_data[2] = 1; // or 6
 		break;
+	case 0x04: // format drive
+		break;
 	case 0x08: // read
 		cms->res_len = packet[4] * 0x200;
 		res = scsi_read_block(cms, packet[3] | (packet[2]<<8) | ((packet[1]&0x1F) << 16), cms->res_data, cms->res_len);
 		break;
 	case 0x0A: // write
-		cms->res_len = 0;
 		cms->recv_len = packet[4] * 0x200;
-		cms->recv_index = 0;
 		break;
 	case 0x12: // inqury
+		cms->res_len = packet[4];
+		memset(cms->res_data, 0, cms->res_len);
+		break;
+	case 0x15: // mode select
+		cms->recv_len = packet[4];
+		break;
+	case 0x1A: // mode sense
 		cms->res_len = packet[4];
 		memset(cms->res_data, 0, cms->res_len);
 		break;
 	case 0x25: // capacity
 		cms->res_len = 8;
 		memset(cms->res_data, 0, cms->res_len);
-		cms->res_data[0] = 0x12;
-		cms->res_data[1] = 0x34;
-		cms->res_data[2] = 0x56;
-		cms->res_data[3] = 0x78;
+		cms->res_data[0] = 0x00;
+		cms->res_data[1] = 0x00;
+		cms->res_data[2] = 0xA0;
+		cms->res_data[3] = 0x00;
 
-		cms->res_data[4] = 0x21;
-		cms->res_data[5] = 0x43;
-		cms->res_data[6] = 0x65;
-		cms->res_data[7] = 0x87;
+		cms->res_data[4] = 0x00;
+		cms->res_data[5] = 0x00;
+		cms->res_data[6] = 0x02;
+		cms->res_data[7] = 0x00;
 		break;
 	default:
 		cms->res_len = 0;
 		cms->recv_len = 0;
-		return 0x40; // task aborted
+		res = 0x40; // task aborted
 	}
-	return res;
+	cms->res_cmd = res;
+	if (cms->recv_len)
+		phase = PHASE_DATA_SEND;
+	else if (cms->res_len)
+		phase = PHASE_DATA_RECV;
+	cms_phase(cms, phase);
 
 }
 
@@ -340,130 +489,190 @@ static void output_command_byte(struct CMS_STATE*cms, byte data)
 		++cms->cmd_index;
 	}
 	if (cms->cmd_index == cms->cmd_len) {
-		cms->res_cmd = process_command(cms, cms->cmd_data, cms->cmd_len);
+		process_command(cms, cms->cmd_data, cms->cmd_len);
 	}
 }
 
 
+
+static void select_device(struct CMS_STATE*cms, byte mask)
+{
+	printf("cms: selecting device %02X\n", mask);
+	if (mask & cms->devices & 0x7F) {
+		extern int cpu_debug;
+		int i;
+//		cpu_debug = 1;
+		cms->dev_selected = -1;
+		for (i = 0; i < MAX_DEVICES; ++i, mask >>= 1) {
+			if (mask & 0x01) {
+				cms->dev_selected = i;
+			}
+		}
+		printf("cms: selected device %i\n", cms->dev_selected);
+	}	
+}
+
+static void cms_sel(struct CMS_STATE*cms, int sel) // SEL signal
+{
+	printf("cms: set SEL = %i\n", sel?1:0);
+	if (sel) {
+		cms_phase(cms, PHASE_SELECT);
+		select_device(cms, cms->reg_odr);
+		if (IS_SET(cms->regs[REG_ICR], BIT_ICR_BSY))
+			SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+		else {
+			if (cms->dev_selected != -1) { // acknowledge selection
+				SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			} else {
+				CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			}
+		};
+	} else {
+		cms_phase(cms, (cms->dev_selected==-1)?PHASE_IDLE:PHASE_COMMAND);
+	}
+}
+
+
+static void cms_bsy(struct CMS_STATE*cms, int bsy) // ICR BSY signal
+{
+	printf("cms: set BSY = %i\n", bsy?1:0);
+	if (cms->phase == PHASE_SELECT) {
+		if (bsy) {
+			select_device(cms, cms->reg_odr);
+			SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+		} else {
+			if (cms->dev_selected != -1) { // acknowledge selection
+				SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			} else {
+				CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			}
+		}
+	} else {
+	}
+}
+
 static byte input_response_byte(struct CMS_STATE*cms)
 {
-	byte res = 0;
-	byte tcr = cms->regs[REG_TCR];
+	byte res = cms->regs[REG_CSD];
 
-	if (cms->dev_selected == -1) return 0xFF;
-	if (!IS_SET(tcr, BIT_TCR_IO)) return 0xFF;
-	if (IS_SET(tcr, BIT_TCR_CD) && !IS_SET(tcr, BIT_TCR_MSG)) {
-		return cms->res_cmd;
-	} else if (IS_SET(tcr, BIT_TCR_CD) && IS_SET(tcr, BIT_TCR_MSG)) {
-		cms->cmd_finished = 1;
-		return cms->res_msg;
-	}
-
-	if (cms->res_index == -1) return 0xFF;
-	if (cms->res_index < cms->res_len) {
-		res = cms->res_data[cms->res_index];
-	}
-	if (cms->res_index <= cms->res_len) {
-		++ cms->res_index;
-	} else {
-		cms->res_index = -1;
+	if (cms->dev_selected == -1) return res;
+	switch (cms->phase) {
+	case PHASE_STATUS:
+		res = cms->res_cmd;
+		break;
+	case PHASE_MESSAGE:
+		res = cms->res_msg;
+		break;
+	case PHASE_DATA_RECV:
+		if (cms->res_index == -1) return res;
+		if (cms->res_index < cms->res_len) {
+			res = cms->res_data[cms->res_index];
+			printf("cms: DATA[%i/%i] => %02X\n", cms->res_index, cms->res_len, res);
+		}
 	}
 	printf("cms: input_response_byte = %02X\n", res);
 	return res;
 }
 
-static void cms_sel(struct CMS_STATE*cms, int sel, byte mask) // SEL signal
+
+static void next_response_byte(struct CMS_STATE*cms)
 {
-	if (sel) {
-		printf("cms: select %X\n", mask);
-		if (mask & cms->devices & 0x7F) {
-			if (!IS_SET(cms->regs[REG_ICR], BIT_ICR_BSY)) {
-				extern int cpu_debug;
-				int i;
-//				cpu_debug = 1;
-				cms->dev_selected = -1;
-				for (i = 0; i < MAX_DEVICES; ++i, mask >>= 1) {
-					if (mask & 0x01) {
-						cms->dev_selected = i;
-					}
-				}
-				if (cms->dev_selected != -1)
-					SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
-				printf("cms: selected device %X (%i)\n", mask, cms->dev_selected);
-			}	
-		}	
+	if (cms->dev_selected == -1) return;
+	switch (cms->phase) {
+	case PHASE_STATUS:
+		cms_phase(cms, PHASE_MESSAGE);
+		break;
+	case PHASE_MESSAGE:
+		cms_phase(cms, PHASE_WAIT);
+		break;
+	case PHASE_DATA_RECV:
+		if (cms->res_index == -1) {
+			cms_phase(cms, PHASE_IDLE);
+			return;
+		}
+		if (cms->res_index < cms->res_len) {
+			++ cms->res_index;
+		}
+		if (cms->res_index == cms->res_len) cms_phase(cms, PHASE_STATUS);
 	}
 }
 
 
-static void cms_ack(struct CMS_STATE*cms, int ack) // ACK signal
+static void cms_ack(struct CMS_STATE*cms, int ack) // ICR ACK signal
 {
+	printf("cms: set ACK = %i\n", ack?1:0);
 	if (cms->dev_selected == -1) return;
-	if (ack) {
-		if (!IS_SET(cms->regs[REG_TCR], BIT_TCR_IO)) {
-			printf("cms: acknowledge: %s %s = %02X\n",
-				IS_SET(cms->regs[REG_TCR], BIT_TCR_IO)?"read":"write",
-				IS_SET(cms->regs[REG_TCR], BIT_TCR_CD)?"command":"data",
-				cms->regs[REG_ODR]);
+
+	switch (cms->phase) {
+	case PHASE_COMMAND:
+	case PHASE_DATA_SEND:
+	case PHASE_DATA_RECV:
+	case PHASE_STATUS:
+	case PHASE_MESSAGE:
+		puts("cms: data acknowledged");
+		if (ack) {
+			CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
+		} else {
+			SET_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
 		}
-		printf("cms: set request inactive\n");
-		CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
-		if (cms->cmd_finished) CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
-	} else {
-		if (!cms->cmd_finished) SET_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
+		break;
+	}
+	switch (cms->phase) {
+	case PHASE_STATUS:
+	case PHASE_MESSAGE:
+	case PHASE_DATA_RECV:
+		if (!ack) {
+			next_response_byte(cms);
+			cms->regs[REG_CSD] = input_response_byte(cms);
+		}
+	case PHASE_COMMAND:
+	case PHASE_DATA_SEND:
+		if (!ack) {
+			output_byte(cms, cms->reg_odr);
+		}
 	}
 }
 
 static void cms_dma(struct CMS_STATE*cms, int dma) // DMA signal
 {
+	printf("cms: set DMA = %i\n", dma?1:0);
 	if (cms->dev_selected == -1) return;
 	if (dma) {
 		puts("cms: set DMA flag");
 		SET_BIT(cms->regs[REG_BSR], BIT_BSR_DRQ);
 	} else {
-		CLEAR_BIT(cms->regs[REG_BSR], BIT_BSR_DRQ);
+		CLEAR_BIT(cms->regs[REG_BSR], BIT_BSR_DRQ | BIT_BSR_EDMA);
 	}
 }
 
 
 
-static void cms_tcr(struct CMS_STATE*cms, byte data)
+static void cms_tcr(struct CMS_STATE*cms, byte data, byte xd)
 {
 	if (cms->dev_selected == -1) return;
 	SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
-	if (IS_SET(data, BIT_TCR_CD) && !IS_SET(data, BIT_TCR_IO)) {
+	if (IS_SET(data, BIT_TCR_CD) && !IS_SET(data, BIT_TCR_IO) && IS_SET(xd, BIT_TCR_CD)) {
 		puts("cms: preparing to receive command");
-		cms->cmd_index = 0;
-		cms->cmd_len = 0;
-		cms->cmd_finished = 0;
-		SET_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
+		cms_phase(cms, PHASE_COMMAND);
 	} else if (IS_SET(data, BIT_TCR_CD) && IS_SET(data, BIT_TCR_IO) && !IS_SET(data, BIT_TCR_MSG)) {
 		puts("cms: preparing to send command response");
-		SET_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
 	} else if (IS_SET(data, BIT_TCR_CD) && IS_SET(data, BIT_TCR_IO) && IS_SET(data, BIT_TCR_MSG)) {
 		puts("cms: preparing to send message response");
-		SET_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
 	}
 }
 
 
 static void dma_receive(struct CMS_STATE*cms)
 {
-	SET_BIT(cms->regs[REG_BSR], BIT_BSR_EDMA);
 	printf("cms: starting DMA receive: length = %i, index = %i\n", cms->res_len, cms->res_index);
-	cms->dma_len = cms->res_len;
-	cms->dma_index = cms->res_index;
-	cms->res_index = - 1;
+	cms_phase(cms, PHASE_DMA_RECV);
 }
 
 static void dma_send(struct CMS_STATE*cms)
 {
-	SET_BIT(cms->regs[REG_BSR], BIT_BSR_EDMA);
 	printf("cms: starting DMA send: length = %i, index = %i\n", 
 		cms->recv_len, cms->recv_index);
-	cms->dma_len = cms->recv_len;
-	cms->dma_index = cms->recv_index;
-	cms->recv_index = - 1;
+	cms_phase(cms, PHASE_DMA_SEND);
 }
 
 
@@ -473,11 +682,13 @@ static byte input_dma_byte(struct CMS_STATE*cms)
 	byte res = 0;
 	if (cms->dev_selected == -1) return 0xFF;
 	if (cms->dma_index == -1) return 0xFF;
+	if (cms->phase != PHASE_DMA_RECV) return 0xFF;
 	if (cms->dma_index < cms->dma_len) {
 		res = cms->res_data[cms->dma_index];
 		++ cms->dma_index;
-	} else {
-		cms->dma_index = -1;
+	}
+	if (cms->dma_index == cms->dma_len) {
+		cms_phase(cms, PHASE_STATUS);
 	}
 	return res;
 }
@@ -487,14 +698,43 @@ static void output_data_byte(struct CMS_STATE*cms, byte data)
 {
 	if (cms->dev_selected == -1) return;
 	if (cms->recv_index == -1) return;
+	if (cms->phase != PHASE_DATA_SEND) return;
 	if (cms->recv_index < cms->recv_len) {
+		printf("cms: DATA[%i/%i] <= %02X\n", cms->recv_index, cms->recv_len, data);
 		cms->res_data[cms->recv_index] = data;
 		++cms->recv_index;
 	}
 	if (cms->recv_index == cms->recv_len) {
 		cms->res_cmd = finish_command(cms, cms->cmd_data, cms->cmd_len, cms->res_data, cms->recv_len);
+		cms_phase(cms, PHASE_STATUS);
 	}
 }
+
+static void output_byte(struct CMS_STATE*cms, byte data)
+{
+	printf("OUTPUT[%s]: %02X\n", phnames[cms->phase], data);
+	switch (cms->phase) {
+	case PHASE_SELECT:
+		select_device(cms, data);
+		if (IS_SET(cms->regs[REG_ICR], BIT_ICR_BSY))
+			SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+		else {
+			if (cms->dev_selected != -1) { // acknowledge selection
+				SET_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			} else {
+				CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_BSY);
+			}
+		}
+		break;
+	case PHASE_COMMAND:
+		output_command_byte(cms, data);
+		break;
+	case PHASE_DATA_SEND:
+		output_data_byte(cms, data);
+		break;
+	}
+}
+
 
 static void output_dma_byte(struct CMS_STATE*cms, byte data)
 {
@@ -506,6 +746,7 @@ static void output_dma_byte(struct CMS_STATE*cms, byte data)
 	}
 	if (cms->dma_index == cms->dma_len) {
 		cms->res_cmd = finish_command(cms, cms->cmd_data, cms->cmd_len, cms->res_data, cms->dma_len);
+		cms_phase(cms, PHASE_STATUS);
 	}
 }
 
@@ -537,41 +778,42 @@ static const char*brnames[8][8] = {
 
 static void cms_io_w(word adr, byte data, struct CMS_STATE*cms) // C0X0-C0XF
 {
-	printf("cms: write io[%04X] <= %02X\n", adr, data);
+//	printf("cms: write io[%04X] <= %02X\n", adr, data);
 	if (adr&0x08) { // switches
 		switch (adr & 0x0F) {
 		case 9: select_rom_bank(cms, data & 3); break;
 		case 10: output_dma_byte(cms, data); break;
 		}
 	} else {
+		byte xd;
 		int i, d = data;
 //		printf("cms: REGISTER: %s (%i)\n", rnames[adr&7], adr&7);
-		printf("cms: %s WRITE FLAGS(%02X): {", rwnames[adr&7], data);
+/*		printf("cms: %s WRITE FLAGS(%02X): {", rwnames[adr&7], data);
 		for (i = 0; i < 8; ++i, d<<=1) {
 			printf("%s:%i ", bwnames[adr&7][i], (d&0x80)?1:0);
 		}
-		printf("}\n");
+		printf("}\n");*/
+		xd = cms->regs[adr&7] ^ data;
 		switch (adr&7) {
-		case REG_ODR:
+		case _REG_ODR:
 			cms->reg_odr = data;
-			if (cms->cmd_index != -1) output_command_byte(cms, data);
-			else if (cms->recv_index != -1) output_data_byte(cms, data);
 			break;
 		case REG_MR2:
-			cms_arb(cms, IS_SET(data, BIT_MR2_ARB), cms->reg_odr);
-			cms_dma(cms, IS_SET(data, BIT_MR2_DMA));
+			if (IS_SET(xd, BIT_MR2_ARB)) cms_arb(cms, IS_SET(data, BIT_MR2_ARB), cms->reg_odr);
+			if (IS_SET(xd, BIT_MR2_DMA)) cms_dma(cms, IS_SET(data, BIT_MR2_DMA));
 		case REG_SER:
 			cms->regs[adr&7] = data;
 			break;
 		case REG_TCR:
+			cms_tcr(cms, data, xd);
 			cms->regs[adr&7] = data;
-			cms_tcr(cms, data);
 			break;
 		case REG_ICR:
+			if (IS_SET(xd, BIT_ICR_ACK)) cms_ack(cms, IS_SET(data, BIT_ICR_ACK));
+			if (IS_SET(xd, BIT_ICR_SEL)) cms_sel(cms, IS_SET(data, BIT_ICR_SEL));
+			if (IS_SET(xd, BIT_ICR_RST)) cms_rst(cms, IS_SET(data, BIT_ICR_RST));
+			if (IS_SET(xd, BIT_ICR_BSY)) cms_bsy(cms, IS_SET(data, BIT_ICR_BSY));
 			cms->regs[adr&7] = data;
-			cms_ack(cms, IS_SET(data, BIT_ICR_ACK));
-			cms_sel(cms, IS_SET(data, BIT_ICR_SEL), cms->reg_odr);
-			cms_rst(cms, IS_SET(data, BIT_ICR_RST));
 			break;
 		case REG_SDS: // start DMA send
 			dma_send(cms);
@@ -590,18 +832,19 @@ static byte cms_io_r(word adr, struct CMS_STATE*cms) // C0X0-C0XF
 	if (adr&0x08) { // switches
 		switch (adr&0x0F) {
 		case 8: res = 1; break; // exec delay
+		case 9: res = 0; break;  //?
 		case 10: res = input_dma_byte(cms); break;
+		case 11: res = 0; break; // arbiter delay
 		case 12: res = 1; break; // ready timeout
+		case 13: res = 0; break; // flags
 		case 14: res = 0; break; // delay?
 		case 15: res = 0; break;// delay?
 		}
+//		printf("cms: read io[%04X] => %02X\n", adr, res);
 	} else { // registers
 		int i, d;
 		res = cms->regs[adr&7];
 		switch (adr&7) {
-		case REG_CSD:
-			res = input_response_byte(cms);
-			break;
 		case REG_ICR:
 			res &= BIT_ICR_DBUS | BIT_ICR_ATN | BIT_ICR_SEL | BIT_ICR_BSY | BIT_ICR_ACK | BIT_ICR_RST;
 			if (IS_SET(cms->regs[REG_MR2], BIT_MR2_ARB)) res |= BIT_ICR_AIP;
@@ -613,14 +856,14 @@ static byte cms_io_r(word adr, struct CMS_STATE*cms) // C0X0-C0XF
 		case REG_BSR:
 			break;
 		}
-		printf("cms: %s READ FLAGS(%02X): {", rrnames[adr&7], res);
+/*		printf("cms: %s READ FLAGS(%02X): {", rrnames[adr&7], res);
 		for (i = 0, d = res; i < 8; ++i, d<<=1) {
 			printf("%s:%i ", brnames[adr&7][i], (d&0x80)?1:0);
 		}
 		printf("}\n");
-		system_command(cms->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+		system_command(cms->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);*/
 	}
-	printf("cms: read io[%04X] => %02X\n", adr, res);
+//	printf("cms: read io[%04X] => %02X\n", adr, res);
 	return res;
 }
 
@@ -638,7 +881,7 @@ int  cms_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cms->st = st;
 	cms->sr = sr;
 
-	cms->devices = 0x40;
+	cms->devices = 0x07;
 	cms->dev_selected = -1;
 	cms->cmd_index = -1;
 	cms->res_index = -1;
