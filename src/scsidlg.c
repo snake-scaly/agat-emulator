@@ -247,17 +247,3 @@ int scsicfgdlg_run(HWND hpar, struct SLOTCONFIG*sc)
 	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_SCSIDLG), hpar, sc);
 }
 
-
-int format_scsi_comment(TCHAR*buf, int len, struct SLOTCONFIG*c)
-{
-	int nd = 0;
-	TCHAR lbuf[256];
-	if (c->cfgint[CFG_INT_SCSI_NO1]) ++nd;
-	if (c->cfgint[CFG_INT_SCSI_NO2]) ++nd;
-	if (c->cfgint[CFG_INT_SCSI_NO3]) ++nd;
-	localize_str(LOC_SCSI, 20 + nd, buf, len * sizeof(buf[0]));
-	localize_str(LOC_SCSI, 30, lbuf, sizeof(lbuf));
-	lstrcat(buf, lbuf);
-	lstrcat(buf, c->cfgstr[CFG_STR_DRV_ROM]);
-	return 0;
-}

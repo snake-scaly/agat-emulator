@@ -219,7 +219,7 @@ static void cms_xrom_enable(struct CMS_STATE*cms, int en)
 	if (en == cms->rom_enabled) return;
 	enable_slot_xio(cms->st, en);
 	cms->rom_enabled = en;
-	printf("cms: xrom %sabled\n", en?"en":"dis");
+//	printf("cms: xrom %sabled\n", en?"en":"dis");
 }
 
 static byte cms_rom_r(word adr, struct CMS_STATE*cms) // CX00-CXFF
@@ -263,7 +263,7 @@ static void cms_phase(struct CMS_STATE*cms, int phase)
 {
 	if (cms->phase == phase) return;
 	cms->phase = phase;
-	printf("PHASE: %s\n", phnames[phase]);
+//	printf("PHASE: %s\n", phnames[phase]);
 	switch (phase) {
 	case PHASE_RESET:
 		cms->regs[REG_CSB] = BIT_CSB_RST;
@@ -341,11 +341,11 @@ static void cms_phase(struct CMS_STATE*cms, int phase)
 
 static void cms_rst(struct CMS_STATE*cms, int reset) // RST signal
 {
-	printf("cms: set RST = %i\n", reset?1:0);
+//	printf("cms: set RST = %i\n", reset?1:0);
 	if (reset) {
 		extern int cpu_debug;
 //		cpu_debug = 1;
-		puts("cms: reset registers");
+//		puts("cms: reset registers");
 		cms->dev_selected = -1;
 		cms->cmd_index = -1;
 		cms->cmd_len = 0;
@@ -360,11 +360,11 @@ static void cms_rst(struct CMS_STATE*cms, int reset) // RST signal
 
 static void cms_arb(struct CMS_STATE*cms, int arb, byte mask) // ARB signal
 {
-	printf("cms: set ARB = %i\n", arb?1:0);
+//	printf("cms: set ARB = %i\n", arb?1:0);
 	if (arb) {
 		extern int cpu_debug;
 //		cpu_debug = 1;
-		printf("cms: arbiter %X\n", mask);
+//		printf("cms: arbiter %X\n", mask);
 		cms->regs[REG_CSD] = mask;
 		cms_phase(cms, PHASE_ARBITER);
 	} else {
@@ -405,7 +405,7 @@ static void close_device(struct CMS_STATE*cms)
 static int scsi_read_block(struct CMS_STATE*cms, unsigned long lba, byte*data, int len)
 {
 	if (!cms->img) return 3;
-	printf("scsi: read block with LBA=%i, size=%i\n", lba, len);
+//	printf("scsi: read block with LBA=%i, size=%i\n", lba, len);
 	fseek(cms->img, lba * 512, SEEK_SET);
 	fread(data, 1, len, cms->img);
 	return 0;
@@ -414,7 +414,7 @@ static int scsi_read_block(struct CMS_STATE*cms, unsigned long lba, byte*data, i
 
 static int scsi_write_block(struct CMS_STATE*cms, unsigned long lba, const byte*data, int len)
 {
-	printf("scsi: write block with LBA=%i, size=%i\n", lba, len);
+//	printf("scsi: write block with LBA=%i, size=%i\n", lba, len);
 	if (!cms->img) return 3;
 	fseek(cms->img, lba * 512, SEEK_SET);
 	fwrite(data, 1, len, cms->img);
@@ -424,7 +424,7 @@ static int scsi_write_block(struct CMS_STATE*cms, unsigned long lba, const byte*
 static int scsi_format(struct CMS_STATE*cms, unsigned nb)
 {
 	char buf[512];
-	printf("scsi: formatting device\n");
+//	printf("scsi: formatting device\n");
 	if (!cms->img) return 3;
 	memset(buf, 0, sizeof(buf));
 	for (; nb; --nb) {
@@ -460,16 +460,19 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 	int res = 0;
 	unsigned nb;
 	int phase = PHASE_STATUS;
+	int i;
+
 	if (cms->dev_selected == -1) {
 		cms_phase(cms, PHASE_IDLE);
 		return;
 	}
-/*	int i;
-	printf("SCSI COMMAND: {");
+/*
+	printf("SCSI COMMAND[%02X]: {", cms->disks[cms->dev_selected].mask);
 	for (i = 0; i < len; ++i) {
 		printf("%02X ", packet[i]);
 	}
-	printf("}\n");*/
+	printf("}\n");
+*/
 	cms->res_len = 0;
 	cms->recv_len = 0;
 	switch (packet[0]) {
@@ -496,8 +499,9 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 		}
 		break;
 	case 0x12: // inqury
-		cms->res_len = packet[4];
-		memset(cms->res_data, 0, cms->res_len);
+		cms->res_len = packet[4] | (packet[3] << 8);
+		if (cms->res_len > MAX_RES_LEN) res = 0x22;
+		else memset(cms->res_data, 0, cms->res_len);
 		break;
 	case 0x15: // mode select
 		cms->recv_len = packet[4];
@@ -509,7 +513,7 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 	case 0x25: // capacity
 		cms->res_len = 8;
 		memset(cms->res_data, 0, cms->res_len);
-		nb = cms->disks[cms->dev_selected].nblk;
+		nb = cms->disks[cms->dev_selected].nblk - 1;
 		cms->res_data[0] = (nb>>24)&0xFF;
 		cms->res_data[1] = (nb>>16)&0xFF;
 		cms->res_data[2] = (nb>>8)&0xFF;
@@ -526,10 +530,12 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 		res = 0x40; // task aborted
 	}
 	cms->res_cmd = res;
-	if (cms->recv_len)
-		phase = PHASE_DATA_SEND;
-	else if (cms->res_len)
-		phase = PHASE_DATA_RECV;
+	if (!res) {
+		if (cms->recv_len)
+			phase = PHASE_DATA_SEND;
+		else if (cms->res_len)
+			phase = PHASE_DATA_RECV;
+	}
 	cms_phase(cms, phase);
 
 }
@@ -540,7 +546,7 @@ static void output_command_byte(struct CMS_STATE*cms, byte data)
 	if (cms->cmd_index == -1) return;
 	if (!cms->cmd_index && !cms->cmd_len) {
 		cms->cmd_len = get_cmd_len(cms, data);
-		printf("SCSI[%i] command length(%02X) = %i bytes\n", cms->dev_selected, data, cms->cmd_len);
+//		printf("SCSI[%i] command length(%02X) = %i bytes\n", cms->dev_selected, data, cms->cmd_len);
 	}
 	if (cms->cmd_index < cms->cmd_len) {
 		cms->cmd_data[cms->cmd_index] = data;
@@ -555,7 +561,7 @@ static void output_command_byte(struct CMS_STATE*cms, byte data)
 
 static void select_device(struct CMS_STATE*cms, byte mask)
 {
-	printf("cms: selecting device %02X\n", mask);
+//	printf("cms: selecting device %02X\n", mask);
 	if (mask & cms->devices & 0x7F) {
 		extern int cpu_debug;
 		int i, dev = -1;
@@ -565,14 +571,14 @@ static void select_device(struct CMS_STATE*cms, byte mask)
 				dev = i;
 			}
 		}
-		printf("cms: selected device %i\n", dev);
+//		printf("cms: selected device %i\n", dev);
 		open_device(cms, dev);
 	}	
 }
 
 static void cms_sel(struct CMS_STATE*cms, int sel) // SEL signal
 {
-	printf("cms: set SEL = %i\n", sel?1:0);
+//	printf("cms: set SEL = %i\n", sel?1:0);
 	if (sel) {
 		cms_phase(cms, PHASE_SELECT);
 		select_device(cms, cms->reg_odr);
@@ -593,7 +599,7 @@ static void cms_sel(struct CMS_STATE*cms, int sel) // SEL signal
 
 static void cms_bsy(struct CMS_STATE*cms, int bsy) // ICR BSY signal
 {
-	printf("cms: set BSY = %i\n", bsy?1:0);
+//	printf("cms: set BSY = %i\n", bsy?1:0);
 	if (cms->phase == PHASE_SELECT) {
 		if (bsy) {
 			select_device(cms, cms->reg_odr);
@@ -625,10 +631,10 @@ static byte input_response_byte(struct CMS_STATE*cms)
 		if (cms->res_index == -1) return res;
 		if (cms->res_index < cms->res_len) {
 			res = cms->res_data[cms->res_index];
-			printf("cms: DATA[%i/%i] => %02X\n", cms->res_index, cms->res_len, res);
+//			printf("cms: DATA[%i/%i] => %02X\n", cms->res_index, cms->res_len, res);
 		}
 	}
-	printf("cms: input_response_byte = %02X\n", res);
+//	printf("cms: input_response_byte = %02X\n", res);
 	return res;
 }
 
@@ -658,7 +664,7 @@ static void next_response_byte(struct CMS_STATE*cms)
 
 static void cms_ack(struct CMS_STATE*cms, int ack) // ICR ACK signal
 {
-	printf("cms: set ACK = %i\n", ack?1:0);
+//	printf("cms: set ACK = %i\n", ack?1:0);
 	if (cms->dev_selected == -1) return;
 
 	switch (cms->phase) {
@@ -667,7 +673,7 @@ static void cms_ack(struct CMS_STATE*cms, int ack) // ICR ACK signal
 	case PHASE_DATA_RECV:
 	case PHASE_STATUS:
 	case PHASE_MESSAGE:
-		puts("cms: data acknowledged");
+//		puts("cms: data acknowledged");
 		if (ack) {
 			CLEAR_BIT(cms->regs[REG_CSB], BIT_CSB_REQ);
 		} else {
@@ -693,10 +699,10 @@ static void cms_ack(struct CMS_STATE*cms, int ack) // ICR ACK signal
 
 static void cms_dma(struct CMS_STATE*cms, int dma) // DMA signal
 {
-	printf("cms: set DMA = %i\n", dma?1:0);
+//	printf("cms: set DMA = %i\n", dma?1:0);
 	if (cms->dev_selected == -1) return;
 	if (dma) {
-		puts("cms: set DMA flag");
+//		puts("cms: set DMA flag");
 		SET_BIT(cms->regs[REG_BSR], BIT_BSR_DRQ);
 	} else {
 		CLEAR_BIT(cms->regs[REG_BSR], BIT_BSR_DRQ | BIT_BSR_EDMA);
@@ -710,26 +716,26 @@ static void cms_tcr(struct CMS_STATE*cms, byte data, byte xd)
 	if (cms->dev_selected == -1) return;
 	SET_BIT(cms->regs[REG_BSR], BIT_BSR_PHSM);
 	if (IS_SET(data, BIT_TCR_CD) && !IS_SET(data, BIT_TCR_IO) && IS_SET(xd, BIT_TCR_CD)) {
-		puts("cms: preparing to receive command");
+//		puts("cms: preparing to receive command");
 		cms_phase(cms, PHASE_COMMAND);
 	} else if (IS_SET(data, BIT_TCR_CD) && IS_SET(data, BIT_TCR_IO) && !IS_SET(data, BIT_TCR_MSG)) {
-		puts("cms: preparing to send command response");
+//		puts("cms: preparing to send command response");
 	} else if (IS_SET(data, BIT_TCR_CD) && IS_SET(data, BIT_TCR_IO) && IS_SET(data, BIT_TCR_MSG)) {
-		puts("cms: preparing to send message response");
+//		puts("cms: preparing to send message response");
 	}
 }
 
 
 static void dma_receive(struct CMS_STATE*cms)
 {
-	printf("cms: starting DMA receive: length = %i, index = %i\n", cms->res_len, cms->res_index);
+//	printf("cms: starting DMA receive: length = %i, index = %i\n", cms->res_len, cms->res_index);
 	cms_phase(cms, PHASE_DMA_RECV);
 }
 
 static void dma_send(struct CMS_STATE*cms)
 {
-	printf("cms: starting DMA send: length = %i, index = %i\n", 
-		cms->recv_len, cms->recv_index);
+//	printf("cms: starting DMA send: length = %i, index = %i\n", 
+//		cms->recv_len, cms->recv_index);
 	cms_phase(cms, PHASE_DMA_SEND);
 }
 
@@ -758,7 +764,7 @@ static void output_data_byte(struct CMS_STATE*cms, byte data)
 	if (cms->recv_index == -1) return;
 	if (cms->phase != PHASE_DATA_SEND) return;
 	if (cms->recv_index < cms->recv_len) {
-		printf("cms: DATA[%i/%i] <= %02X\n", cms->recv_index, cms->recv_len, data);
+//		printf("cms: DATA[%i/%i] <= %02X\n", cms->recv_index, cms->recv_len, data);
 		cms->res_data[cms->recv_index] = data;
 		++cms->recv_index;
 	}
@@ -770,7 +776,7 @@ static void output_data_byte(struct CMS_STATE*cms, byte data)
 
 static void output_byte(struct CMS_STATE*cms, byte data)
 {
-	printf("OUTPUT[%s]: %02X\n", phnames[cms->phase], data);
+//	printf("OUTPUT[%s]: %02X\n", phnames[cms->phase], data);
 	switch (cms->phase) {
 	case PHASE_SELECT:
 		select_device(cms, data);
@@ -836,8 +842,8 @@ static const char*brnames[8][8] = {
 
 static void cms_io_w(word adr, byte data, struct CMS_STATE*cms) // C0X0-C0XF
 {
-//	printf("cms: write io[%04X] <= %02X\n", adr, data);
 	if (adr&0x08) { // switches
+//		printf("cms: write io[%04X] <= %02X\n", adr, data);
 		switch (adr & 0x0F) {
 		case 9: select_rom_bank(cms, data & 3); break;
 		case 10: output_dma_byte(cms, data); break;
