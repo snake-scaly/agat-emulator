@@ -1252,6 +1252,19 @@ static struct CMD_65C02 cmds[256]=
 extern int cpu_debug;
 
 
+static const char*get_flags(byte b)
+{
+	static const char flags[]="NV1BDIZC";
+	static char buf[9]="--------";
+	const char *p=flags;
+	char *t=buf;
+	int i;
+	for (i=8;i;i--,p++,t++,b<<=1) if (b&0x80) *t=*p; else *t='-';
+	return buf;
+
+}
+
+
 static void op_disassemble(struct STATE_65C02*st, struct CMD_65C02*c)
 {
 	fprintf(stdout, "%04X\t%s\t", st->pc - 1, c->cmd_name);
@@ -1266,7 +1279,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 	int b;
 	int n = 0;
 
-	if (cpu_debug) dumpregs(st);
+//	if (cpu_debug) dumpregs(st);
 
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
@@ -1289,6 +1302,9 @@ static int exec_65c02(struct CPU_STATE*cs)
 		st->f &= ~FLAG_D;
 //		puts("irq");
 	}
+	if (cpu_debug) {
+		printf("PC: %04X; A: %02X; X: %02X; Y: %02X; F: %02X [%8s]\n", st->pc, st->a, st->x, st->y, st->f, get_flags(st->f));
+	}
 
 	b=fetch_cmd_byte(st);
 	c=cmds+b;
@@ -1297,9 +1313,9 @@ static int exec_65c02(struct CPU_STATE*cs)
 		printf("undocumented command: %02X (%s %s)\n", b, c->cmd_name, c->adr_name);
 		return -1;
 	}
-	if (cpu_debug/* || (c->flags & CMD_NEW)*/) {
-		op_disassemble(st, c);
-	}
+//	if (cpu_debug/* || (c->flags & CMD_NEW)*/) {
+//		op_disassemble(st, c);
+//	}
 	st->addt = 0;
 	if (c->adr) c->adr(st);
 	if (c->cmd) c->cmd(st); else n++;
@@ -1351,19 +1367,6 @@ static int load_65c02(struct CPU_STATE*cs, ISTREAM *in)
 	st0.sr = st->sr;
 	*st = st0;
 	return 0;
-}
-
-
-static const char*get_flags(byte b)
-{
-	static const char flags[]="NV1BDIZC";
-	static char buf[9]="--------";
-	const char *p=flags;
-	char *t=buf;
-	int i;
-	for (i=8;i;i--,p++,t++,b<<=1) if (b&0x80) *t=*p; else *t='-';
-	return buf;
-
 }
 
 

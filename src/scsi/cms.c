@@ -216,7 +216,7 @@ static int cms_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 
 static void cms_xrom_enable(struct CMS_STATE*cms, int en)
 {
-	if (en == cms->rom_enabled) return;
+//	if (en == cms->rom_enabled) return;
 	enable_slot_xio(cms->st, en);
 	cms->rom_enabled = en;
 //	printf("cms: xrom %sabled\n", en?"en":"dis");

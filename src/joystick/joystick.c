@@ -39,7 +39,13 @@ static int  joy_status_none(struct JOYDATA*j, int no, unsigned dt)
 
 static int  joy_button_none(struct JOYDATA*j, int no)
 {
-	return 0xFF;
+	if (j->sr->cursystype == SYSTEM_E) { // alt ("apple") keys acts as joystick buttons
+		switch (no) {
+		case 0:	return (j->sr->mousebtn&0x10)?0xFF:0x7F; break;
+		case 1:	return (j->sr->mousebtn&0x20)?0xFF:0x7F; break;
+		}
+		return 0x7F;
+	} else return 0xFF;
 }
 
 static void joy_reset_none(struct JOYDATA*j)
@@ -97,8 +103,8 @@ static int  joy_button_mouse(struct JOYDATA*j, int no)
 //	printf("read_button_mouse: %X\n", j->sr->mousebtn);
 //	if (!j->joy_present) return 0x7F;
 	switch (no) {
-	case 0:	return (j->sr->mousebtn&1)?0xFF:0x7F; break;
-	case 1:	return (j->sr->mousebtn&2)?0xFF:0x7F; break;
+	case 0:	return (j->sr->mousebtn&0x11)?0xFF:0x7F; break;
+	case 1:	return (j->sr->mousebtn&0x22)?0xFF:0x7F; break;
 	}
 	return 0x7F;
 }

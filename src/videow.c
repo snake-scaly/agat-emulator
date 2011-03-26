@@ -28,10 +28,10 @@ WORD get_keyb_language()
 
 void update_alt_state(struct SYS_RUN_STATE*sr)
 {
-	if (keyb_is_pressed(sr, VK_LMENU)) sr->mousebtn|=1;
-	else sr->mousebtn&=~1;
-	if (keyb_is_pressed(sr, VK_RMENU)) sr->mousebtn|=2;
-	else sr->mousebtn&=~2;
+	if (keyb_is_pressed(sr, VK_LMENU)) sr->mousebtn|=0x10;
+	else sr->mousebtn&=~0x10;
+	if (keyb_is_pressed(sr, VK_RMENU)) sr->mousebtn|=0x20;
+	else sr->mousebtn&=~0x20;
 }
 
 int register_video_window()

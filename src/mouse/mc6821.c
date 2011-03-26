@@ -30,6 +30,8 @@ byte mc6821_read(struct MC6821_STATE*st, int adr)
 	if (adr & 1) return regs->control;
 	if (regs->control & 4) {
 		regs->control &= 0x3F; // clear ints
+/*		printf("mc6821_read: data_dev = %02X, data_pc = %02X, dir = %02X, result = %02X\n",
+			regs->data_dev, regs->data_pc, regs->dir, (regs->data_dev & ~regs->dir) | (regs->data_pc & regs->dir));*/
 		return (regs->data_dev & ~regs->dir) | (regs->data_pc & regs->dir);
 	} else return regs->dir;
 }

@@ -439,8 +439,14 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 
 int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en)
 {
-	if (ss->xio_en == en) return 0;
-	ss->xio_en = en;
+	if (!en) {
+		int i;
+		for (i = 0; i < NCONFTYPES; ++i) ss->sr->slots[i].xio_en = 0;
+	} else {
+		if (ss->xio_en == en) return 0;
+		ss->xio_en = en;
+	}
 //	printf("%sabled xrom#%i\n", en?"en":"dis", ss->sc->slot_no);
+//	system_command(ss->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	return update_xio_status(ss->sr);
 }
