@@ -414,7 +414,7 @@ BEGIN
     LTEXT           "Режим вывода:",102,7,40,68,8
 END
 
-IDD_SCSIDLG DIALOG DISCARDABLE  0, 0, 227, 185
+IDD_SCSIDLG DIALOG DISCARDABLE  0, 0, 227, 198
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Свойства SCSI"
 FONT 8, "MS Sans Serif"
@@ -436,8 +436,10 @@ BEGIN
     PUSHBUTTON      "...",IDC_DEVSEL3,205,106,15,12
     EDITTEXT        IDC_IMGROM,7,142,194,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_IMGROMSEL,205,142,15,12
-    DEFPUSHBUTTON   "OK",IDOK,48,164,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,129,164,50,14
+    CONTROL         "«Быстрый» режим",IDC_FAST,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,53,160,81,12
+    DEFPUSHBUTTON   "OK",IDOK,48,177,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,129,177,50,14
     LTEXT           "Образ ПЗУ контроллера:",17,7,127,87,9
     LTEXT           "Диск №1:",IDC_STATIC,7,9,31,8
     LTEXT           "Имя файла:",IDC_STATIC,7,25,42,8
@@ -595,7 +597,7 @@ BEGIN
         VERTGUIDE, 170
         VERTGUIDE, 201
         TOPMARGIN, 7
-        BOTTOMMARGIN, 178
+        BOTTOMMARGIN, 191
         HORZGUIDE, 48
         HORZGUIDE, 90
     END
@@ -1003,14 +1005,19 @@ BEGIN
     15003                   "Не задано имя образа диска"
     15004                   "Не задано имя файла ПЗУ"
     15005                   "Не указан размер диска"
+END
 
+STRINGTABLE DISCARDABLE 
+BEGIN
     15010                   "Отсутствует"
-
     15020                   "Нет дисков; "
     15021                   "Один диск; "
     15022                   "Два диска; "
     15023                   "Три диска; "
+END
 
+STRINGTABLE DISCARDABLE 
+BEGIN
     15030                   "ПЗУ: "
 END
 

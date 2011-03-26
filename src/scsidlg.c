@@ -10,8 +10,8 @@
 static struct RESIZE_DIALOG resize=
 {
 	RESIZE_LIMIT_MIN,
-	{{227,195},{0,0}},
-	14,
+	{{227,210},{0,0}},
+	15,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
@@ -27,6 +27,7 @@ static struct RESIZE_DIALOG resize=
 		{17,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_TOP}},
 		{IDC_IMGROM,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_TOP}},
 		{IDC_IMGROMSEL,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
+		{IDC_FAST,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 	}
 };
 
@@ -94,6 +95,9 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*sc)
 	init_devlist(hlist, sc->cfgint[CFG_INT_SCSI_NO2]);
 	hlist = GetDlgItem(hwnd, IDC_DEVNO3);
 	init_devlist(hlist, sc->cfgint[CFG_INT_SCSI_NO3]);
+
+	if (sc->cfgint[CFG_INT_SCSI_FAST])
+		CheckDlgButton(hwnd, IDC_FAST, BST_CHECKED);
 
 	upd_controls(hwnd);
 	return 0;
@@ -186,6 +190,8 @@ static int dialog_ok(HWND hwnd, struct SLOTCONFIG*sc)
 	if (sc->cfgint[CFG_INT_SCSI_NO2] && !sc->cfgint[CFG_INT_SCSI_SZ2]) goto fail5;
 	if (sc->cfgint[CFG_INT_SCSI_NO3] && !sc->cfgint[CFG_INT_SCSI_SZ3]) goto fail5;
 
+	sc->cfgint[CFG_INT_SCSI_FAST] = (IsDlgButtonChecked(hwnd, IDC_FAST) == BST_CHECKED);
+	
 	EndDialog(hwnd, 1);
 	return 0;
 fail1:

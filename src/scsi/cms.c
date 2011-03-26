@@ -79,6 +79,7 @@ struct CMS_STATE
 	FILE	*img;
 
 	int	dev_selected; // selected device number or (-1)
+	int	fast_mode;
 
 
 	int	phase;
@@ -337,6 +338,7 @@ static void cms_phase(struct CMS_STATE*cms, int phase)
 		cms->res_index = cms->cmd_index = cms->recv_index = -1;
 		break;
 	}
+	if (cms->fast_mode) system_command(cms->sr, SYS_COMMAND_FAST, phase >= PHASE_COMMAND, 0);
 }
 
 static void cms_rst(struct CMS_STATE*cms, int reset) // RST signal
@@ -945,6 +947,7 @@ int  cms_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cms->st = st;
 	cms->sr = sr;
 
+	cms->fast_mode = cf->cfgint[CFG_INT_SCSI_FAST];
 	cms->devices = 0;
 	if (cf->cfgint[CFG_INT_SCSI_NO1]) cms->devices |= 1<<(cf->cfgint[CFG_INT_SCSI_NO1]-1);
 	if (cf->cfgint[CFG_INT_SCSI_NO2]) cms->devices |= 1<<(cf->cfgint[CFG_INT_SCSI_NO2]-1);
