@@ -387,8 +387,8 @@ void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte*bmp_bits = vs->sr->bmp_bits;
 	int pixels[4]={vs->pal.c4_palette[0],
-		vs->pal.c4_palette[1],
 		vs->pal.c4_palette[2],
+		vs->pal.c4_palette[1],
 		vs->pal.c4_palette[3]};
 	int x,y;
 	int sx=4,sy=1;
