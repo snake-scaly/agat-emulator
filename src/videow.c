@@ -500,6 +500,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		break;
 	case WM_TIMER:
+		if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 		switch (wp) {
 		case TID_FLASH:
 			system_command(sr, SYS_COMMAND_FLASH, 0, 0);

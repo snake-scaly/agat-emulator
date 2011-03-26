@@ -14,7 +14,7 @@
 #include "runmgr.h"
 #include "runmgrint.h"
 
-#define MAX_TIME 3600
+#define MAX_TIME 2850
 
 struct JOYPROC {
 	int (*status)(struct JOYDATA*j, int no, unsigned dt);
@@ -89,11 +89,14 @@ static void joy_reset_joy(struct JOYDATA*j)
 
 static int  joy_status_mouse(struct JOYDATA*j, int no, unsigned dt)
 {
+	int x = j->sr->xmousepos, y = j->sr->ymousepos;
 	if (!j->joy_present) return 0x7F;
+	if (x < 0) x = 0;
+	if (y < 0) y = 0;
 //	printf("dt=%i; X=%i; Y=%i\n",dt,(j->sr->xmousepos>>8)*MAX_TIME,(j->sr->ymousepos>>8)*MAX_TIME);
 	switch (no) {
-	case 0:	return (dt<(j->sr->xmousepos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
-	case 1:	return (dt<(j->sr->ymousepos>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 0:	return (dt<(x>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 1:	return (dt<(y>>8)*MAX_TIME/255)?0xFF:0x7F; break;
 	}
 	return 0x7F;
 }
