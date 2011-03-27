@@ -172,7 +172,12 @@ static void printer_control(struct PRINTER_STATE*pcs, byte data)
 {
 //	printf("printer_control %02X\n", data);
 	if ((data ^ pcs->regs[1]) & 0x80) {
-		if (data & 0x80) printer_data(pcs, pcs->regs[0]);
+		if (data & 0x80) {
+			printer_data(pcs, pcs->regs[0]);
+			pcs->regs[2]&=~0x80;
+		} else {
+			pcs->regs[2]|= 0x80;
+		}
 	}
 }
 
@@ -180,6 +185,7 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-
 {
 	adr &= 0x03;
 //	printf("printer: write reg %x = %02x\n", adr, data);
+//	system_command(pcs->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	switch (adr) {
 	case 1:
 		printer_control(pcs, data);
@@ -194,12 +200,14 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-
 
 static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 {
+	byte r;
 	adr &= 0x03;
 //	printf("printer: read reg %x = %02x\n", adr, pcs->regs[adr]);
+//	system_command(pcs->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	switch (adr) {
 	case 2:
-		pcs->regs[2]^=0x80;
-		return pcs->regs[2];
+		r = pcs->regs[2];
+		return r;
 	}
 	return empty_read(adr, pcs);
 }

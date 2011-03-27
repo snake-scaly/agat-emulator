@@ -816,7 +816,7 @@ static void output_dma_byte(struct CMS_STATE*cms, byte data)
 	}
 }
 
-
+/*
 
 static const char*rrnames[8] = { "CSD", "ICR", "MR2", "TCR", "CSB", "BSR", "IDR", "RPI" };
 static const char*rwnames[8] = { "ODR", "ICR", "MR2", "TCR", "SER", "SDS", "SDT", "SDI" };
@@ -841,6 +841,8 @@ static const char*brnames[8][8] = {
 	{ "x7", "x6", "x5", "x4", "x3", "x2", "x1", "x0" }, // 6, IDR
 	{ "x7", "x6", "x5", "x4", "x3", "x2", "x1", "x0" }, // 7, RPI
 };
+*/
+
 
 static void cms_io_w(word adr, byte data, struct CMS_STATE*cms) // C0X0-C0XF
 {

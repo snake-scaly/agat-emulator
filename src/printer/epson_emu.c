@@ -70,6 +70,7 @@ struct EPSON_EMU
 	int esc_cnt;
 	int esc_cmd;
 
+	int gr_mode;
 	int bin_cnt;
 	unsigned char*data;
 
@@ -265,6 +266,7 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 		return 0;
 	case '*':
 		Pprintf(("Selecting graphics %i...\n", data));
+		emu->gr_mode = data;
 		return 0;
 	case 'm':
 		Pprintf(("Select charset extension %i\n", data));
@@ -365,8 +367,9 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 		switch (no) {
 		case 3: emu->bin_cnt = data; break;
 		case 4: emu->bin_cnt |= data<<8;
-			emu->data = realloc(emu->data, emu->bin_cnt);
+			emu->data = realloc(emu->data, emu->bin_cnt + 1);
 			assert(emu->data);
+			emu->data[emu->bin_cnt] = emu->gr_mode;
 		default:
 			if (no > 4) {
 				emu->data[no - 5] = data;

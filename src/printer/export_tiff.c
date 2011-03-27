@@ -91,7 +91,7 @@ struct EXPORT_TIFF
 	void (*page_start)(struct EXPORT_TIFF*et);
 	void (*page_finish)(struct EXPORT_TIFF*et);
 
-	int  (*stretch)(struct EXPORT_TIFF*et, int w, int res);
+	int  (*stretch)(struct EXPORT_TIFF*et, int w, int resx, int resy);
 };
 
 
@@ -238,7 +238,7 @@ static void create_font(struct EXPORT_TIFF*et)
 }
 
 
-static void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char*data);
+static void graphout(struct EXPORT_TIFF*et, int resx, int resy, int w, const unsigned char*data);
 
 static void printch(struct EXPORT_TIFF*et, int ch)
 {
@@ -534,17 +534,17 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 }
 
 
-static int raster_stretch(struct EXPORT_TIFF*et, int w, int res)
+static int raster_stretch(struct EXPORT_TIFF*et, int w, int resx, int resy)
 {
 	int w1;
-	w1 = w * et->res_x / res;
-	StretchBlt(et->dc, et->pos_x, et->pos_y, w1, 8 * et->res_y / SRC_VERT_DPI,
+	w1 = w * et->res_x / resx;
+	StretchBlt(et->dc, et->pos_x, et->pos_y, w1, 8 * et->res_y / resy,
 		et->bdc, 0, 0, w, 8, SRCAND);
 	return w1;
 }
 
 
-static HRGN get_black_rgn(struct EXPORT_TIFF*et, int w, int res)
+static HRGN get_black_rgn(struct EXPORT_TIFF*et, int w, int resx, int resy)
 {
 	int x, y;
 	HRGN r;
@@ -554,10 +554,10 @@ static HRGN get_black_rgn(struct EXPORT_TIFF*et, int w, int res)
 			HRGN r1;
 			COLORREF cl = GetPixel(et->bdc, x, y);
 			if (GetRValue(cl) || GetGValue(cl) || GetBValue(cl)) continue;
-			r1 = CreateRectRgn(et->pos_x + x * et->res_x / res,
-				et->pos_y + y * et->res_y / SRC_VERT_DPI,
-				et->pos_x + (x + 1) * et->res_x / res,
-				et->pos_y + (y + 1) * et->res_y / SRC_VERT_DPI);
+			r1 = CreateRectRgn(et->pos_x + x * et->res_x / resx,
+				et->pos_y + y * et->res_y / resy,
+				et->pos_x + (x + 1) * et->res_x / resx,
+				et->pos_y + (y + 1) * et->res_y / resy);
 			CombineRgn(r, r, r1, RGN_OR);
 			DeleteObject(r1);
 		}
@@ -565,23 +565,24 @@ static HRGN get_black_rgn(struct EXPORT_TIFF*et, int w, int res)
 	return r;
 }
 
-static int vector_stretch(struct EXPORT_TIFF*et, int w, int res)
+static int vector_stretch(struct EXPORT_TIFF*et, int w, int resx, int resy)
 {
 	int w1;
-	HRGN rgn = get_black_rgn(et, w, res);
-	w1 = w * et->res_x / res;
+	HRGN rgn = get_black_rgn(et, w, resx, resy);
+	w1 = w * et->res_x / resx;
 	FillRgn(et->dc, rgn, GetStockObject(BLACK_BRUSH));
 	DeleteObject(rgn);
 	return w1;
 }
 
-static  void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char*data)
+static  void graphout(struct EXPORT_TIFF*et, int resx, int resy, int w, const unsigned char*data)
 {
 	int x, y, m;
 	if (!et->page_dirty) {
 		et->page_start(et);
 		et->page_dirty = 1;
 	}
+	if (!resy) resy = SRC_VERT_DPI;
 	et->prev_char = 0;
 	et->was_cr = et->was_lf = 0;
 	Tprintf(("graphics output at %i,%i, width = %i\n",et->pos_x,et->pos_y,w));
@@ -597,8 +598,8 @@ static  void graphout(struct EXPORT_TIFF*et, int res, int w, const unsigned char
 			SetPixelV(et->bdc, x, y, ((*data)&m)?RGB(0,0,0):RGB(255,255,255));
 		}
 	}
-	Tprintf(("line height = %i; graphics height = %i\n", et->line_h, 8 * et->res_y / SRC_VERT_DPI));
-	et->pos_x += et->stretch(et, w, res);
+	Tprintf(("line height = %i; graphics height = %i\n", et->line_h, 8 * et->res_y / resy));
+	et->pos_x += et->stretch(et, w, resx, resy);
 }
 
 static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsigned char*params)
@@ -767,10 +768,10 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 		break;
 	case 'L':
 	case 'Y':
-		graphout(et, 120, nparams, params);
+		graphout(et, 120, 60, nparams, params);
 		break;
 	case 'K':
-		graphout(et, 60, nparams, params);
+		graphout(et, 60, 60, nparams, params);
 		break;
 	case 'S':
 		if (nparams == 1) {
@@ -792,9 +793,25 @@ static void tiff_write_command(struct EXPORT_TIFF*et, int cmd, int nparams, unsi
 		et->fi.subscript = et->fi.superscript = 0;
 		break;
 	case 'Z':
-		graphout(et, 240, nparams, params);
+		graphout(et, 240, 60, nparams, params);
 		break;
-	case '*': // unsupported yet
+	case '*':
+		switch (params[nparams]) { // additional byte has been specified
+		case 0: graphout(et, 60, 60, nparams, params); break;
+		case 1: case 2: graphout(et, 120, 60, nparams, params); break;
+		case 3: graphout(et, 240, 60, nparams, params); break;
+		case 4: graphout(et, 80, 60, nparams, params); break;
+		case 5: graphout(et, 72, 60, nparams, params); break;
+		case 6: graphout(et, 90, 60, nparams, params); break;
+		case 32: graphout(et, 60, 180, nparams, params); break;
+		case 33: graphout(et, 120, 180, nparams, params); break;
+		case 38: graphout(et, 90, 180, nparams, params); break;
+		case 39: graphout(et, 180, 180, nparams, params); break;
+		case 40: graphout(et, 360, 180, nparams, params); break;
+		case 71: graphout(et, 180, 360, nparams, params); break;
+		case 72: case 73: graphout(et, 360, 360, nparams, params); break;
+		}
+
 		break;
 	default:
 		Tprintf(("Tiff: unsupported command %c (%i args)\n", cmd, nparams));

@@ -1,7 +1,7 @@
 /*
 	Agat Emulator version 1.4
 	Copyright (c) NOP, nnop@newmail.ru
-	thunderclock - emulation of Agat-9's printer card
+	printera - emulation of Apple's printer card
 */
 
 #include "types.h"
