@@ -81,6 +81,7 @@ struct FDD_DATA
 	struct SLOT_RUN_STATE	*st;
 	int	last_tsc;
 	int	use_fast;
+	int	ntries;
 };
 
 
@@ -371,10 +372,15 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	byte r;
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 
-	if (!d->present) return 0;
-	if (!d->disk) { d->error = 1; return rand()%0x80; }
+	if (!d->present) {
+//		puts("not present");
+		++ data->ntries;
+		if (data->ntries < 0x10000) return 0;
+		else return rand()%0x100;
+	}
+	if (!d->disk) { d->error = 1; return rand()%0x100; }
 
-	if (!(data->time&3)) r = 0;
+	if (!(data->time&3)) r = rand()%0x80;
 	else {
 		r = d->TrackData[d->TrackIndex];
 //		printf("TrackData[%i] = %X\n", d->TrackIndex, r);
@@ -895,6 +901,7 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 //		printf("fdd1: motor on\n");
 		break;
 	case 10: case 11:
+		data->ntries = 0;
 		data->drv = a - 10;
 //		printf("fdd1: select drive = %i\n", data->drv);
 		if (data->drives[data->drv].dirty) {
@@ -928,6 +935,7 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 	}
 	data->state.C0XD = 0;
 //	printf("fdd1 read[%x]=%x\n", a, r);
+//	system_command(data->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	return r;
 }
 
