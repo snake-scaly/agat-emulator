@@ -691,7 +691,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 #else
 			d=decode_key(wp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
 #endif
-			d = translate_capslock(sr, d);
+			if (d != -1) d = translate_capslock(sr, d);
 
 		switch (wp) {
 		case VK_CAPITAL:
