@@ -440,7 +440,6 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int pixels[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
 	int x,y;
 	int sx=8, sy=1;
-	int clr[2]={0,15};
 	const byte*mem = ramptr(vs->sr);
 	byte b=mem[addr],*ptr;
 	int i;
@@ -464,18 +463,18 @@ void paint_dgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
 	for (i=8;i;i--,b<<=1,ptr++) {
 		byte c1, c2, c;
-		c1=clr[(b&0x80)?1:0];
+		c1=pixels[(b&0x80)?1:0];
 #ifndef DOUBLE_X
 		b<<=1;
-		if (b&0x80) c1=clr[1];
+		if (b&0x80) c1=pixels[1];
 		i--;
 #endif //DOUBLE_X
 		b<<=1;
-		c2=clr[(b&0x80)?1:0];
+		c2=pixels[(b&0x80)?1:0];
 		i--;
 #ifndef DOUBLE_X
 		b<<=1;
-		if (b&0x80) c2=clr[1];
+		if (b&0x80) c2=pixels[1];
 		i--;
 #endif //DOUBLE_X
 		c=c2|(c1<<4);
