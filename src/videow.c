@@ -453,6 +453,28 @@ int cancel_input_file(struct SYS_RUN_STATE*sr)
 	return 0;
 }
 
+static byte translate_capslock(struct SYS_RUN_STATE*sr, byte k)
+{
+	if (sr->caps_lock || sr->cursystype != SYSTEM_E) return k;
+	if ((k >> 5) == 2) k |= 0x20;
+	else if ((k >> 5) == 3) k &= ~0x20;
+	return k;
+}
+
+static void apply_capslock(struct SYS_RUN_STATE*sr)
+{
+}
+
+static void check_capslock(HWND w, struct SYS_RUN_STATE*sr)
+{
+	if (GetKeyState(VK_CAPITAL) & 1) {
+		sr->caps_lock = 1;
+	} else {
+		sr->caps_lock = 0;
+	}
+	apply_capslock(sr);
+}
+
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
 	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
@@ -497,6 +519,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				localize_str(LOC_VIDEO, 120, lbuf, sizeof(lbuf))); //TEXT("&Закрыть"));
 #endif
 			SetTimer(w,TID_FLASH,FLASH_INTERVAL,NULL);
+			check_capslock(w, sr);
 		}
 		break;
 	case WM_TIMER:
@@ -563,6 +586,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}	
 		break;
 	case WM_ACTIVATE:
+		check_capslock(w, sr);
 		switch (wp) {
 		case WA_CLICKACTIVE:
 			if (sr->mouselock) lock_mouse(sr);
@@ -621,8 +645,12 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 #else
 			d=decode_key(wp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
 #endif
+			d = translate_capslock(sr, d);
 
 		switch (wp) {
+		case VK_CAPITAL:
+			check_capslock(w, sr);
+			break;
 		case VK_SCROLL:
 			if (GetKeyState(wp)&1) {
 				system_command(sr, SYS_COMMAND_STOP, 0, 0);

@@ -52,6 +52,7 @@ struct SYS_RUN_STATE
 	int keyreg;
 	int cur_key;
 	int key_down;
+	int caps_lock;
 
 	int ints_enabled;
 
