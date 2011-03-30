@@ -4,6 +4,7 @@
 //
 #define IDC_SYSVIEW                     11
 #define IDD_MAIN                        101
+#define IDC_COPY                        101
 #define IDD_ABOUT                       102
 #define IDD_CONFIG                      103
 #define IDD_MEMORY                      104
@@ -125,6 +126,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        125
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1063
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

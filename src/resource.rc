@@ -748,10 +748,15 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
-    9200                    "Ввод из текстового файла..."
+    9200                    "Ввод из текстового файла...\tF6"
     9201                    "Тип кодировки"
     9202                    "Перекодировать содержимое файла из кодировки Windows?"
     9210                    "чтение файла %i%%..."
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    9300                    "Копирование в буфер обмена\tF7"
 END
 
 STRINGTABLE DISCARDABLE 

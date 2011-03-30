@@ -475,6 +475,50 @@ static void check_capslock(HWND w, struct SYS_RUN_STATE*sr)
 	apply_capslock(sr);
 }
 
+static void copy_clipboard(struct SYS_RUN_STATE*sr)
+{
+	HDC enh, src;
+	HBITMAP bmp, lbm;
+
+	src = GetDC(sr->video_w);
+
+	enh = CreateCompatibleDC(src);
+	if (!enh) {
+		ReleaseDC(sr->video_w, src);
+		return;
+	}
+	bmp = CreateCompatibleBitmap(src, sr->v_size.cx, sr->v_size.cy);
+	if (!bmp) {
+		ReleaseDC(sr->video_w, src);
+		return;
+	}
+	ReleaseDC(sr->video_w, src);
+	lbm = SelectObject(enh, bmp);
+	if (!BitBlt(enh, 0, 0, sr->v_size.cx, sr->v_size.cy, sr->mem_dc, 0, 0, SRCCOPY)) {
+		SelectObject(enh, lbm);
+		DeleteObject(bmp);
+		DeleteDC(enh);
+		return;
+	}
+	SelectObject(enh, lbm);
+	DeleteDC(enh);
+
+	if (!OpenClipboard(sr->video_w)) { MessageBeep(MB_ICONEXCLAMATION); return; }
+	if (!EmptyClipboard()) {
+		CloseClipboard();
+		MessageBeep(MB_ICONEXCLAMATION);
+		return;
+	}
+	if (!SetClipboardData(CF_BITMAP, bmp)) {
+		CloseClipboard();
+		MessageBeep(MB_ICONEXCLAMATION);
+		return;
+	}
+	CloseClipboard();
+	puts("copy ok");
+}
+
+
 LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 {
 	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
@@ -511,7 +555,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			AppendMenu(m,MF_SEPARATOR,0,0);
 
 			AppendMenu(m,MF_STRING,IDC_INPUT_FILE,
-				localize_str(LOC_VIDEO, 200, lbuf, sizeof(lbuf))); //TEXT("Ввод из текстового файла..."));
+				localize_str(LOC_VIDEO, 200, lbuf, sizeof(lbuf))); //TEXT("Ввод из текстового файла...\tF6"));
+			AppendMenu(m,MF_STRING,IDC_COPY,
+				localize_str(LOC_VIDEO, 300, lbuf, sizeof(lbuf))); //TEXT("Копирование в буфер обмена\tF7"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
 #ifdef UNDER_CE
 			AppendMenu(m,MF_SEPARATOR,0,0);
@@ -667,6 +713,12 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F5:
 			unlock_mouse(sr);
 			break;
+		case VK_F6:
+			on_input_file(w, sr);
+			break;
+		case VK_F7:
+			copy_clipboard(sr);
+			break;
 		case VK_APPS:
 			system_command(sr, SYS_COMMAND_FAST, 1, 0);
 			break;
@@ -785,6 +837,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			return 0;
 		case IDC_INPUT_FILE:
 			on_input_file(w, sr);
+			break;
+		case IDC_COPY:
+			copy_clipboard(sr);
+			break;
 		default:
 			system_command(sr, SYS_COMMAND_WINCMD, LOWORD(wp), (long)w);
 			break;

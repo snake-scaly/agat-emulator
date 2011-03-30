@@ -420,10 +420,11 @@ BEGIN
 	9111	"Load state..."
 	9112	"Clear state..."
 	9120	"&Close"
-	9200	"Input text file..."
+	9200	"Input text file...\tF6"
 	9201	"Type of encoding"
 	9202	"Recode contents of the file from Windows encoding?"
 	9210	"reading file %i%%..."
+	9300	"Copy screen to clipboard\tF7"
 // Configuration module: 10000
 	10000	"ROM files (*.rom)@*.rom@All files@*.*@"
 	10001	"Select ROM file"
