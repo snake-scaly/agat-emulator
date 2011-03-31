@@ -956,8 +956,8 @@ BEGIN
     12304                   "Apple IIe"
     12305                   "Apple I"
     12306                   "Enhanced Apple IIe"
-    12307                   "Правец-82"
-    12308                   "Правец-8A"
+    12307                   "Правец-82/8M"
+    12308                   "Правец-8A/8Ц"
 END
 
 STRINGTABLE DISCARDABLE 

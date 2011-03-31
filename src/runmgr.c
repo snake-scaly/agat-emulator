@@ -381,8 +381,13 @@ int load_system_state(struct SYS_RUN_STATE*sr, ISTREAM*in)
 		system_command(sr, SYS_COMMAND_XRAM_RELEASE, CONF_SLOT6 + 1, 0);
 		break;
 	case SYSTEM_9:
-		for (i = 0; i < 8; ++i)
-			system_command(sr, SYS_COMMAND_BASEMEM9_RESTORE, CONF_SLOT6 + 1, i);
+		if (sr->apple_emu) {
+			int fl = 3;
+			system_command(sr, SYS_COMMAND_APPLE9_RESTORE, CONF_SLOT6 + 1, (long)&fl);
+		} else {
+			for (i = 0; i < 8; ++i)
+				system_command(sr, SYS_COMMAND_BASEMEM9_RESTORE, CONF_SLOT6 + 1, i);
+		}
 		break;
 	}
 	update_xio_status(sr);

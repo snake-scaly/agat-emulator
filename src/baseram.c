@@ -106,6 +106,7 @@ static int baseram_save(struct SLOT_RUN_STATE*ss, OSTREAM*out)
 	struct BASERAM_STATE*st = ss->data;
 	memcpy(&st0, st, sizeof(st0));
 	WRITE_FIELD(out, st0);
+	printf("written apple rom mode: %02X, ofs = %X\n", st->apple_rom_mode, st->psrom9_ofs);
 	oswrite(out, st->ram, st->ram_size);
 	if (ss->sr->sys.save_system)
 		ss->sr->sys.save_system(ss->sr, out);
@@ -153,6 +154,8 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 			system9_cancel_apple_mode(0, 0, st);
 		}
 		st->apple_rom_mode = st0.apple_rom_mode;
+		st->psrom9_ofs = st0.psrom9_ofs;
+		printf("loaded apple rom mode: %02X, ofs = %X\n", st->apple_rom_mode, st->psrom9_ofs);
 	}
 	if (ss->sr->sys.load_system)
 		ss->sr->sys.load_system(ss->sr, in);
