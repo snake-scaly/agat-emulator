@@ -152,12 +152,15 @@ static int baseram_load(struct SLOT_RUN_STATE*ss, ISTREAM*in)
 		} else {
 			system9_cancel_apple_mode(0, 0, st);
 		}
+		st->apple_rom_mode = st0.apple_rom_mode;
 	}
 	if (ss->sr->sys.load_system)
 		ss->sr->sys.load_system(ss->sr, in);
 	switch (ss->sr->cursystype) {
 	case SYSTEM_9:
 		if (!st->apple_emu) break;
+		upd_apple(st, 3);
+		break;
 	case SYSTEM_E:
 		READ_FIELD(in, st->ram2e);
 	case SYSTEM_A:

@@ -6,8 +6,8 @@ void videosel_9(struct VIDEO_STATE*vs, int mode)
 	page=(mode>>4)&0x07;
 	subpage=(mode>>2)&3;
 	type=(mode&3);
-/*	printf("select video mode: %x (last %x)\n", mode, vs->rb_cur.vmode);
-	system_command(vs->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+//	printf("select video mode: %x (last %x)\n", mode, vs->rb_cur.vmode);
+/*	system_command(vs->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	if ((mode&0xFF) == 0xA8) {
 		dump_mem(vs->sr, 0, 0x10000, "memory.dmp");
 		exit(1);

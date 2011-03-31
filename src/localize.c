@@ -75,3 +75,8 @@ HMODULE localize_get_lib()
 {
 	return lang;
 }
+
+HMODULE localize_get_def_lib()
+{
+	return def_lang;
+}

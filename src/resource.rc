@@ -50,6 +50,10 @@ IDB_APPLE1_LOGO         BITMAP  DISCARDABLE     "bmps\\apple1_logo.bmp"
 IDB_APPLE2EE            BITMAP  DISCARDABLE     "bmps\\apple2ee.bmp"
 IDB_APPLE2EE_LOGO       BITMAP  DISCARDABLE     "bmps\\apple2ee_logo.bmp"
 IDB_UNKNOWN             BITMAP  DISCARDABLE     "bmps\\unknown.bmp"
+IDB_PRAVETZ8A           BITMAP  DISCARDABLE     "bmps\\pravetz8a.bmp"
+IDB_PRAVETZ8A_LOGO      BITMAP  DISCARDABLE     "bmps\\pravetz8a_logo.bmp"
+IDB_PRAVETZ82           BITMAP  DISCARDABLE     "bmps\\pravetz82.bmp"
+IDB_PRAVETZ82_LOGO      BITMAP  DISCARDABLE     "bmps\\pravetz82_logo.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -952,6 +956,8 @@ BEGIN
     12304                   "Apple IIe"
     12305                   "Apple I"
     12306                   "Enhanced Apple IIe"
+    12307                   "Правец-82"
+    12308                   "Правец-8A"
 END
 
 STRINGTABLE DISCARDABLE 

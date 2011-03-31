@@ -57,9 +57,11 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
 		return 0;
 	case SYSTEM_A: // apple ][
-	case SYSTEM_P: // apple ][
-	case SYSTEM_E: // apple ][
-	case SYSTEM_EE: // apple ][
+	case SYSTEM_P: // apple ][+
+	case SYSTEM_E: // apple //e
+	case SYSTEM_EE: // enhanced apple //e
+	case SYSTEM_82: // pravetz 82
+	case SYSTEM_8A: // pravetz 8A
 		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTERA);

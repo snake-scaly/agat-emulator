@@ -31,7 +31,7 @@ struct PRINTER_STATE
 	byte rom1[256], rom2[2048];
 	byte rom_mode; // bit 1 -> C0X3, bit 2 -> CX00
 	byte regs[3];
-	int lastpos[2], nreq;
+	int lastpos[2];
 	int mousetype; // 0 - none, 1 - mm8031, 2 - mars
 };
 
@@ -126,8 +126,7 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-
 	case 0:
 		pcs->regs[adr] = data;
 		if (data&0x80 && pcs->mousetype == MOUSE_MARS) {
-			pcs->nreq = 0;
-			pcs->regs[2] &= 0xC0;
+			pcs->regs[2] |= 0x0F; // reset motion bits
 		}	
 		break;
 	case 3:
@@ -181,29 +180,25 @@ static byte read_mm8031(struct PRINTER_STATE*pcs)
 static byte read_mars(struct PRINTER_STATE*pcs)
 {
 	int ofs = 0;
-	byte res = pcs->regs[2]&0x0F;
+	byte res = pcs->regs[2] | 0x0F;
 	if (pcs->lastpos[0] == -1 && pcs->lastpos[1] == -1) {
 		pcs->lastpos[0] = pcs->st->sr->xmouse/DIV_H;
 		pcs->lastpos[1] = pcs->st->sr->ymouse/DIV_V;
 	}
-	++pcs->nreq;
-	if (pcs->nreq > 3) {
-		pcs->nreq = 0;
 // delta y
-		ofs = pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1];
-		if (ofs < 0) res |= 1;
-		if (ofs > 0) res |= 2;
-		if (ofs > 1) ofs = 1;
-		if (ofs < -1) ofs = -1;
-		pcs->lastpos[1] += ofs;
+	ofs = pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1];
+	if (ofs < 0) res &= ~2;
+	if (ofs > 0) res &= ~1;
+	if (ofs > 1) ofs = 1;
+	if (ofs < -1) ofs = -1;
+	pcs->lastpos[1] += ofs;
 // delta x
-		ofs = pcs->st->sr->xmouse/DIV_H - pcs->lastpos[0];
-		if (ofs > 0) res |= 4;
-		if (ofs < 0) res |= 8;
-		if (ofs > 1) ofs = 1;
-		if (ofs < -1) ofs = -1;
-		pcs->lastpos[0] += ofs;
-	}
+	ofs = pcs->st->sr->xmouse/DIV_H - pcs->lastpos[0];
+	if (ofs > 0) res &= ~8;
+	if (ofs < 0) res &= ~4;
+	if (ofs > 1) ofs = 1;
+	if (ofs < -1) ofs = -1;
+	pcs->lastpos[0] += ofs;
 	if (pcs->st->sr->mousebtn & 1) res &= ~0x80;
 	else res |= 0x80;
 	if (pcs->st->sr->mousebtn & 2) res &= ~0x40;

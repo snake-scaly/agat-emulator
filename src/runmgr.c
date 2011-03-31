@@ -144,6 +144,8 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		SYSTEM_E, // apple 2e
 		SYSTEM_1, // apple 1
 		SYSTEM_E, // apple 2ee -> apple 2e
+		SYSTEM_A, // pravetz 82 -> apple 2
+		SYSTEM_E  // pravetz 8A -> apple 2e
 	};
 
 	_RMSG("entry");

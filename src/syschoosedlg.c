@@ -44,13 +44,18 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 		IDB_APPLE2P,
 		IDB_APPLE2E,
 		IDB_APPLE1,
-		IDB_APPLE2EE
+		IDB_APPLE2EE,
+		IDB_PRAVETZ82,
+		IDB_PRAVETZ8A,
 	};
 
 	if (id == IDC_SYSLIST && notify == LBN_SELCHANGE) {
 		HBITMAP bm, lbm;
-		bm = LoadBitmap(localize_get_lib(), MAKEINTRESOURCE(bmps[ListBox_GetCurSel(ctl)]));
-		if (!bm) bm = LoadBitmap(localize_get_lib(), MAKEINTRESOURCE(IDB_UNKNOWN));
+		LPCTSTR res_id;
+		res_id = MAKEINTRESOURCE(bmps[ListBox_GetCurSel(ctl)]);
+		bm = LoadBitmap(localize_get_lib(), res_id);
+		if (!bm) bm = LoadBitmap(localize_get_def_lib(), res_id);
+		if (!bm) bm = LoadBitmap(localize_get_def_lib(), MAKEINTRESOURCE(IDB_UNKNOWN));
 		lbm = (HANDLE)SendDlgItemMessage(hwnd, IDC_SYSVIEW, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bm);
 		if (lbm) DeleteObject(lbm);
 		EnableDlgItem(hwnd, IDOK, TRUE);

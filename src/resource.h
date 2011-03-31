@@ -38,6 +38,10 @@
 #define IDB_APPLE2EE_LOGO               122
 #define IDB_UNKNOWN                     123
 #define IDD_SCSIDLG                     124
+#define IDB_PRAVETZ8A                   125
+#define IDB_PRAVETZ8A_LOGO              126
+#define IDB_PRAVETZ82                   127
+#define IDB_PRAVETZ82_LOGO              128
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -123,7 +127,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        125
+#define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1063
 #define _APS_NEXT_SYMED_VALUE           102

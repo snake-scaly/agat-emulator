@@ -6,6 +6,7 @@ void	localize_term();
 LPCTSTR localize_str(int modid, int strid, LPTSTR buf, int bufsize);
 
 HMODULE localize_get_lib();
+HMODULE localize_get_def_lib();
 
 enum {
 	LOC_GENERIC,

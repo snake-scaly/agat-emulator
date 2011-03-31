@@ -18,6 +18,7 @@ void set_video_type(struct VIDEO_STATE*vs, int t)
 int videosel(struct VIDEO_STATE*vs, int mode)
 {
 	int r=vs->rb_cur.vmode;
+	if (vs->sr->apple_emu) return 0xFF;
 	video_set_mode(vs, VIDEO_MODE_AGAT);
 //	printf("videosel: %x->%x\n",vs->rb_cur.vmode,mode);
 	switch(vs->sr->cursystype) {
