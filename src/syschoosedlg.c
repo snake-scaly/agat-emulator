@@ -28,6 +28,11 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 	for (i = 0; i < NSYSTYPES; i++) {
 		ListBox_AddString(hlist, get_sysnames(i));
 	}
+	{
+		HBITMAP bm, lbm;
+		bm = LoadBitmap(localize_get_def_lib(), MAKEINTRESOURCE(IDB_UNKNOWN));
+		lbm = (HANDLE)SendDlgItemMessage(hwnd, IDC_SYSVIEW, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)bm);
+	}
 	return 0;
 }
 

@@ -236,7 +236,7 @@ int select_font(HWND hpar, TCHAR fname[CFGSTRLEN])
 int select_disk(HWND hpar, TCHAR fname[CFGSTRLEN], int*readonly)
 {
 	OPENFILENAME ofn;
-	TCHAR path[MAX_PATH], buf[2][256];
+	TCHAR path[MAX_PATH], buf[2][1024];
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = hpar;

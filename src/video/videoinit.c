@@ -79,6 +79,7 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 	case SYS_COMMAND_HRESET:
 		disable_ints(vs->sr);
 		video_set_pal(&vs->pal, 0);
+		vs->ainf.videoterm = vs->ainf.text80 = vs->ainf.dhgr = 0;
 //		videosel(0);
 		return 0;
 	case SYS_COMMAND_FLASH:

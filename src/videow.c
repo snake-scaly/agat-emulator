@@ -26,6 +26,11 @@ WORD get_keyb_language()
 	return PRIMARYLANGID(LOWORD(GetKeyboardLayout(0)));
 }
 
+int is_keyb_english(struct SYS_RUN_STATE*sr)
+{
+	return get_keyb_language() != LANG_RUSSIAN;
+}
+
 void update_alt_state(struct SYS_RUN_STATE*sr)
 {
 	if (keyb_is_pressed(sr, VK_LMENU)) sr->mousebtn|=0x10;
@@ -687,9 +692,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			int d;
 			if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 #ifdef KEY_SCANCODES
-			d=decode_key(lp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
+			d=decode_key(lp, &sr->keymap, !is_keyb_english(sr));
 #else
-			d=decode_key(wp, &sr->keymap, get_keyb_language() == LANG_RUSSIAN);
+			d=decode_key(wp, &sr->keymap, !is_keyb_english(sr));
 #endif
 			if (d != -1) d = translate_capslock(sr, d);
 
@@ -884,7 +889,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_INPUTLANGCHANGE:
 //		printf("%x\n",lp);
-		sr->keyreg = (PRIMARYLANGID(LOWORD(lp))==LANG_RUSSIAN) ? 0x7F: 0xFF;
+		sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
 		break;
 	}
 def:

@@ -432,7 +432,7 @@ BEGIN
 	10003	"Select configuration file"
 	10004	"Font files (*.fnt)@*.fnt@All files@*.*@"
 	10005	"Select font file"
-	10006	"All disk image files (*.dsk, *.img, *.nib, *.aim, *.po, *.do)@*.dsk;*.img;*.nib;*.aim;*.po;*.do@Disk image files (*.dsk, *.po, *.do)@*.dsk;*.po;*.do@RAW image files (*.nib)@*.nib@AIM image files (*.aim)@*.aim@All files@*.*@"
+	10006	"All disk image files (*.dsk, *.img, *.nib, *.aim, *.po, *.do, *.hdv)@*.dsk;*.img;*.nib;*.aim;*.po;*.do;*.hdv@Disk image files (*.dsk, *.po, *.do)@*.dsk;*.po;*.do@RAW image files (*.nib)@*.nib@AIM image files (*.aim)@*.aim@Hard disk image files (*.hdv)@*.hdv@All files@*.*@"
 	10007	"Select disk image file"
 	10008	"Tape audio files (*.wav)@*.wav@All files@*.*@"
 	10009	"Select tape file for reading"

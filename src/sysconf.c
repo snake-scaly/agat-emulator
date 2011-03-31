@@ -8,14 +8,14 @@
 
 char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
 };
 
 
@@ -319,10 +319,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_EE:
 			case SYSTEM_1:
 			case SYSTEM_82:
-			case SYSTEM_8A:
 				c->dev_type = DEV_TAPE_FILE;
 				break;
 			case SYSTEM_9:
+			case SYSTEM_8A:
 				c->dev_type = DEV_TAPE_NONE;
 				break;
 			}
@@ -391,7 +391,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
 				return 0;
 			case SYSTEM_8A:
-				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\PRAVETZ8A.ROM"));
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\PRAVETZ8C.ROM"));
 				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;

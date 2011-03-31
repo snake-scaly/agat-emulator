@@ -138,6 +138,11 @@ static byte keyb_apple_read(word adr, struct SYS_RUN_STATE*sr)
 	return keyb_apple_state(sr, (adr&1)^1);
 }
 
+static byte keyb_lang_read(word adr, struct SYS_RUN_STATE*sr)
+{
+	return is_keyb_english(sr)?0xFF:0x7F;
+}
+
 int init_system_2e(struct SYS_RUN_STATE*sr)
 {
 	struct APPLE2E_DATA*p;
@@ -173,6 +178,10 @@ int init_system_2e(struct SYS_RUN_STATE*sr)
 	fill_rw_proc(sr->baseio_sel + 0, 1, read_C00X, write_C00X, sr);
 	fill_rw_proc(sr->baseio_sel + 1, 1, read_C01X, write_C01X, sr);
 	fill_read_proc(sr->io6_sel + 1, 2, keyb_apple_read, sr); // will be overwritten by a joystick
+
+	if (sr->config->systype == SYSTEM_8A) {
+		fill_read_proc(sr->io6_sel + 0, 1, keyb_lang_read, sr);
+	}
 
 	return 0;
 }
