@@ -118,6 +118,13 @@ static byte get_cs(byte*data,int n);
 
 
 
+
+static void sound_phase()
+{
+	PlaySound(NULL, NULL, SND_NODEFAULT);
+	PlaySound("teac.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOWAIT);
+}
+
 static void fill_fdd_drive(struct FDD_DRIVE_DATA*data)
 {
 	memcpy(data->prolog,def_prolog,sizeof(def_prolog));
@@ -607,6 +614,10 @@ static void load_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 static void make_step(struct FDD_DATA*data,byte _b)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
+	if (!drv->present) { // no step
+		return;
+	}	
+	sound_phase();
 	if (data->state.rk&4) {
 		if (drv->prolog[FDD_PROLOG_TRACK]<FDD_TRACK_COUNT-2) {
 			drv->prolog[FDD_PROLOG_TRACK]+=2;
@@ -829,6 +840,10 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
 	if (!data->initialized) return 0;
 	if (!(data->state.rd & 0x80)) return 0;
+	if (!drv->present) {
+		data->state.rd &= ~0x80; // clear ready bit
+		return rand()&0xFF;
+	}	
 	switch (drv->rawfmt) {
 	case 0:
 		if (drv->use_prolog) d=drv->prolog[drv->disk_index];
@@ -1128,7 +1143,10 @@ void fdd_access(struct FDD_DATA*data)
 			data->state.rd &= ~0x40;
 		}// else data->state.rd |= 0x40;
 		data->sync = 0;
-		if (drv->present && drv->disk) data->state.rd |= 0x80;
+		data->state.rd |= 0x80;
+		if (!drv->present || !drv->disk) {
+			data->sync = 1;
+		}
 		data->time = t - dt;
 		data->rd = 0;
 	}

@@ -70,7 +70,8 @@ IDI_DISK                ICON    DISCARDABLE     "bmps\\diskette.ico"
 // WAVE
 //
 
-SHUGART.WAV             WAVE    MOVEABLE PURE   "shugart.wav"
+SHUGART.WAV          WAVE    MOVEABLE PURE   "shugart.wav"
+TEAC.WAV             WAVE    MOVEABLE PURE   "teac.wav"
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -82,6 +82,7 @@ struct FDD_DATA
 	int	last_tsc;
 	int	use_fast;
 	int	ntries;
+	byte	last_read;
 };
 
 
@@ -373,19 +374,22 @@ static byte fdd_read_data(struct FDD_DATA*data)
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 
 	if (!d->present) {
-//		puts("not present");
-		++ data->ntries;
-		if (data->ntries < 0x10000) return 0;
-		else return rand()%0x100;
-	}
-	if (!d->disk) { d->error = 1; return rand()%0x100; }
+		return 0xFF;
+	}	
+	if (!data->state.MotorOn) {
+		if (!(rand()%20)) data->last_read = rand()&0xFF;
+		return data->last_read;
+	}	
 
-	if (!(data->time&3)) r = rand()%0x80;
+	if (!d->disk) { d->error = 1; return data->last_read = rand()%0x100; }
+
+	if (!(data->time&3)) r = rand()&0x7F;
 	else {
 		r = d->TrackData[d->TrackIndex];
 //		printf("TrackData[%i] = %X\n", d->TrackIndex, r);
 		fdd_rot(d);
 	}
+	data->last_read = r;
 	data->time++;
 	return r;
 }
@@ -844,26 +848,27 @@ static void fdd_select_phase(struct FDD_DATA*data, int p, int en)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 //	printf("fdd1: %s phase %i, cur_phase %i, phase %i, track %i\n", en?"enable":"disable", p, data->state.CurrentPhase, data->drives[data->drv].Phase, data->drives[data->drv].Track);
+	if (!d->present) return;
 	if (!en) return;
 	if (data->state.CurrentPhase==p) return;
 	if (((d->Phase+1)&3)==p) {
+		if (d->Phase&1) sound_phase();
 		if (d->Phase<110) {
 			d->Phase++;
 			if (d->Track!=d->Phase/2) {
         			d->Track=d->Phase/2;
 //        			printf("fdd1: track = %i\n",d->Track);
-				sound_phase();
 				fdd_load_track(data);
 			}	
 		}
 	}
 	if (((d->Phase-1)&3)==p) {
+		if (d->Phase&1) sound_phase();
 		if (d->Phase>0) {
 			d->Phase--;
 			if (d->Track!=d->Phase/2) {
         			d->Track=d->Phase/2;
 //        			printf("fdd1: track = %i\n",d->Track);
-				sound_phase();
 				fdd_load_track(data);
 			}	
 		}
@@ -910,9 +915,8 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		break;
 	case 12:
 		if (data->state.ReadMode) {
-			if (data->state.MotorOn)
-				r = fdd_read_data(data);
-			else r = rand()%0x80;
+			r = fdd_read_data(data);
+//			printf("read_data: %X\n", r);
 		} else {
 			fdd_write_data(data);
 		}
@@ -921,6 +925,10 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		data->state.C0XD = 1;
 		return r;
 	case 14:
+		if (!data->drives[data->drv].present) {
+			r = 0xFF;
+			break;
+		}
 		if (!data->state.ReadMode) {
 			data->state.ReadMode = 1;
 			fdd_save_track(data);
