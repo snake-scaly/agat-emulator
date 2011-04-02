@@ -69,14 +69,29 @@ void update_save_state(LPCTSTR name)
 	}
 }
 
+static int main_cfg_get_sel(HWND wnd)
+{
+	return ListView_GetNextItem(GetDlgItem(wnd,IDC_CFGLIST),-1,LVNI_SELECTED);
+}
+
+static void main_cfg_set_sel(HWND wnd,int sel)
+{
+	if (sel!=-1) {
+		HWND list=GetDlgItem(wnd,IDC_CFGLIST);
+		ListView_SetItemState(list,sel,LVNI_SELECTED,LVNI_SELECTED);
+	}
+}
+
 static int scan_configs(HWND hwnd)
 {
 	HWND hlist;
 	HANDLE ff;
 	WIN32_FIND_DATA fd;
+	int sel;
 
 	hlist = GetDlgItem(hwnd, IDC_CFGLIST);
-	LockWindowUpdate(hlist);
+	sel = main_cfg_get_sel(hwnd);
+	SendMessage(hlist,WM_SETREDRAW,0,0);
 	ImageList_RemoveAll(him);
 	ListView_DeleteAllItems(hlist);
 
@@ -107,7 +122,8 @@ static int scan_configs(HWND hwnd)
 		ListView_InsertItem(hlist, &it);
 	} while (FindNextFile(ff, &fd));
 	FindClose(ff);
-	LockWindowUpdate(NULL);
+	main_cfg_set_sel(hwnd, sel);
+	SendMessage(hlist,WM_SETREDRAW,1,0);
 	return 0;
 }
 

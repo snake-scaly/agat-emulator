@@ -1126,7 +1126,7 @@ void fdd_access(struct FDD_DATA*data)
 	if (!data->time || data->time > t) data->time = t;
 	if (data->state.rd&0x80) data->time -= 8;
 	dt = t - data->time;
-	if (dt > t0 * 10) dt = t0 * 10;
+	if (dt > t0 * 1000) dt = t0 * 1000;
 	if (!(data->state.rk & 0x80)) { data->time = t; return; }
 //	logprint(0, TEXT("dt = %i"), dt);
 	if (dt > t0) {
