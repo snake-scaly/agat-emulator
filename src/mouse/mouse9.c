@@ -304,7 +304,7 @@ int  mouse9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTC
 		pcs->regs[2] = 0x23 | 0x40 | 0x80;
 		break;
 	case MOUSE_MARS:
-		pcs->regs[2] = 0x40 | 0x80;
+		pcs->regs[2] = 0x40 | 0x80 | 0x20 | 0x10;
 		break;
 	}
 
