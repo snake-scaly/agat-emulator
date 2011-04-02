@@ -50,6 +50,7 @@ static void output_bitmap(struct SYS_RUN_STATE*sr, int x, int y, byte data, int 
 	const byte*fnt = video_get_font(sr);
 	int tc = 15, bc = 0;
 	int xi, yi, xn, yn;
+	if (!fnt) return;
 	ptr =(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W/2));
 	fnt += data * 8;
 	if (inv) { tc = 0; bc = 15; }

@@ -84,6 +84,8 @@ enum {
 	DEV_ACI, // cassette interface for Apple I
 
 	DEV_SCSI_CMS,
+
+	DEV_CHARGEN2,
 	
 	NDEVTYPES
 };

@@ -44,6 +44,7 @@ static int dialog_init(HWND hwnd, void*p)
 		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
 		DevList_AddItem(hlist, DEV_MOUSE_PAR);
 		DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
+		DevList_AddItem(hlist, DEV_CHARGEN2);
 		return 0;
 	case SYSTEM_9: // agathe 9
 		if (inf->slotid != CONF_SLOT1) {
@@ -55,6 +56,7 @@ static int dialog_init(HWND hwnd, void*p)
 			DevList_AddItem(hlist, DEV_MOUSE_NIPPEL);
 		}
 		DevList_AddItem(hlist, DEV_NIPPELCLOCK);
+		DevList_AddItem(hlist, DEV_CHARGEN2);
 		return 0;
 	case SYSTEM_A: // apple ][
 	case SYSTEM_P: // apple ][+

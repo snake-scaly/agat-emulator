@@ -114,31 +114,40 @@ static byte printer_rom_r(word adr, struct PRINTER_STATE*pcs) // CX00-CXFF
 	return pcs->rom1[adr & 0xFF];
 }
 
-static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-C0XF
-{
-//	printf("mouse: write reg %x: %02x\n", adr, data);
-//	{ extern int cpu_debug; cpu_debug = 1; }
-//	dump_mem(pcs->st->sr, 0, 0x10000, "memdump.bin");
-	adr &= 0x03;
-	switch (adr) {
-	case 1:
-		break;
-	case 0:
-		pcs->regs[adr] = data;
-		if (data&0x80 && pcs->mousetype == MOUSE_MARS) {
-			pcs->regs[2] |= 0x0F; // reset motion bits
-		}	
-		break;
-	case 3:
-		set_rom_mode(pcs, pcs->rom_mode | 1);
-		break;
-	}
-}
-
 #define DIV_H 600
 #define DIV_V 600
-#define MAX_H 7
-#define MAX_V 7
+#define MAX_H 4
+#define MAX_V 4
+
+static int otable[8] = {0, 1, 3, 6, 15, 35, 70, 100};
+
+static int odec(int ofs)
+{
+	int s = 1;
+	int i;
+	if (ofs < 0) { s = -1; ofs = -ofs; }
+	for (i = 7; i >= 0; --i)
+		if (otable[i] <= ofs) break;
+	return i * s;
+}
+
+
+static int oenc(int ofs)
+{
+	int s = 1;
+	int i;
+	if (ofs < 0) { s = -1; ofs = -ofs; }
+	return otable[ofs] * s;
+}
+
+static byte update_mm8031(struct PRINTER_STATE*pcs, byte res)
+{
+	if (pcs->st->sr->mousebtn & 1) res &= ~0x80;
+	else res |= 0x80;
+	if (pcs->st->sr->mousebtn & 2) res &= ~0x40;
+	else res |= 0x40;
+	return res;
+}
 
 static byte read_mm8031(struct PRINTER_STATE*pcs)
 {
@@ -149,21 +158,22 @@ static byte read_mm8031(struct PRINTER_STATE*pcs)
 		pcs->lastpos[1] = pcs->st->sr->ymouse/DIV_V;
 	}
 	if (pcs->regs[0] & 0x80) { // delta y
-		ofs = pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1];
+		ofs = odec(pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1]);
 		if (ofs > MAX_V) ofs = MAX_V;
 		if (ofs < -MAX_V) ofs = -MAX_V;
-		pcs->lastpos[1] += ofs;
+		pcs->lastpos[1] += oenc(ofs);
 		ofs = -ofs;
 	} else { // delta x
-		ofs = pcs->st->sr->xmouse/DIV_H - pcs->lastpos[0];
+		ofs = odec(pcs->st->sr->xmouse/DIV_H - pcs->lastpos[0]);
 		if (ofs > MAX_H) ofs = MAX_H;
 		if (ofs < -MAX_H) ofs = -MAX_H;
-		pcs->lastpos[0] += ofs;
+		pcs->lastpos[0] += oenc(ofs);
 	}
-//		printf("(%i,%i)->(%i,%i)\n", pcs->lastpos[0], pcs->lastpos[1], pcs->st->sr->xmousepos/DIV_H, pcs->st->sr->ymousepos/DIV_V);
+//	printf("ofs = %i\n", ofs);
+//	printf("(%i,%i)->(%i,%i); ofs = %i\n", pcs->lastpos[0], pcs->lastpos[1], pcs->st->sr->xmousepos/DIV_H, pcs->st->sr->ymousepos/DIV_V, ofs);
 	ofs &= 15;
+	ofs ^= 8;
 	ofs <<= 2;
-	ofs ^= 0x20;
 	res |= ofs;
 	if (pcs->st->sr->mousebtn & 1) res &= ~0x80;
 	else res |= 0x80;
@@ -176,6 +186,15 @@ static byte read_mm8031(struct PRINTER_STATE*pcs)
 #undef DIV_V
 #define DIV_H 600
 #define DIV_V 600
+
+static byte update_mars(struct PRINTER_STATE*pcs, byte res)
+{
+	if (pcs->st->sr->mousebtn & 1) res &= ~0x80;
+	else res |= 0x80;
+	if (pcs->st->sr->mousebtn & 2) res &= ~0x40;
+	else res |= 0x40;
+	return res;
+}
 
 static byte read_mars(struct PRINTER_STATE*pcs)
 {
@@ -207,6 +226,37 @@ static byte read_mars(struct PRINTER_STATE*pcs)
 }
 
 
+
+static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-C0XF
+{
+//	printf("mouse: write reg %x: %02x\n", adr, data);
+//	{ extern int cpu_debug; cpu_debug = 1; }
+//	dump_mem(pcs->st->sr, 0, 0x10000, "memdump.bin");
+	adr &= 0x03;
+	switch (adr) {
+	case 1:
+		break;
+	case 0:
+		if (data&0x80 && pcs->mousetype == MOUSE_MARS) {
+			pcs->regs[2] |= 0x0F; // reset motion bits
+		}	
+		pcs->regs[adr] = data;
+		switch (pcs->mousetype) {
+		case MOUSE_NONE:
+			break;
+		case MOUSE_MM8031:
+			pcs->regs[2] = read_mm8031(pcs);
+			break;
+		case MOUSE_MARS:
+			break;
+		}
+		break;
+	case 3:
+		set_rom_mode(pcs, pcs->rom_mode | 1);
+		break;
+	}
+}
+
 static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 {
 //	printf("read mouse reg %x\n", adr);
@@ -217,7 +267,7 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 		case MOUSE_NONE:
 			break;
 		case MOUSE_MM8031:
-			pcs->regs[2] = read_mm8031(pcs);
+			pcs->regs[2] = update_mm8031(pcs, pcs->regs[2]);
 			break;
 		case MOUSE_MARS:
 			pcs->regs[2] = read_mars(pcs);

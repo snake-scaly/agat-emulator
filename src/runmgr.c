@@ -18,6 +18,7 @@ extern int init_system_1(struct SYS_RUN_STATE*sr);
 extern int init_system_2e(struct SYS_RUN_STATE*sr);
 extern int init_systems(struct SYS_RUN_STATE*sr); // other systems
 
+int  chargen_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf);
 
 
 int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*sc)
@@ -102,6 +103,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_SCSI_CMS:
 		puts("cms_init");
 		return cms_init(sr, st, sc);
+	case DEV_CHARGEN2:
+		puts("chargen_init");
+		return chargen_init(sr, st, sc);
 	}
 	return 0;
 }

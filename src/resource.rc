@@ -916,6 +916,7 @@ BEGIN
     12134                   "Мышь через плату Apple Mouse"
     12135                   "Apple Cassette Interface (ACI)"
     12136                   "Плата CMS SCSI"
+    12137                   "Плата знакогенератора"
 END
 
 STRINGTABLE DISCARDABLE 

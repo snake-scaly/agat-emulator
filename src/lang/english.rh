@@ -545,6 +545,7 @@ BEGIN
 	12134	"Mouse via Apple Mouse Card"
 	12135   "Apple Cassette Interface (ACI)"
 	12136	"CMS SCSI Card"
+	12137	"Character Generator Card"
 
 	12200	"Slot #0"
 	12201	"Slot #1"

@@ -377,7 +377,7 @@ static byte fdd_read_data(struct FDD_DATA*data)
 		return 0xFF;
 	}	
 	if (!data->state.MotorOn) {
-		if (!(rand()%20)) data->last_read = rand()&0xFF;
+		if (!(rand()%2)) data->last_read = (rand()&0x7F) | 0x80;
 		return data->last_read;
 	}	
 

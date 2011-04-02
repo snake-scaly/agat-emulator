@@ -236,6 +236,7 @@ const byte*video_get_font(struct SYS_RUN_STATE*sr)
 {
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
 	struct VIDEO_STATE*vs = st->data;
+	if (vs->cur_font < 0) return NULL;
 	return vs->font[vs->cur_font][0];
 }
 
@@ -243,10 +244,11 @@ int video_select_font(struct SYS_RUN_STATE*sr, int fnt)
 {
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
 	struct VIDEO_STATE*vs = st->data;
-	fnt %= vs->num_fonts;
+	if (fnt >= 0) fnt %= vs->num_fonts; else fnt = -1;
 	if (vs->cur_font == fnt) return vs->cur_font;
 	vs->cur_font = fnt;
-	if (vs->ainf.text_mode) video_repaint_screen(vs);
+	//if (vs->is_text_mode) 
+	video_repaint_screen(vs);
 	return vs->cur_font;
 }
 

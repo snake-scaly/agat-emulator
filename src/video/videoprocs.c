@@ -1,5 +1,8 @@
 #include "videoint.h"
 
+
+static const byte empty_char[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
 void paint_lgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 {
 	int bmp_pitch = vs->sr->bmp_pitch;
@@ -229,7 +232,7 @@ void paint_t32_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	byte ch=mem[addr&~1];
 	byte atr=mem[addr|1];
 	int  tc, bc=vs->pal.c1_palette[0]; // text and back colors
-	byte*fnt=vs->font[vs->cur_font][ch];
+	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
 	int xi, yi, xn, yn;
 	r->left=x*CHAR_W;
@@ -331,7 +334,7 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r, int tc, int bc)
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H+x*CHAR_W2/2));
 	const byte*mem = ramptr(vs->sr);
 	byte ch=mem[addr];
-	byte*fnt=vs->font[vs->cur_font][ch];
+	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
 	int xi, yi, xn, yn;
 	r->left=x*CHAR_W2;
@@ -577,7 +580,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 		ch&=0x3F;
 		ch+=0xA0;
 	}
-	fnt = vs->font[vs->cur_font][ch];
+	fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 //	printf("%x -> (%i, %i)\n",addr, x, y);
 	r->left=x*PIX_W*7;
 	r->top=y*CHAR_H;
@@ -626,7 +629,7 @@ void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr, in
 	int bmp_pitch = vs->sr->bmp_pitch;
 	byte atr = ch>>6;
 	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
-	const byte*fnt = vs->font[vs->cur_font][ch];
+	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
 	int xi, yi, xn, yn;
 	if (!vs->cur_font) {
