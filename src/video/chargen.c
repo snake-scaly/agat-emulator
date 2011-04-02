@@ -21,10 +21,10 @@ static int chargen_term(struct SLOT_RUN_STATE*st)
 
 static void set_mode(struct CHARGEN_STATE*ccs, byte mode)
 {
-	printf("new mode: %X\n", mode);
+//	printf("new mode: %X\n", mode);
 	system_command(ccs->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	if (ccs->mode == mode) return;
-	mode  &= ~4;
+//	mode  &= ~4;
 	ccs->mode = mode;
 	enable_slot_xio(ccs->st, mode&1);
 	video_select_font(ccs->st->sr, (mode&4)?-1:((mode&2)?1:0));
@@ -35,7 +35,7 @@ static void finish_init(struct CHARGEN_STATE*ccs)
 	struct SLOT_RUN_STATE*st = ccs->st->sr->slots + CONF_CHARSET;
 	struct VIDEO_STATE*vs = st->data;
 	vs->num_fonts = 2;
-	memcpy(vs->font[1], vs->font[0], sizeof(vs->font[1]));
+//	memcpy(vs->font[1], vs->font[0], sizeof(vs->font[1]));
 }
 
 static int chargen_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
