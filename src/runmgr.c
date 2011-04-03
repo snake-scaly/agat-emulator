@@ -139,7 +139,7 @@ int free_slot_state(struct SLOT_RUN_STATE*st)
 struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name)
 {
 	struct SYS_RUN_STATE*sr;
-	int i, r;
+	int i, j, r;
 	static const int sys_types[NSYSTYPES] = {
 		SYSTEM_7,
 		SYSTEM_9,
@@ -182,14 +182,14 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	}
 	if (r < 0) {
 		_RMSG("init_system failed");
-		goto fail;
+		goto fail2;
 	}
 
 	_RMSG("init_video_window");
 	r = init_video_window(sr);
 	if (r < 0) {
 		_RMSG("init_video_window failed");
-		goto fail;
+		goto fail1;
 	}
 	if (sr->name) {
 		GetWindowText(sr->video_w, sr->title, 1024);
@@ -232,24 +232,20 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	return sr;
 fail:
 	_RMSG("failure");
-	{
-		int j;
-
-		if (sr->popup_menu)
-			system_command(sr, SYS_COMMAND_FREEMENU, 0, (long)sr->popup_menu);
-		set_run_state_ptr(sr->name, NULL);
-		PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE, 0), 0);
-
-		for (j = 0; j < i ; j ++ ) {
-			free_slot_state(sr->slots + j);
-		}
-		term_video_window(sr);
-
-		if (sr->sys.free_system) sr->sys.free_system(sr);
-		if (sr->name) free((void*)sr->name);
-		free(sr);
-		return NULL;
+	if (sr->popup_menu)
+		system_command(sr, SYS_COMMAND_FREEMENU, 0, (long)sr->popup_menu);
+	set_run_state_ptr(sr->name, NULL);
+	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE, 0), 0);
+	for (j = 0; j < i ; j ++ ) {
+		free_slot_state(sr->slots + j);
 	}
+	term_video_window(sr);
+fail1:
+	if (sr->sys.free_system) sr->sys.free_system(sr);
+fail2:
+	if (sr->name) free((void*)sr->name);
+	free(sr);
+	return NULL;
 }
 
 int free_system_state(struct SYS_RUN_STATE*sr)

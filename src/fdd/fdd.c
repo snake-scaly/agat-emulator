@@ -1121,15 +1121,16 @@ static struct {
 void fdd_access(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA*drv=data->drives+data->drv;
-	int t0 =  75;//92;
+	int t0 =  50;//75;//92;
 	int t = cpu_get_tsc(data->st->sr), dt;
 	if (!data->time || data->time > t) data->time = t;
-	if (data->state.rd&0x80) data->time -= 8;
+//	if (data->state.rd&0x80) data->time -= 8;
 	dt = t - data->time;
 	if (dt > t0 * 1000) dt = t0 * 1000;
+	else if (dt > t0 * 2 && dt < t0 * 4) { dt -= t0; }
 	if (!(data->state.rk & 0x80)) { data->time = t; return; }
-//	logprint(0, TEXT("dt = %i"), dt);
-	if (dt > t0) {
+//	printf("dt = %i\n", dt);
+	if (dt >= t0) {
 //		if (dt > 300) t0 = 30;
 		while (dt >= t0) { 
 //			fprintf(stderr, ">>rotate\n");

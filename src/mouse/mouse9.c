@@ -33,6 +33,7 @@ struct PRINTER_STATE
 	byte regs[3];
 	int lastpos[2];
 	int mousetype; // 0 - none, 1 - mm8031, 2 - mars
+	int step;
 };
 
 static int printer_term(struct SLOT_RUN_STATE*st)
@@ -199,11 +200,13 @@ static byte update_mars(struct PRINTER_STATE*pcs, byte res)
 static byte read_mars(struct PRINTER_STATE*pcs)
 {
 	int ofs = 0;
-	byte res = pcs->regs[2] | 0x0F;
+	byte res = pcs->regs[2];
 	if (pcs->lastpos[0] == -1 && pcs->lastpos[1] == -1) {
 		pcs->lastpos[0] = pcs->st->sr->xmouse/DIV_H;
 		pcs->lastpos[1] = pcs->st->sr->ymouse/DIV_V;
 	}
+	++pcs->step;
+	if (!(pcs->step & 7)) {
 // delta y
 	ofs = pcs->st->sr->ymouse/DIV_V - pcs->lastpos[1];
 	if (ofs < 0) res &= ~2;
@@ -218,6 +221,7 @@ static byte read_mars(struct PRINTER_STATE*pcs)
 	if (ofs > 1) ofs = 1;
 	if (ofs < -1) ofs = -1;
 	pcs->lastpos[0] += ofs;
+	}
 	if (pcs->st->sr->mousebtn & 1) res &= ~0x80;
 	else res |= 0x80;
 	if (pcs->st->sr->mousebtn & 2) res &= ~0x40;

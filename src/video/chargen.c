@@ -90,7 +90,7 @@ static void chargen_xrom_w(word adr, byte data, struct CHARGEN_STATE*ccs) // C80
 
 static void chargen_io_w(word adr, byte data, struct CHARGEN_STATE*ccs) // C0X0-C0XF
 {
-	set_mode(ccs, adr & 0x07);
+	set_mode(ccs, (adr & 0x07));
 }
 
 int  chargen_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)

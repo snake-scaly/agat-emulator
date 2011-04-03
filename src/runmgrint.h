@@ -31,7 +31,9 @@ struct SYS_RUN_STATE
 	SIZE v_size;
 	struct KEYMAP keymap;
 	int  fullscreen;
+	ATOM video_at;
 	HWND video_w;
+	HICON video_icon;
 	TCHAR title[1024];
 	WINDOWPLACEMENT old_pl;
 	LONG old_style;

@@ -614,7 +614,6 @@ static struct DIALOG_DATA dialog =
 
 int maindlg_run(HWND hpar)
 {
-	register_video_window();
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
 	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_MAIN), hpar, NULL);

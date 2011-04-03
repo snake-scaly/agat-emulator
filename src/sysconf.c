@@ -723,6 +723,18 @@ HBITMAP sysicon_to_bitmap(HDC dc, struct SYSICON*icon)
 	return CreateDIBitmap(dc, &hdr, CBM_INIT, icon->image, &bi, DIB_RGB_COLORS);
 }
 
+
+HICON sysicon_to_icon(HDC dc, struct SYSICON*icon)
+{
+	static const BYTE zmem[64*64/8];
+	ICONINFO iinf = { TRUE, 0, 0, CreateBitmap(icon->w, icon->h, 1, 1, zmem), sysicon_to_bitmap(dc, icon) };
+	HICON res;
+	res = CreateIconIndirect(&iinf);
+	DeleteObject(iinf.hbmMask);
+	DeleteObject(iinf.hbmColor);
+	return res;
+}
+
 int bitmap_to_sysicon(HDC dc, HBITMAP hbm, struct SYSICON*icon)
 {
 	BITMAPINFO bi;

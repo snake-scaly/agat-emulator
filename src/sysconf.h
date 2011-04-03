@@ -169,6 +169,7 @@ int save_config(struct SYSCONFIG*c, OSTREAM*out);
 int load_config(struct SYSCONFIG*c, ISTREAM*in);
 
 HBITMAP sysicon_to_bitmap(HDC dc, struct SYSICON*icon);
+HICON sysicon_to_icon(HDC dc, struct SYSICON*icon);
 int bitmap_to_sysicon(HDC dc, HBITMAP hbm, struct SYSICON*icon);
 int free_sysicon(struct SYSICON*icon);
 

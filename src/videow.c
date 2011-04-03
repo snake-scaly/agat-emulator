@@ -39,19 +39,33 @@ void update_alt_state(struct SYS_RUN_STATE*sr)
 	else sr->mousebtn&=~0x20;
 }
 
-int register_video_window()
+int register_video_window(struct SYS_RUN_STATE*sr)
 {
 	WNDCLASS cl;
+	HDC dc;
+	TCHAR cbuf[32];
+	static int cno = 1;
 	ZeroMemory(&cl,sizeof(cl));
-	cl.hbrBackground=NULL;//CreateSolidBrush(RGB(0,0,0));
+	cl.hbrBackground=NULL;
 	cl.lpfnWndProc=wnd_proc;
-	cl.lpszClassName=VIDEO_CLASS;
+	wsprintf(cbuf, VIDEO_CLASS TEXT("_%04i"), cno++);
+	cl.lpszClassName=cbuf;
 	cl.hCursor=LoadCursor(NULL,IDC_ARROW);
-	cl.hIcon=LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_MAIN));
-	at=RegisterClass(&cl);
-	if (!at) return -1;
+	dc = GetDC(sr->base_w);
+	sr->video_icon = cl.hIcon=sysicon_to_icon(dc, &sr->config->icon);
+	ReleaseDC(sr->base_w, dc);
+	if (!cl.hIcon) cl.hIcon = LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_MAIN));
+	sr->video_at=RegisterClass(&cl);
+	if (!sr->video_at) return -1;
 	return 0;
 }
+
+void unregister_video_window(struct SYS_RUN_STATE*sr)
+{
+	UnregisterClass((LPCTSTR)sr->video_at, GetModuleHandle(NULL));
+	if (sr->video_icon) DestroyIcon(sr->video_icon);
+}
+
 
 int load_video_palette(struct SYS_RUN_STATE*sr, RGBQUAD colors[16])
 {
@@ -135,7 +149,7 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 	RECT r={0,0,sr->v_size.cx,sr->v_size.cy};
 	AdjustWindowRectEx(&r,s,FALSE,0);
 	puts("cr_thread");
-	sr->video_w=CreateWindowEx(sex,(LPCTSTR)at,get_system_name(sr),s,
+	sr->video_w=CreateWindowEx(sex,(LPCTSTR)sr->video_at,get_system_name(sr),s,
 		CW_USEDEFAULT,CW_USEDEFAULT,r.right-r.left,r.bottom-r.top,
 		NULL/*sr->base_w*/,NULL,NULL,sr);
 	if (!sr->video_w) {
@@ -153,6 +167,7 @@ int init_video_window(struct SYS_RUN_STATE*sr)
 {
 	int r;
 	sr->keymap = keymap_default;
+	if (register_video_window(sr) < 0) return -1;
 	keymap_load(sr->config->slots[CONF_KEYBOARD].cfgstr[CFG_STR_ROM], &sr->keymap);
 	r = create_video_buffer(sr);
 	switch (sr->cursystype) {
@@ -206,6 +221,7 @@ void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
 
 int term_video_window(struct SYS_RUN_STATE*sr)
 {
+	if (!sr->video_w) return 1;
 	puts("free_video_window: entry");
 	if (sr->input_data) {
 		isclose(sr->input_data);
@@ -216,6 +232,7 @@ int term_video_window(struct SYS_RUN_STATE*sr)
 //	WaitForSingleObject(sr->h, INFINITE);
 //	CloseHandle(sr->h);
 	free_video_buffer(sr);
+	unregister_video_window(sr);
 	puts("free_video_window: exit");
 	return 0;
 }
