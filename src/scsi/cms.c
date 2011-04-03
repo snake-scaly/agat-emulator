@@ -4,6 +4,7 @@
 	SCSI CMS Card emulation module
 */
 
+#include "common.h"
 #include "types.h"
 #include "memory.h"
 #include "streams.h"
@@ -940,6 +941,8 @@ int  cms_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 {
 	ISTREAM*rom;
 	struct CMS_STATE*cms;
+	const char_t*name;
+	char_t buf[32];
 
 	puts("in cms_init");
 
@@ -959,19 +962,31 @@ int  cms_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 		cms->disks[0].no = cf->cfgint[CFG_INT_SCSI_NO1];
 		cms->disks[0].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO1]-1);
 		cms->disks[0].nblk = cf->cfgint[CFG_INT_SCSI_SZ1] * 2048;
-		strcpy(cms->disks[0].name, cf->cfgstr[CFG_STR_SCSI_NAME1]);
+
+		sprintf(buf, "s%id%i", st->sc->slot_no, cms->disks[0].no - 1);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_SCSI_NAME1];
+		strcpy(cms->disks[0].name, name);
 	}
 	if (cf->cfgint[CFG_INT_SCSI_NO2]) {
 		cms->disks[1].no = cf->cfgint[CFG_INT_SCSI_NO2];
 		cms->disks[1].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO2]-1);
 		cms->disks[1].nblk = cf->cfgint[CFG_INT_SCSI_SZ2] * 2048;
-		strcpy(cms->disks[1].name, cf->cfgstr[CFG_STR_SCSI_NAME2]);
+
+		sprintf(buf, "s%id%i", st->sc->slot_no, cms->disks[1].no - 1);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_SCSI_NAME2];
+		strcpy(cms->disks[1].name, name);
 	}
 	if (cf->cfgint[CFG_INT_SCSI_NO3]) {
 		cms->disks[2].no = cf->cfgint[CFG_INT_SCSI_NO3];
 		cms->disks[2].mask = 1<<(cf->cfgint[CFG_INT_SCSI_NO3]-1);
 		cms->disks[2].nblk = cf->cfgint[CFG_INT_SCSI_SZ3] * 2048;
-		strcpy(cms->disks[2].name, cf->cfgstr[CFG_STR_SCSI_NAME3]);
+
+		sprintf(buf, "s%id%i", st->sc->slot_no, cms->disks[2].no - 1);
+		name = sys_get_parameter(buf);
+		if (!name) name = cf->cfgstr[CFG_STR_SCSI_NAME3];
+		strcpy(cms->disks[2].name, name);
 	}
 
 	cms->dev_selected = -1;

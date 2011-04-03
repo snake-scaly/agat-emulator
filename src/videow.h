@@ -18,7 +18,6 @@
 #define PIX_H 1
 #endif
 
-int register_video_window();
 int init_video_window(struct SYS_RUN_STATE*sr);
 void set_video_size(struct SYS_RUN_STATE*sr, int w, int h);
 int term_video_window(struct SYS_RUN_STATE*sr);

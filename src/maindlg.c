@@ -204,6 +204,7 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 	int use_save = 0;
 	TCHAR buf[2][256];
 
+	printf("running config %s\n", fname);
 
 	{
 		unsigned fl = get_run_state_flags(fname);
@@ -624,7 +625,6 @@ int maindlg_run_config(HWND hpar, LPCTSTR name)
 {
 	int r;
 	MSG msg;
-	register_video_window();
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
 	update_save_state(name);
