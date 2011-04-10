@@ -140,7 +140,13 @@ static byte keyb_apple_read(word adr, struct SYS_RUN_STATE*sr)
 
 static byte keyb_lang_read(word adr, struct SYS_RUN_STATE*sr)
 {
-	return is_keyb_english(sr)?0xFF:0x7F;
+	return (is_keyb_english(sr)?0x80:0x00) | (sr->input_8bit?0x40:0x00);
+}
+
+static void keyb_lang_write(word adr, byte data, struct SYS_RUN_STATE*sr)
+{
+	printf("lang_write: %02X\n", data);
+	sr->input_8bit = data & 1;
 }
 
 int init_system_2e(struct SYS_RUN_STATE*sr)
@@ -180,7 +186,7 @@ int init_system_2e(struct SYS_RUN_STATE*sr)
 	fill_read_proc(sr->io6_sel + 1, 2, keyb_apple_read, sr); // will be overwritten by a joystick
 
 	if (sr->config->systype == SYSTEM_8A) {
-		fill_read_proc(sr->io6_sel + 0, 1, keyb_lang_read, sr);
+		fill_rw_proc(sr->io6_sel + 0, 1, keyb_lang_read, keyb_lang_write, sr);
 	}
 
 	return 0;

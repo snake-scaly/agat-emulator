@@ -8,6 +8,8 @@
 #include "resource.h"
 #include "sysconf.h"
 
+#include <sys/stat.h>
+
 #include "localize.h"
 
 static struct RESIZE_DIALOG resize=
@@ -51,6 +53,23 @@ int select_rom(HWND hpar, TCHAR fname[CFGSTRLEN])
 		if (PathRelativePathTo(buf, path, FILE_ATTRIBUTE_DIRECTORY, fname, 0))
 			lstrcpy(fname, buf);
 	}
+	return TRUE;
+}
+
+int select_rom_ex(HWND hpar, struct SLOTCONFIG *slot)
+{
+	int r;
+	struct stat st;
+	r = select_rom(hpar, slot->cfgstr[CFG_STR_ROM]);
+	if (!r) return r;
+	r = stat(slot->cfgstr[CFG_STR_ROM], &st);
+	if (r) {
+		char buf[256];
+		MessageBox(hpar, localize_str(LOC_GENERIC, 2, buf, sizeof(buf)), slot->cfgstr[CFG_STR_ROM], MB_ICONEXCLAMATION);
+		return FALSE;
+	}
+	slot->cfgint[CFG_INT_ROM_SIZE] = st.st_size;
+	slot->cfgint[CFG_INT_ROM_MASK] = st.st_size - 1;
 	return TRUE;
 }
 
@@ -469,6 +488,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_ACI:
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+	case DEV_FIRMWARE:
+		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_MOUSE_PAR:
 	case DEV_PRINTER9:
 		return prn9dlg_run(hwnd, slot);
@@ -493,6 +514,7 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 			return TRUE; }
 		case CONF_ROM:
 			return select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
+//			return select_rom_ex(hwnd, slot);
 		case CONF_CHARSET:
 			return select_font(hwnd, slot->cfgstr[CFG_STR_ROM]);
 		case CONF_SOUND:

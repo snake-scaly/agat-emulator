@@ -39,7 +39,10 @@ static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
 		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - sz) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
 		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
 	} else {
-		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-1, 1, rom1_read, st);
+		int sz = st->rom_size, nb;
+		nb = sz>>BASEMEM_BLOCK_SHIFT;
+		if (!nb) nb = 1;
+		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom1_read, st);
 	}
 }
 
@@ -128,7 +131,8 @@ static byte rom_read(word adr,struct BASEROM_STATE*st)
 static byte rom1_read(word adr,struct BASEROM_STATE*st)
 {
 //	printf("rom1_read: %X\n", adr);
-	if (adr >= 0xFF00) return st->rom[(adr & st->rom_mask) - st->rom_ofs];
+	if (adr >= 0x10000 - st->rom_size) 
+		return st->rom[(adr & st->rom_mask) - st->rom_ofs];
 	else return empty_read(adr, st);
 }
 

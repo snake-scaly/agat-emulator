@@ -64,7 +64,10 @@ static int dialog_init(HWND hwnd, void*p)
 	case SYSTEM_EE: // enhanced apple //e
 	case SYSTEM_82: // pravetz 82
 	case SYSTEM_8A: // pravetz 8A
-		DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
+		if (inf->slotid == CONF_SLOT0) {
+			DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
+			DevList_AddItem(hlist, DEV_FIRMWARE);
+		}
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
 		DevList_AddItem(hlist, DEV_PRINTERA);
 		DevList_AddItem(hlist, DEV_SOFTCARD);

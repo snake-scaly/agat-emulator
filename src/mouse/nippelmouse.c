@@ -67,7 +67,7 @@ static int mouse_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 		return 0;
 	case SYS_COMMAND_MOUSE_EVENT:
 		if (data & 0x80) {
-//			puts("mouse move");
+//			printf("mouse move: %i, %i\n", mcs->st->sr->dxmouse, mcs->st->sr->dymouse);
 			mcs->regs[0] += mcs->st->sr->dxmouse;
 			mcs->regs[1] -= mcs->st->sr->dymouse;
 		}

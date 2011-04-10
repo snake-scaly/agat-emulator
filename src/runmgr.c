@@ -106,6 +106,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_CHARGEN2:
 		puts("chargen_init");
 		return chargen_init(sr, st, sc);
+	case DEV_FIRMWARE:
+		puts("firmware_init");
+		return firmware_init(sr, st, sc);
 	}
 	return 0;
 }

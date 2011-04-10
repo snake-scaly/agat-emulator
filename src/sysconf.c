@@ -240,6 +240,13 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_ACI:
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\ACI.ROM"));
 		return 0;
+	case DEV_FIRMWARE:
+		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\APPLE2O.ROM"));
+		c->cfgint[CFG_INT_ROM_RES] = 13;
+		c->cfgint[CFG_INT_ROM_SIZE] = 0x3000;
+		c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
+		c->cfgint[CFG_INT_ROM_OFS] = 0x1000;
+		return 0;
 	case DEV_SYSTEM:
 		switch (c->slot_no) {
 		case CONF_MEMORY:
@@ -584,6 +591,9 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_ACI:
+		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		return 0;
+	case DEV_FIRMWARE:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
 	case DEV_MOCKINGBOARD:

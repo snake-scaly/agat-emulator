@@ -28,7 +28,7 @@ static void kbd_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d010
 static void kbdcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d011
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
-	a1->kbd_cr = data;
+//	a1->kbd_cr = data & ~0x80;
 }
 
 static void scroll_bitmap(struct SYS_RUN_STATE*sr)
@@ -153,13 +153,15 @@ static void dsp_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d012
 	a1->dsp_cr |= 0x80;
 	a1->remains = TERM_WAIT;
 //	printf("video_write: %X: lsz = %i\n", data, a1->lsz);
-	if (data & 0x80) video_write(data, sr);
+//	if (data & 0x80) 
+	video_write(data | 0x80, sr);
 }
 
 static void dspcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d013
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->dsp_cr = data;
+	a1->remains = TERM_WAIT;
 }
 
 static byte kbd_read(word adr, struct SYS_RUN_STATE*sr) // d010
@@ -182,6 +184,7 @@ static byte dsp_read(word adr, struct SYS_RUN_STATE*sr) // d012
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	byte r = a1->dsp_cr;
+//	printf("remains = %i\n", a1->remains);
 	if (!a1->remains) a1->dsp_cr &= ~0x80;
 	else -- a1->remains;
 	return r;
@@ -214,18 +217,26 @@ static void d000_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d000-d7f
 
 static byte d000_read(word adr, struct SYS_RUN_STATE*sr) // d000-d7ff
 {
-//	printf("d000_read: %X\n", adr);
+	byte r;
 	switch (adr) {
 	case 0xD010: // KBD
-		return kbd_read(adr, sr);
+		r = kbd_read(adr, sr);
+		break;
 	case 0xD011: // KBD CR
-		return kbdcr_read(adr, sr);
+		r = kbdcr_read(adr, sr);
+		break;
 	case 0xD012: // DSP
-		return dsp_read(adr, sr);
+		r = dsp_read(adr, sr);
+		break;
 	case 0xD013: // DSP CR
-		return dspcr_read(adr, sr);
+		r = dspcr_read(adr, sr);
+		break;
+	default:
+		r = empty_read(adr, sr);
+		break;
 	}
-	return empty_read(adr, sr);
+//	printf("d000_read: %04X = %02X\n", adr, r);
+	return r;
 }
 
 int init_system_1(struct SYS_RUN_STATE*sr)

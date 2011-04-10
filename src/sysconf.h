@@ -86,6 +86,8 @@ enum {
 	DEV_SCSI_CMS,
 
 	DEV_CHARGEN2,
+
+	DEV_FIRMWARE, // firmware card for apple2
 	
 	NDEVTYPES
 };

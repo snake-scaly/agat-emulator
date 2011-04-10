@@ -549,6 +549,7 @@ BEGIN
 	12135   "Apple Cassette Interface (ACI)"
 	12136	"Плата CMS SCSI"
 	12137	"Плата знакогенератора"
+	12138	"Плата Apple Firmware Card"
 
 	12200	"Слот №0"
 	12201	"Слот №1"
