@@ -43,6 +43,8 @@
 #define IDB_PRAVETZ8A_LOGO              126
 #define IDD_TTYA1                       126
 #define IDB_PRAVETZ82                   127
+#define IDD_A1ROM                       127
+#define IDD_ROMA1                       127
 #define IDB_PRAVETZ82_LOGO              128
 #define IDC_NEW                         200
 #define IDC_RESET                       201
@@ -127,6 +129,9 @@
 #define IDC_TTYSPEED                    1064
 #define IDC_SIZE3                       1065
 #define IDC_TTYCLEAR                    1065
+#define IDC_SMALL                       1066
+#define IDC_MED                         1067
+#define IDC_LARGE                       1068
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -136,7 +141,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1066
+#define _APS_NEXT_CONTROL_VALUE         1067
 #define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif

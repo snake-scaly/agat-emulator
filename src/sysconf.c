@@ -260,8 +260,8 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_MEM_MASK] = 128;
 				return 0;
 			case SYSTEM_1:
-				c->cfgint[CFG_INT_MEM_SIZE] = 1;
-				c->cfgint[CFG_INT_MEM_MASK] = 2 | 4 | 64;
+				c->cfgint[CFG_INT_MEM_SIZE] = 2;
+				c->cfgint[CFG_INT_MEM_MASK] = 2 | 4 | 16 | 2048;
 				return 0;
 			case SYSTEM_A:
 				c->cfgint[CFG_INT_MEM_SIZE] = 5;
@@ -343,6 +343,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			c->dev_type = DEV_MOUSE;
 			return 0;
 		case CONF_ROM:
+			c->cfgint[CFG_INT_ROM_FLAGS] = 0;
 			switch (systype) {
 			case SYSTEM_7:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\MONITOR7.ROM"));
@@ -357,6 +358,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x100;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x0FF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
+				c->cfgint[CFG_INT_ROM_FLAGS] |= CFG_INT_ROM_FLAG_A1;
 				return 0;
 			case SYSTEM_9:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\MONITOR9.ROM"));

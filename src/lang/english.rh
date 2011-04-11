@@ -389,7 +389,7 @@ FONT 9, "Tahoma"
 BEGIN
     CONTROL         "Slider1",IDC_TTYSPEED,"msctls_trackbar32",TBS_AUTOTICKS | 
                     TBS_TOP | WS_TABSTOP,7,20,141,20
-    CONTROL         "Enable ""Clear""",IDC_TTYCLEAR,"Button",
+    CONTROL         "Enable ""Clear"" char",IDC_TTYCLEAR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,46,101,10
     DEFPUSHBUTTON   "OK",IDOK,33,63,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,105,63,50,14
@@ -397,6 +397,24 @@ BEGIN
     RTEXT           "%",11,150,25,30,8
 END
 
+
+IDD_ROMA1 DIALOG DISCARDABLE  0, 0, 227, 90
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "ROM Configuration"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW_NAME,98,7,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW,205,7,15,12
+    CONTROL         "ROM size 256 bytes, space: FF00-FFFF",IDC_SMALL,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,7,28,158,10
+    CONTROL         "ROM size 4 Kbytes, space: F000-FFFF",IDC_MED,"Button",
+                    BS_AUTORADIOBUTTON,7,40,158,10
+    CONTROL         "ROM size 8 Kbytes, space: E000-FFFF",IDC_LARGE,"Button",
+                    BS_AUTORADIOBUTTON,7,52,154,10
+    DEFPUSHBUTTON   "OK",IDOK,48,69,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,69,50,14
+    LTEXT           "ROM image: ",IDC_STATIC,7,10,67,8
+END
 
 STRINGTABLE
 BEGIN
@@ -633,6 +651,8 @@ BEGIN
 	12511	"%s: %s"
 	12512	"none; %s: %s"
 	12513	"%s: %s; %s: %s"
+
+	12600	"%i bytes"
 
 	13000	"RAW output"
 	13001	"Text output"

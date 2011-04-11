@@ -285,21 +285,21 @@ int ram1_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 
 	{
 		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
-//		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
-		if (nb > 2) { // > 4 KB RAM -> map to basic area
+		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
+		switch (nb) {
+		case 4: // 8K, 4K low + 4K high
 			fill_rw_proc(sr->base_mem + (0xE000>>BASEMEM_BLOCK_SHIFT), 0x1000>>BASEMEM_BLOCK_SHIFT, ram1_read, ram1_write, st);
-			nb -= 2;
+		case 2: // 4K, only low
+			fill_rw_proc(sr->base_mem, 1, ram_read, ram_write, st);
+			break;
+		case 16: // 32K low
+			fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
+			break;
+		default: // 32K low + 4K high
+			fill_rw_proc(sr->base_mem, 16, ram_read, ram_write, st);
+			fill_rw_proc(sr->base_mem + (0xE000>>BASEMEM_BLOCK_SHIFT), 0x1000>>BASEMEM_BLOCK_SHIFT, ram1_read, ram1_write, st);
+			break;
 		}
-		if (nb > 24) nb = 24;
-		fill_rw_proc(sr->base_mem, nb, ram_read, ram_write, st);
-/*		{
-			FILE*f;
-			f = fopen("basic.rom", "rb");
-			if (f) {
-				fread(st->ram + st->ram_size - 0x1000, 1, 0x1000, f);
-				fclose(f);
-			}
-		}*/
 	}
 	return 0;
 }
