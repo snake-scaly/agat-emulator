@@ -83,6 +83,21 @@ int set_int_cmd(struct SYSCONFIG*sc, int slotno, int indno, int intval)
 	return 0;
 }
 
+int set_dev_cmd(struct SYSCONFIG*sc, int slotno, int devno)
+{
+	if (slotno < 0 || slotno >= NCONFTYPES) {
+		fprintf(stderr, "invalid slot number %i\n", slotno);
+		return 3;
+	}
+	if (devno < 0 || devno >= NDEVTYPES) {
+		fprintf(stderr, "invalid device index %i\n", devno);
+		return 3;
+	}
+	if (sc->slots[slotno].dev_type != devno) need_save = 1;
+	sc->slots[slotno].dev_type = devno;
+	return 0;
+}
+
 int set_str_cmd(struct SYSCONFIG*sc, int slotno, int indno, const char*strval)
 {
 	if (slotno < 0 || slotno >= NCONFTYPES) {
@@ -156,6 +171,9 @@ int main(int argc, const char*argv[])
 		break;
 	case CMD_SETINT:
 		res = set_int_cmd(&sysconf, mc.slotno, mc.indno, mc.intval);
+		break;
+	case CMD_SETDEV:
+		res = set_dev_cmd(&sysconf, mc.slotno, mc.devtype);
 		break;
 	case CMD_SETSTR:
 		res = set_str_cmd(&sysconf, mc.slotno, mc.indno, mc.strval);

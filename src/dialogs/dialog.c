@@ -4,9 +4,7 @@
 #include "dialog.h"
 #include "localize.h"
 
-HINSTANCE res_instance;
-
-
+HINSTANCE res_instance = NULL;
 
 static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
@@ -27,7 +25,7 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 //		puts("init");
 		r = data->init ? data->init(hwnd, data->param) : 0;
 		if (r < 0) {
-			EndDialog(hwnd, -1);
+			EndDialog(hwnd, -2);
 			return FALSE;
 		}
 		resize_init(data->resize);
@@ -95,10 +93,18 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
 int dialog_run(struct DIALOG_DATA*data, LPCTSTR res_id, HWND hpar, void* param)
 {
-	if (!res_instance) res_instance = localize_get_lib();
+	int r;
+	HINSTANCE inst = res_instance;
 	data->param = param;
 	data->res_id = res_id;
-	return DialogBoxParam(res_instance, res_id, hpar, dialog_proc, (LPARAM)data);
+	if (!inst) {
+		inst = localize_get_lib();
+		r = DialogBoxParam(inst, res_id, hpar, dialog_proc, (LPARAM)data);
+		if (r != -1) return r;
+		inst = localize_get_def_lib();
+	}
+	r = DialogBoxParam(inst, res_id, hpar, dialog_proc, (LPARAM)data);
+	return r;
 }
 
 BOOL EnableDlgItem(HWND hpar, int id, BOOL enable)

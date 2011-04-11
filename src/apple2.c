@@ -122,7 +122,8 @@ byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 				case 0x8A: ch = 0x8d; break;
 				}
 			}
-			sr->cur_key = ch;
+			sr->input_hbit = ch >> 7;
+			sr->cur_key = ch | 0x80;
 			if (sr->input_pos == sr->input_size) {
 				cancel_input_file(sr);
 			} else {
@@ -150,6 +151,7 @@ byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr)	// C063
 
 void keyb_clear(struct SYS_RUN_STATE*sr)	// C010-C01F
 {
-	sr->cur_key = 0;
+	if (sr->cursystype == SYSTEM_9) sr->cur_key &= ~0x80;
+	else sr->cur_key = 0;
 }
 

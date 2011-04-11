@@ -140,12 +140,13 @@ static byte keyb_apple_read(word adr, struct SYS_RUN_STATE*sr)
 
 static byte keyb_lang_read(word adr, struct SYS_RUN_STATE*sr)
 {
-	return (is_keyb_english(sr)?0x80:0x00) | (sr->input_8bit?0x40:0x00);
+//	printf("hbit: %i\n", sr->input_hbit);
+	return ((sr->input_hbit||!sr->input_8bit)?0x80:0x00) | (sr->input_8bit?0x40:0x00);
 }
 
 static void keyb_lang_write(word adr, byte data, struct SYS_RUN_STATE*sr)
 {
-	printf("lang_write: %02X\n", data);
+//	printf("lang_write: %02X\n", data);
 	sr->input_8bit = data & 1;
 }
 
@@ -187,6 +188,7 @@ int init_system_2e(struct SYS_RUN_STATE*sr)
 
 	if (sr->config->systype == SYSTEM_8A) {
 		fill_rw_proc(sr->io6_sel + 0, 1, keyb_lang_read, keyb_lang_write, sr);
+		sr->input_8bit = 1;
 	}
 
 	return 0;
@@ -203,7 +205,7 @@ int free_system_2e(struct SYS_RUN_STATE*sr)
 int restart_system_2e(struct SYS_RUN_STATE*sr)
 {
 	struct APPLE2E_DATA*a2e = sr->sys.ptr;
-	video_select_font(sr, 0);
+	video_select_font(sr, sr->config->systype == SYSTEM_8A);
 	memset(a2e, 0, sizeof(*a2e));
 	return 0;
 }

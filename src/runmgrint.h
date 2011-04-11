@@ -55,7 +55,7 @@ struct SYS_RUN_STATE
 	int cur_key;
 	int key_down;
 	int caps_lock;
-	int input_8bit;
+	int input_8bit, input_hbit;
 
 	int ints_enabled;
 

@@ -338,6 +338,9 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		set_video_type(vs, 12);
 		break;
 	}
+	if (sr->config->systype == SYSTEM_8A) {
+		vs->cur_font = 1;
+	}
 	return 0;
 }
 

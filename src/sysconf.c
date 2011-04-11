@@ -12,7 +12,7 @@ char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1},
+	{0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
@@ -285,9 +285,12 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			break;
 		case CONF_MONITOR:
 			switch (systype) {
+			case SYSTEM_1:
+				c->dev_type = DEV_TTYA1;
+				c->cfgint[CFG_INT_TTY_SPEED] = 100;
+				return 0;
 			case SYSTEM_7:
 			case SYSTEM_9:
-			case SYSTEM_1:
 				c->dev_type = DEV_NULL;
 				return 0;
 			case SYSTEM_A:
@@ -595,6 +598,15 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		return 0;
 	case DEV_FIRMWARE:
 		_tcscpy(buf, c->cfgstr[CFG_STR_ROM]);
+		if (c->cfgint[CFG_INT_ROM_FLAGS] & CFG_INT_ROM_FLAG_ACTIVE) {
+			_tcscat(buf, TEXT("; ACTIVE"));
+		}
+		if (c->cfgint[CFG_INT_ROM_FLAGS] & CFG_INT_ROM_FLAG_F8MOD) {
+			_tcscat(buf, TEXT("; F8MOD"));
+			if (c->cfgint[CFG_INT_ROM_FLAGS] & CFG_INT_ROM_FLAG_F8ACTIVE) {
+				_tcscat(buf, TEXT("; F8ACTIVE"));
+			}
+		}
 		return 0;
 	case DEV_MOCKINGBOARD:
 		buf[0] = '\x97';
@@ -659,6 +671,14 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		return 0;
 	case DEV_SCSI_CMS:
 		return format_scsi_comment(buf, 256, c);
+	case DEV_TTYA1:
+		wsprintf(buf, 
+			localize_str(LOC_VIDEO, (c->cfgint[CFG_INT_TTY_SPEED]==500)?402:400, lbuf, sizeof(lbuf)),
+			c->cfgint[CFG_INT_TTY_SPEED]);
+		if (c->cfgint[CFG_INT_TTY_FLAGS] & CFG_INT_TTY_FLAG_CLEAR) {
+			_tcscat(buf, localize_str(LOC_VIDEO, 401, lbuf, sizeof(lbuf)));
+		}
+		return 0;
 	}
 	return 0;
 }

@@ -363,6 +363,40 @@ BEGIN
     LTEXT           "Size (MB):",IDC_STATIC,120,92,44,8
 END
 
+IDD_FIRMWARE DIALOG DISCARDABLE  0, 0, 227, 95
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Firmware Card Configuration"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW_NAME,98,7,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW,205,7,15,12
+    CONTROL         "Power On Active",IDC_ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,27,141,10
+    CONTROL         """F8 mod"" support",IDC_F8MOD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,42,88,10
+    CONTROL         "Power On F8 Active",IDC_F8ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,57,145,10
+    DEFPUSHBUTTON   "OK",IDOK,48,74,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,129,74,50,14
+    LTEXT           "ROM image:",IDC_STATIC,7,10,67,8
+END
+
+
+IDD_TTYA1 DIALOG DISCARDABLE  0, 0, 187, 84
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "TTY Configuration"
+FONT 9, "Tahoma"
+BEGIN
+    CONTROL         "Slider1",IDC_TTYSPEED,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_TOP | WS_TABSTOP,7,20,141,20
+    CONTROL         "Enable ""Clear""",IDC_TTYCLEAR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,46,101,10
+    DEFPUSHBUTTON   "OK",IDOK,33,63,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,105,63,50,14
+    LTEXT           "TTY speed:",IDC_STATIC,7,7,75,8
+    RTEXT           "%",11,150,25,30,8
+END
+
 
 STRINGTABLE
 BEGIN
@@ -413,7 +447,7 @@ BEGIN
 	9023	"Clear state"
 
 	9100	"&Reset\tCtrl+Break"
-	9101	"&Hard reset\tAlt+Break"
+	9101	"&Hard reset\tCtrl+Alt+Break"
 	9102	"IRQ"
 	9103	"NMI"
 	9110	"Save state..."
@@ -425,6 +459,9 @@ BEGIN
 	9202	"Recode contents of the file from Windows encoding?"
 	9210	"reading file %i%%..."
 	9300	"Copy screen to clipboard\tF7"
+	9400	"TTY speed: %i%%"
+	9401	"; TTY clear"
+	9402	"Maximum TTY speed"
 // Configuration module: 10000
 	10000	"ROM files (*.rom)@*.rom@All files@*.*@"
 	10001	"Select ROM file"
@@ -547,6 +584,7 @@ BEGIN
 	12136	"CMS SCSI Card"
 	12137	"Character Generator Card"
 	12138	"Apple Firmware Card"
+	12139	"Apple I Terminal"
 
 	12200	"Slot #0"
 	12201	"Slot #1"

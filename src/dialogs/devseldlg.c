@@ -116,7 +116,7 @@ static int dialog_ok(HWND hwnd, void*p)
 
 static int dialog_close(HWND hwnd, void*p)
 {
-	EndDialog(hwnd, -1);
+	EndDialog(hwnd, -2);
 	return 0;
 }
 

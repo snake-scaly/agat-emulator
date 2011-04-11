@@ -28,7 +28,7 @@ WORD get_keyb_language()
 
 int is_keyb_english(struct SYS_RUN_STATE*sr)
 {
-	return get_keyb_language() != LANG_RUSSIAN;
+	return get_keyb_language() == LANG_ENGLISH;
 }
 
 void update_alt_state(struct SYS_RUN_STATE*sr)
@@ -477,6 +477,19 @@ int cancel_input_file(struct SYS_RUN_STATE*sr)
 
 static byte translate_capslock(struct SYS_RUN_STATE*sr, byte k)
 {
+	if (sr->config->systype == SYSTEM_8A) {
+		int sh = sr->caps_lock;
+		k |= 0x80;
+		if (is_keyb_english(sr)) {
+			if (k >= 0xE0 && k < 0xFF) { k -= 0x20; }
+			else sh = !sh;
+		} else {
+			if (k >= 0xC0 && k < 0xE0) { k += 0x20; sh = !sh; }
+		}
+		if (!sh) k |= 0x80;
+		else if (k >= 0xC0) k &= 0x7F;
+		return k;
+	}
 	if (sr->caps_lock || sr->cursystype != SYSTEM_E) return k;
 	if ((k >> 5) == 2) k |= 0x20;
 	else if ((k >> 5) == 3) k &= ~0x20;
@@ -699,9 +712,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			break;
 		case VK_PAUSE:
-			system_command(sr, SYS_COMMAND_STOP, 0, 0);
-			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
-			system_command(sr, SYS_COMMAND_START, 0, 0);
+/*			if (GetKeyState(VK_CONTROL)&0x8000) {
+				system_command(sr, SYS_COMMAND_RESET, 0, 0);
+			} else*/ {
+				system_command(sr, SYS_COMMAND_STOP, 0, 0);
+				system_command(sr, SYS_COMMAND_HRESET, 0, 0);
+				system_command(sr, SYS_COMMAND_START, 0, 0);
+			}
 			break;
 		}
 	case WM_KEYDOWN:
@@ -713,7 +730,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 #else
 			d=decode_key(wp, &sr->keymap, !is_keyb_english(sr));
 #endif
-			if (d != -1) d = translate_capslock(sr, d);
+			if (d && d != -1) d = translate_capslock(sr, d);
 
 		switch (wp) {
 		case VK_CAPITAL:
@@ -747,7 +764,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 //			printf("d=%x\n",d);
 			if (d) {
-				sr->cur_key=d|0x80;
+				sr->input_hbit = d>>7;
+				sr->cur_key = d | 0x80;
 				sr->key_down = wp;
 #ifndef SYNC_SCREEN_UPDATE
 				InvalidateRect(w,NULL,FALSE);
@@ -755,6 +773,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			}
 			if (d==-1) {
 				sr->cur_key = 0;
+				system_command(sr, SYS_COMMAND_RESET, 0, 0);
 				if (GetKeyState(VK_MENU)&0x8000) {
 					system_command(sr, SYS_COMMAND_STOP, 0, 0);
 					system_command(sr, SYS_COMMAND_HRESET, 0, 0);

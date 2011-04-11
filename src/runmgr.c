@@ -171,6 +171,15 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 
 	set_run_state_ptr(sr->name, sr);
 
+	for (i = 0; i < NCONFTYPES; i++ ) {
+		sr->slots[i].sc = c->slots + i;
+		sr->slots[i].sr = sr;
+		if (i <= CONF_SLOT7) {
+			sr->slots[i].baseio_sel = sr->baseio_sel + i + 8;
+			sr->slots[i].io_sel = sr->io_sel + i;
+		}
+	}
+
 	_RMSG("init_system");
 	switch (sr->cursystype) {
 	case SYSTEM_1:
@@ -203,12 +212,6 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	_RMSG("video title set");
 
 	for (i = 0; i < NCONFTYPES; i++ ) {
-		sr->slots[i].sc = c->slots + i;
-		sr->slots[i].sr = sr;
-		if (i <= CONF_SLOT7) {
-			sr->slots[i].baseio_sel = sr->baseio_sel + i + 8;
-			sr->slots[i].io_sel = sr->io_sel + i;
-		}
 		_RMSG("calling init_slot_state");
 		r = init_slot_state(sr, sr->slots + i, c->slots + i);
 		if (r < 0) {
@@ -312,6 +315,8 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 		if (sr->sys.restart_system)
 			sr->sys.restart_system(sr);
 		update_xio_status(sr);
+		system_command(sr, SYS_COMMAND_PSROM_RELEASE, 8, 0);
+		system_command(sr, SYS_COMMAND_XRAM_RELEASE, 8, 0);
 		break;
 	case SYS_COMMAND_ACTIVATE:
 		ShowWindow(sr->video_w, SW_SHOWNORMAL);

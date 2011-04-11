@@ -70,8 +70,8 @@ IDI_DISK                ICON    DISCARDABLE     "bmps\\diskette.ico"
 // WAVE
 //
 
-SHUGART.WAV          WAVE    MOVEABLE PURE   "shugart.wav"
-TEAC.WAV             WAVE    MOVEABLE PURE   "teac.wav"
+SHUGART.WAV             WAVE    MOVEABLE PURE   "shugart.wav"
+TEAC.WAV                WAVE    MOVEABLE PURE   "teac.wav"
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -457,6 +457,39 @@ BEGIN
     LTEXT           "Размер (МБ):",IDC_STATIC,120,92,44,8
 END
 
+IDD_FIRMWARE DIALOG DISCARDABLE  0, 0, 227, 95
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Плата Firmware Card"
+FONT 9, "Tahoma"
+BEGIN
+    EDITTEXT        IDC_FW_NAME,98,7,101,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSE_FW,205,7,15,12
+    CONTROL         "При включении карта активирована",IDC_ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,27,141,10
+    CONTROL         "Поддержка ""F8 mod""",IDC_F8MOD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,42,88,10
+    CONTROL         "При включении ПЗУ F8 активировано",IDC_F8ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,57,145,10
+    DEFPUSHBUTTON   "OK",IDOK,48,74,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,129,74,50,14
+    LTEXT           "Имя образа PROM: ",IDC_STATIC,7,10,67,8
+END
+
+IDD_TTYA1 DIALOG DISCARDABLE  0, 0, 187, 84
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка терминала"
+FONT 9, "Tahoma"
+BEGIN
+    CONTROL         "Slider1",IDC_TTYSPEED,"msctls_trackbar32",TBS_AUTOTICKS | 
+                    TBS_TOP | WS_TABSTOP,7,20,141,20
+    CONTROL         "Команда очистки экрана",IDC_TTYCLEAR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,46,101,10
+    DEFPUSHBUTTON   "OK",IDOK,33,63,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,105,63,50,14
+    LTEXT           "Скорость терминала:",IDC_STATIC,7,7,75,8
+    RTEXT           "%",11,150,25,30,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -606,6 +639,22 @@ BEGIN
         HORZGUIDE, 48
         HORZGUIDE, 90
     END
+
+    IDD_FIRMWARE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_TTYA1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 77
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -734,7 +783,7 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     9100                    "&Сброс\tCtrl+Break"
-    9101                    "&Полный сброс\tAlt+Break"
+    9101                    "&Полный сброс\tCtrl+Alt+Break"
     9102                    "IRQ"
     9103                    "NMI"
 END
@@ -762,6 +811,13 @@ END
 STRINGTABLE DISCARDABLE 
 BEGIN
     9300                    "Копирование в буфер обмена\tF7"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    9400                    "Скорость терминала %i%%"
+    9401                    "; Очистка экрана"
+    9402                    "Скорость терминала не ограничена"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -918,6 +974,7 @@ BEGIN
     12136                   "Плата CMS SCSI"
     12137                   "Плата знакогенератора"
     12138                   "Плата Apple Firmware Card"
+    12139                   "Терминал Apple I"
 END
 
 STRINGTABLE DISCARDABLE 

@@ -88,6 +88,7 @@ enum {
 	DEV_CHARGEN2,
 
 	DEV_FIRMWARE, // firmware card for apple2
+	DEV_TTYA1, // terminal for Apple I
 	
 	NDEVTYPES
 };
@@ -236,7 +237,12 @@ enum {
 	CFG_INT_ROM_SIZE,
 	CFG_INT_ROM_MASK,
 	CFG_INT_ROM_OFS,
+	CFG_INT_ROM_FLAGS,
 };
+
+#define CFG_INT_ROM_FLAG_ACTIVE		1
+#define CFG_INT_ROM_FLAG_F8ACTIVE	2
+#define CFG_INT_ROM_FLAG_F8MOD		0x20
 
 enum {
 	CFG_INT_TAPE_FREQ,
@@ -262,6 +268,12 @@ enum {
 	CFG_INT_MOUSE_TYPE,
 };
 
+enum {
+	CFG_INT_TTY_SPEED,
+	CFG_INT_TTY_FLAGS,
+};
+
+#define CFG_INT_TTY_FLAG_CLEAR		1 // enable "clear screen" command emulation
 
 enum {
 	CFG_INT_SCSI_NO1 = 3, // device number of drive #1

@@ -7,12 +7,21 @@
 
 #define TERM_WAIT 2000
 
+struct APPLE1_DATA_SAVE
+{
+	int dsp_cr, kbd_cr;
+	int remains;
+	int pos[2];
+	int lsz;
+};
+
 struct APPLE1_DATA
 {
 	int dsp_cr, kbd_cr;
 	int remains;
 	int pos[2];
 	int lsz;
+	int tty_speed, tty_flags;
 };
 
 static int free_system_1(struct SYS_RUN_STATE*sr);
@@ -112,7 +121,8 @@ static void video_write(byte data, struct SYS_RUN_STATE*sr)
 	case 0xFF: // right
 		break;
 	case 0x8C: // ctrl+L, extension
-		video_clear(sr);
+		if (a1->tty_flags & CFG_INT_TTY_FLAG_CLEAR)
+			video_clear(sr);
 		break;
 	case 0x8A:
 	case 0x8D:
@@ -151,7 +161,7 @@ static void dsp_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d012
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->dsp_cr |= 0x80;
-	a1->remains = TERM_WAIT;
+	if (a1->tty_speed != 500) a1->remains = TERM_WAIT * 100 / a1->tty_speed;
 //	printf("video_write: %X: lsz = %i\n", data, a1->lsz);
 //	if (data & 0x80) 
 	video_write(data | 0x80, sr);
@@ -161,7 +171,7 @@ static void dspcr_write(word adr, byte data, struct SYS_RUN_STATE*sr) // d013
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	a1->dsp_cr = data;
-	a1->remains = TERM_WAIT;
+	if (a1->tty_speed != 500) a1->remains = TERM_WAIT * 100 / a1->tty_speed;
 }
 
 static byte kbd_read(word adr, struct SYS_RUN_STATE*sr) // d010
@@ -242,8 +252,13 @@ static byte d000_read(word adr, struct SYS_RUN_STATE*sr) // d000-d7ff
 int init_system_1(struct SYS_RUN_STATE*sr)
 {
 	struct APPLE1_DATA*p;
+	struct SLOTCONFIG*sc = sr->config->slots + CONF_MONITOR;
 	p = calloc(1, sizeof(*p));
 	if (!p) return -1;
+
+	p->tty_speed = sc->cfgint[CFG_INT_TTY_SPEED];
+	if (!p->tty_speed) p->tty_speed = 100;
+	p->tty_flags = sc->cfgint[CFG_INT_TTY_FLAGS];
 
 	sr->sys.ptr = p;
 	sr->sys.free_system = free_system_1;
@@ -285,9 +300,10 @@ static int restart_system_1(struct SYS_RUN_STATE*sr)
 static int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out)
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
+	struct APPLE1_DATA_SAVE*a1s = (void*)a1;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
-	oswrite(out, a1, sizeof(*a1));
+	oswrite(out, a1s, sizeof(*a1s));
 	oswrite(out, bmp_bits, bmp_pitch * 24 * CHAR_H);
 	puts("save_system_1");
 //	printf("pos: %i %i\n", a1->pos[0], a1->pos[1]);
@@ -297,9 +313,11 @@ static int save_system_1(struct SYS_RUN_STATE*sr, OSTREAM*out)
 static int load_system_1(struct SYS_RUN_STATE*sr, ISTREAM*in)
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
+	struct APPLE1_DATA_SAVE a1s;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
-	isread(in, a1, sizeof(*a1));
+	isread(in, &a1s, sizeof(a1s));
+	memcpy(a1, &a1s, sizeof(a1s));
 	isread(in, bmp_bits, bmp_pitch * 24 * CHAR_H);
 	puts("load_system_1");
 //	printf("pos: %i %i\n", a1->pos[0], a1->pos[1]);

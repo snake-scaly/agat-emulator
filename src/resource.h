@@ -39,7 +39,9 @@
 #define IDB_UNKNOWN                     123
 #define IDD_SCSIDLG                     124
 #define IDB_PRAVETZ8A                   125
+#define IDD_FIRMWARE                    125
 #define IDB_PRAVETZ8A_LOGO              126
+#define IDD_TTYA1                       126
 #define IDB_PRAVETZ82                   127
 #define IDB_PRAVETZ82_LOGO              128
 #define IDC_NEW                         200
@@ -57,6 +59,7 @@
 #define IDC_CPUFREQ                     1006
 #define IDC_UNDOC                       1007
 #define IDC_NONE                        1008
+#define IDC_F8MOD                       1008
 #define IDC_MOUSE                       1009
 #define IDC_JOYSTICK                    1010
 #define IDC_FREQ                        1011
@@ -118,8 +121,12 @@
 #define IDC_DEVSEL1                     1061
 #define IDC_DEVSEL2                     1062
 #define IDC_SIZE1                       1063
+#define IDC_ACTIVE                      1063
 #define IDC_SIZE2                       1064
+#define IDC_F8ACTIVE                    1064
+#define IDC_TTYSPEED                    1064
 #define IDC_SIZE3                       1065
+#define IDC_TTYCLEAR                    1065
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -129,7 +136,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1063
+#define _APS_NEXT_CONTROL_VALUE         1066
 #define _APS_NEXT_SYMED_VALUE           102
 #endif
 #endif
