@@ -66,7 +66,7 @@ struct SYS_RUN_STATE
 
 	ISTREAM*input_data;
 	int input_recode;
-	int input_size, input_pos;
+	int input_size, input_pos, input_cntr;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

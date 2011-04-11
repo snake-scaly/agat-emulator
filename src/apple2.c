@@ -94,10 +94,13 @@ void keyb_clear_w(word adr, byte d, struct SYS_RUN_STATE*sr)	// C010-C01F
 
 //////////////////////////////////////////////////////////////
 
-
 byte keyb_preview(word adr, struct SYS_RUN_STATE*sr)
 {
-	if (sr->input_data) return 1;
+	if (sr->input_data) {
+		if (!sr->input_cntr) return 1;
+		--sr->input_cntr;
+		return 0;
+	}
 	return sr->cur_key>>7;
 }
 
@@ -106,9 +109,8 @@ byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 	if (sr->input_data && sr->input_size && ! sr->cur_key) {
 		byte ch;
 		int n;
-		static int cntr = 10;
-		if (cntr) { -- cntr; goto ret; }
-		cntr = 10;
+		if (sr->input_cntr) { -- sr->input_cntr; goto ret; }
+		sr->input_cntr = 10;
 		n = isread(sr->input_data, &ch, 1);
 //		printf("isread = %i, ch = %x: pos = %i, size = %i\n", n, ch, sr->input_pos, sr->input_size);
 		if (n != 1) {
@@ -122,8 +124,10 @@ byte keyb_read(word adr, struct SYS_RUN_STATE*sr)	// C000-C00F
 				case 0x8A: ch = 0x8d; break;
 				}
 			}
-			sr->input_hbit = ch >> 7;
-			sr->cur_key = ch | 0x80;
+			if (ch) {
+				sr->input_hbit = ch >> 7;
+				sr->cur_key = ch | 0x80;
+			}
 			if (sr->input_pos == sr->input_size) {
 				cancel_input_file(sr);
 			} else {

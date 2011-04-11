@@ -462,6 +462,7 @@ int on_input_file(HWND w, struct SYS_RUN_STATE*sr)
 	sr->input_size = istell(in);
 	isseek(in, 0, SSEEK_SET);
 	sr->input_data = in;
+	sr->input_cntr = 0;
 	return 0;
 }
 
@@ -715,6 +716,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 /*			if (GetKeyState(VK_CONTROL)&0x8000) {
 				system_command(sr, SYS_COMMAND_RESET, 0, 0);
 			} else*/ {
+				cancel_input_file(sr);
 				system_command(sr, SYS_COMMAND_STOP, 0, 0);
 				system_command(sr, SYS_COMMAND_HRESET, 0, 0);
 				system_command(sr, SYS_COMMAND_START, 0, 0);
@@ -775,10 +777,12 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				sr->cur_key = 0;
 				system_command(sr, SYS_COMMAND_RESET, 0, 0);
 				if (GetKeyState(VK_MENU)&0x8000) {
+					cancel_input_file(sr);
 					system_command(sr, SYS_COMMAND_STOP, 0, 0);
 					system_command(sr, SYS_COMMAND_HRESET, 0, 0);
 					system_command(sr, SYS_COMMAND_START, 0, 0);
 				} else {
+					cancel_input_file(sr);
 					system_command(sr, SYS_COMMAND_RESET, 0, 0);
 				}
 			}
@@ -848,6 +852,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_COMMAND: case WM_SYSCOMMAND:
 		switch (LOWORD(wp)) {
 		case IDC_RESET:
+			cancel_input_file(sr);
 			system_command(sr, SYS_COMMAND_RESET, 0, 0);
 			break;
 		case IDC_IRQ:
@@ -857,6 +862,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			system_command(sr, SYS_COMMAND_NMI, 0, 0);
 			break;
 		case IDC_HRESET:
+			cancel_input_file(sr);
 			system_command(sr, SYS_COMMAND_STOP, 0, 0);
 			system_command(sr, SYS_COMMAND_HRESET, 0, 0);
 			system_command(sr, SYS_COMMAND_START, 0, 0);
