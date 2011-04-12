@@ -75,4 +75,9 @@ int cpu_pause(struct CPU_STATE*st, int p);
 int cpu_step(struct CPU_STATE*st, int ncmd);
 int cpu_cmd(struct CPU_STATE*cs, int cmd, int data, long param);
 
+int init_cpu_6502(struct CPU_STATE*cs);
+int init_cpu_65c02(struct CPU_STATE*cs);
+int init_cpu_M6502(struct CPU_STATE*cs);
+
+
 #endif //CPUINT_H

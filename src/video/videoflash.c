@@ -1,5 +1,7 @@
 #include "videoint.h"
 
+extern void flash_system_1(struct SYS_RUN_STATE*sr);
+
 void video_flash_text(struct VIDEO_STATE*vs)
 {
 	int x, y;

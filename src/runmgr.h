@@ -77,4 +77,13 @@ int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en);
 
 byte system_read_rom(word adr,struct SYS_RUN_STATE*sr);
 
+int cpu_get_tsc(struct SYS_RUN_STATE*sr);
+int cpu_get_freq(struct SYS_RUN_STATE*sr);
+int cpu_get_fast(struct SYS_RUN_STATE*sr);
+
+void disable_ints(struct SYS_RUN_STATE*sr);
+void enable_ints(struct SYS_RUN_STATE*sr);
+byte baseram_read_ext_state(word adr, struct SYS_RUN_STATE*sr);
+
+
 #endif //RUNMGR_H

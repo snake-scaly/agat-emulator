@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include "common.h"
 #include "types.h"
 #include "memory.h"
 #include "streams.h"

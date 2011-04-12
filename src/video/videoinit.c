@@ -1,4 +1,5 @@
 #include "videoint.h"
+#include "common.h"
 
 static int load_font_res(int no, void*buf, int sz)
 {
@@ -378,4 +379,22 @@ int video_select_80col(struct SYS_RUN_STATE*sr, int set)
 	update_video_ap(vs);
 	video_update_mode(vs);
 	return 0;
+}
+
+void video_mem_access(struct SYS_RUN_STATE*sr)
+{
+#ifndef SYNC_SCREEN_UPDATES
+	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
+	struct VIDEO_STATE*vs = st->data;
+	++ vs->mem_access;
+	++ vs->tot_access;
+	if (vs->mem_access > MEM_ACCESS_LIMIT || vs->tot_access > VIDEO_UPDATE_LIMIT) {
+		vs->mem_access = 0;
+		vs->tot_access = 0;
+		if (vs->inv_area.left < vs->inv_area.right) {
+			invalidate_video_window(vs->sr, &vs->inv_area);
+			vs->inv_area.left = vs->inv_area.right = vs->inv_area.top = vs->inv_area.bottom = 0;
+		}
+	}
+#endif
 }

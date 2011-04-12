@@ -1,4 +1,5 @@
 #include "videoint.h"
+#include "common.h"
 
 #define VIDEOTERM_ROM_SIZE 1024
 #define VIDEOTERM_ROM_OFFSET 0x300

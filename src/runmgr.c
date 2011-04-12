@@ -423,6 +423,7 @@ byte mem_read(word adr, struct SYS_RUN_STATE*sr)
 	int ind=adr>>0x0B;
 	byte r;
 	r = mem_proc_read(adr, sr->base_mem + ind);
+	video_mem_access(sr);
 //	printf("mem_read(%04X) = %02X\n", adr, r);
 	return r;
 }

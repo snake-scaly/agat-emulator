@@ -39,4 +39,6 @@ void video_switch_block_pages(struct VIDEO_STATE*vs, int rbi)
 	}
 //	printf("upd = %i; inv = {%i,%i,%i,%i}\n", upd, inv.left, inv.top, inv.right, inv.bottom);
 	if (upd) invalidate_video_window(vs->sr, &inv);
+	vs->mem_access = 0;
+	vs->tot_access = 0;
 }

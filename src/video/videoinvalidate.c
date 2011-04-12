@@ -13,6 +13,7 @@ static void vid_invalidate_addr_comb(struct VIDEO_STATE*vs, dword adr)
 		invalidate_video_window(vs->sr, &r);
 #else
 		UnionRect(&vs->inv_area,&vs->inv_area,&r);
+		vs->mem_access = 0;
 #endif //SYNC_SCREEN_UPDATE
 	}
 }
@@ -47,6 +48,7 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 			}
 		}
 	}
+	vs->mem_access = 0;
 	if (vs->video_mode==VIDEO_MODE_APPLE)
 		vid_invalidate_addr_comb(vs, sadr);
 }

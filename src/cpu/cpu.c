@@ -1,4 +1,5 @@
 #include "cpuint.h"
+#include "common.h"
 
 #include "localize.h"
 

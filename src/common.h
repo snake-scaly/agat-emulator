@@ -11,3 +11,4 @@ unsigned get_n_msec();
 const char*sys_get_parameter(const char*name);
 
 int load_buf_res(int no, void*buf, int len);
+

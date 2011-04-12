@@ -86,6 +86,9 @@ struct VTERM_INFO
 
 #define MAX_N_FONTS 2
 
+#define MEM_ACCESS_LIMIT	300  // cycles
+#define VIDEO_UPDATE_LIMIT	5000 // cycles
+
 struct VIDEO_STATE
 {
 	struct SYS_RUN_STATE*sr;
@@ -96,6 +99,9 @@ struct VIDEO_STATE
 	int rb_enabled;
 
 	RECT inv_area;
+	int  mem_access;
+	int  tot_access;
+
 	byte font[MAX_N_FONTS][256][8];
 	int  cur_font;
 	int  num_fonts;
@@ -117,6 +123,12 @@ __inline struct VIDEO_STATE*get_video_state(struct SYS_RUN_STATE*sr)
 {
 	return sr->slots[CONF_CHARSET].data;
 }
+
+void video_mem_access(struct SYS_RUN_STATE*sr);
+
+void video_flash_text(struct VIDEO_STATE*vs);
+
+int video_init_rb(struct VIDEO_STATE*vs);
 
 void video_set_mode(struct VIDEO_STATE*vs, int md);
 void video_update_mode(struct VIDEO_STATE*vs);
@@ -146,5 +158,8 @@ void video_update_rb(struct VIDEO_STATE*vs, int rbi);
 void video_timer(struct VIDEO_STATE*vs, int t);
 
 void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r);
+
+void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r);
+
 
 #endif //VIDEOINT_H
