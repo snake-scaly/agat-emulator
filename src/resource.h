@@ -141,8 +141,8 @@
 #define IDC_FULLSCREEN_DEFAULT          1068
 #define IDC_SHUGART_SOUNDS              1069
 #define IDC_TEAC_SOUNDS                 1070
-#define IDC_DEBUG_ILLEGAL_CMDS2         1071
 #define IDC_SYNC_UPDATE                 1071
+#define IDC_DEBUG_NEW_CMDS              1072
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

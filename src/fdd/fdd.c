@@ -617,7 +617,8 @@ static void make_step(struct FDD_DATA*data,byte _b)
 	if (!drv->present) { // no step
 		return;
 	}	
-	sound_phase();
+	if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+		sound_phase();
 	if (data->state.rk&4) {
 		if (drv->prolog[FDD_PROLOG_TRACK]<FDD_TRACK_COUNT-2) {
 			drv->prolog[FDD_PROLOG_TRACK]+=2;

@@ -383,9 +383,9 @@ int video_select_80col(struct SYS_RUN_STATE*sr, int set)
 
 void video_mem_access(struct SYS_RUN_STATE*sr)
 {
-#ifndef SYNC_SCREEN_UPDATES
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;
 	struct VIDEO_STATE*vs = st->data;
+	if (sr->sync_update) return;
 	++ vs->mem_access;
 	++ vs->tot_access;
 	if (vs->mem_access > MEM_ACCESS_LIMIT || vs->tot_access > VIDEO_UPDATE_LIMIT) {
@@ -396,5 +396,4 @@ void video_mem_access(struct SYS_RUN_STATE*sr)
 			vs->inv_area.left = vs->inv_area.right = vs->inv_area.top = vs->inv_area.bottom = 0;
 		}
 	}
-#endif
 }

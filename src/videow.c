@@ -153,7 +153,10 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 	DWORD s=WS_VISIBLE|WS_OVERLAPPED|WS_SYSMENU|WS_DLGFRAME|WS_MINIMIZEBOX|WS_CAPTION|WS_MAXIMIZEBOX;
 	DWORD sex=0;
 #endif
+
 	RECT r={0,0,sr->v_size.cx,sr->v_size.cy};
+	sr->pause_inactive = !(sr->gconfig->flags & EMUL_FLAGS_BACKGROUND_ACTIVE);
+	sr->sync_update = (sr->gconfig->flags & EMUL_FLAGS_SYNC_UPDATE) != 0;
 	AdjustWindowRectEx(&r,s,FALSE,0);
 	puts("cr_thread");
 	sr->video_w=CreateWindowEx(sex,(LPCTSTR)sr->video_at,get_system_name(sr),s,
@@ -205,6 +208,8 @@ void toggle_debugger(struct SYS_RUN_STATE*sr)
 {
 	TCHAR lbuf[1024];
 	MENUITEMINFO inf;
+
+	if (!(sr->gconfig->flags & EMUL_FLAGS_ENABLE_DEBUGGER)) return;
 
 	puts("toggle debugger");
 	if (sr->debug_ptr) debug_detach(sr);
@@ -663,9 +668,11 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			AppendMenu(m,MF_STRING,IDC_COPY,
 				localize_str(LOC_VIDEO, 300, lbuf, sizeof(lbuf))); //TEXT("Копирование в буфер обмена\tF7"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
+		if (sr->gconfig->flags & EMUL_FLAGS_ENABLE_DEBUGGER) {
 			AppendMenu(m,MF_STRING,IDC_DEBUGGER,
 				localize_str(LOC_VIDEO, 500, lbuf, sizeof(lbuf))); //TEXT("Запустить отладчик\tF8"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
+		}
 #ifdef UNDER_CE
 			AppendMenu(m,MF_SEPARATOR,0,0);
 			AppendMenu(m,MF_STRING,IDCLOSE,
@@ -738,11 +745,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			free_config(c);
 		}	
 		break;
+	case WM_MOUSEACTIVATE:
+		if (LOWORD(lp) == HTCLIENT && sr->mouselock) lock_mouse(sr);
+		break;
 	case WM_ACTIVATE:
 		check_capslock(w, sr);
 		switch (wp) {
 		case WA_CLICKACTIVE:
-			if (sr->mouselock) lock_mouse(sr);
 			break;
 		case WA_INACTIVE:
 			unlock_mouse(sr);
@@ -843,9 +852,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				sr->input_hbit = d>>7;
 				sr->cur_key = d | 0x80;
 				sr->key_down = wp;
-#ifndef SYNC_SCREEN_UPDATE
-				InvalidateRect(w,NULL,FALSE);
-#endif
+				if (!sr->sync_update) {
+					InvalidateRect(w,NULL,FALSE);
+				}
 			}
 			if (d==-1) {
 				sr->cur_key = 0;

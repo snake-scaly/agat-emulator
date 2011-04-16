@@ -9,12 +9,12 @@ static void vid_invalidate_addr_comb(struct VIDEO_STATE*vs, dword adr)
 	{
 		RECT r;
 		apaint_t40_addr_mix(vs, adr, &r);
-#ifdef SYNC_SCREEN_UPDATE
-		invalidate_video_window(vs->sr, &r);
-#else
-		UnionRect(&vs->inv_area,&vs->inv_area,&r);
-		vs->mem_access = 0;
-#endif //SYNC_SCREEN_UPDATE
+		if (!vs->sr->sync_update) {
+			invalidate_video_window(vs->sr, &r);
+		} else {
+			UnionRect(&vs->inv_area,&vs->inv_area,&r);
+			vs->mem_access = 0;
+		}
 	}
 }
 
@@ -39,11 +39,11 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 				} else {
 //					printf("paint_addr[%i]: %x\n", rb->vtype, adr);
 					paint_addr[rb->vtype](vs, adr, &r);
-#ifdef SYNC_SCREEN_UPDATE
-					invalidate_video_window(sr, &r);
-#else
-					UnionRect(&vs->inv_area, &vs->inv_area, &r);
-#endif //SYNC_SCREEN_UPDATE
+					if (sr->sync_update) {
+						invalidate_video_window(sr, &r);
+					} else {
+						UnionRect(&vs->inv_area, &vs->inv_area, &r);
+					}
 				}
 			}
 		}

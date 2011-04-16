@@ -5,6 +5,7 @@
 
 #include "debugint.h"
 #include "resource.h"
+#include "common.h"
 #include <stdlib.h>
 
 #define CMD_ILL		1
@@ -27,9 +28,9 @@
 #define CMD_LEN_IND	2
 
 #define MAKE_COMMAND(cmd,addr,ticks) { #cmd, ea_show_##addr, CMD_LEN_##addr, 0}
-#define MAKE_COMMAND_ILL(cmd,addr,ticks) { "/"#cmd, ea_show_##addr, CMD_LEN_##addr, CMD_ILL}
+#define MAKE_COMMAND_ILL(cmd,addr,ticks) { #cmd, ea_show_##addr, CMD_LEN_##addr, CMD_ILL}
 #define MAKE_COMMAND_ILLX() { "???", ea_noshow, 0, CMD_ILL}
-#define MAKE_COMMAND_NEW(cmd,addr,ticks) { #cmd"*", ea_show_##addr, CMD_LEN_##addr, CMD_NEW}
+#define MAKE_COMMAND_NEW(cmd,addr,ticks) { #cmd, ea_show_##addr, CMD_LEN_##addr, CMD_NEW}
 
 struct CMD_6502
 {
@@ -699,15 +700,25 @@ void sysmon_l(struct DEBUG_INFO*inf)
 
 	for (;n; --n) {
 		byte cmd;
+		const char*cmdname;
+		int cmdlen;
 		cmd = mem_read(adr, inf->sr);
 		console_printf(inf->con, "\n%04X-   %02X", adr++, cmd);
-		for (i = 0; i < cmds[cmd].len; ++i) {
+		if (((cmds[cmd].flags & CMD_NEW) && !(inf->sr->gconfig->flags & EMUL_FLAGS_DEBUG_NEW_CMDS)) ||
+			((cmds[cmd].flags & CMD_ILL) && !(inf->sr->gconfig->flags & EMUL_FLAGS_DEBUG_ILLEGAL_CMDS))) {
+			cmdlen = 0;
+			cmdname = "???";
+		} else {
+			cmdlen = cmds[cmd].len;
+			cmdname = cmds[cmd].cmd_name;
+		}
+		for (i = 0; i < cmdlen; ++i) {
 			console_printf(inf->con, " %02X", mem_read(adr + i, inf->sr));
 		}
 		for (; i < 4; ++i)  console_printf(inf->con, "   ");
-		console_printf(inf->con, " %-6s", cmds[cmd].cmd_name);
-		cmds[cmd].printadr(inf, adr);
-		adr += cmds[cmd].len;
+		console_printf(inf->con, " %-6s", cmdname);
+		if (cmdlen) cmds[cmd].printadr(inf, adr);
+		adr += cmdlen;
 	}
 	inf->sst.raddr = adr;
 }

@@ -852,7 +852,10 @@ static void fdd_select_phase(struct FDD_DATA*data, int p, int en)
 	if (!en) return;
 	if (data->state.CurrentPhase==p) return;
 	if (((d->Phase+1)&3)==p) {
-		if (d->Phase&1) sound_phase();
+		if (d->Phase&1) {
+			if (data->st->sr->gconfig->flags & EMUL_FLAGS_SHUGART_SOUNDS)
+				sound_phase();
+		}
 		if (d->Phase<110) {
 			d->Phase++;
 			if (d->Track!=d->Phase/2) {
@@ -863,7 +866,10 @@ static void fdd_select_phase(struct FDD_DATA*data, int p, int en)
 		}
 	}
 	if (((d->Phase-1)&3)==p) {
-		if (d->Phase&1) sound_phase();
+		if (d->Phase&1) {
+			if (data->st->sr->gconfig->flags & EMUL_FLAGS_SHUGART_SOUNDS)
+				sound_phase();
+		}
 		if (d->Phase>0) {
 			d->Phase--;
 			if (d->Track!=d->Phase/2) {

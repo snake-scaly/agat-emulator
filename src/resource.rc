@@ -509,7 +509,7 @@ BEGIN
     LTEXT           "Имя образа PROM: ",IDC_STATIC,7,10,67,8
 END
 
-IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 137
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 150
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка эмулятора"
 FONT 9, "Tahoma"
@@ -528,10 +528,13 @@ BEGIN
     CONTROL         "Отображать в отладчике недокументированные команды процессора",
                     IDC_DEBUG_ILLEGAL_CMDS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,82,258,10
-    DEFPUSHBUTTON   "OK",IDOK,73,116,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,154,116,50,14
+    CONTROL         "Отображать в отладчике расширенные команды процессора",
+                    IDC_DEBUG_NEW_CMDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,97,227,10
     CONTROL         "Синхронное обновление экрана",IDC_SYNC_UPDATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,98,125,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
+    DEFPUSHBUTTON   "OK",IDOK,73,129,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,154,129,50,14
 END
 
 
@@ -713,7 +716,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 271
         TOPMARGIN, 7
-        BOTTOMMARGIN, 130
+        BOTTOMMARGIN, 143
     END
 END
 #endif    // APSTUDIO_INVOKED

@@ -70,6 +70,7 @@ struct SYS_RUN_STATE
 
 	void*debug_ptr;
 	struct GLOBAL_CONFIG * gconfig;
+	int sync_update;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

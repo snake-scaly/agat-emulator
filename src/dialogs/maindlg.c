@@ -267,6 +267,7 @@ static int run_config(HWND hwnd, LPCTSTR fname)
 	}
 	{
 		const char*fs = sys_get_parameter("fs");
+		if (!fs && (g_config.flags & EMUL_FLAGS_FULLSCREEN_DEFAULT)) fs = "1";
 		if (fs) set_fullscreen(sr, atoi(fs));
 	}
 	if (use_save) {
