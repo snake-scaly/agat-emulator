@@ -1,3 +1,9 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
+
 #include "console.h"
 #include <windows.h>
 #ifndef UNDER_CE
@@ -7,10 +13,12 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "resource.h"
+
 #define CONSOLE_DEF_FONT TEXT("")
 #define CONSOLE_QUEUE_LENGTH 16
 
-#define CONSOLE_DEFAULT_FLAGS (CONFL_CRLF|CONFL_ECHO|CONFL_KILL|CONFL_CONFIRM)
+#define CONSOLE_DEFAULT_FLAGS (CONFL_CRLF|CONFL_ECHO)//|CONFL_KILL|CONFL_CONFIRM)
 
 #define CONSOLE_WINDOW_CLASS TEXT("Console")
 
@@ -181,9 +189,12 @@ static int console_read_char(CONSOLE*con)
 {
 	int r;
 	if (console_eof(con)) return -1;
-//	printf("read %i write %i\n",con->read_pos,con->write_pos);
+//	printf("read_char: read %i write %i\n",con->read_pos,con->write_pos);
 	if (con->read_pos==con->write_pos) {
 		WaitForSingleObject(con->read_sem,INFINITE);
+/*		if (con->read_pos==con->write_pos) {
+			printf("read_char!!: read %i write %i\n",con->read_pos,con->write_pos);
+		}*/
 		if (console_eof(con)) return -1;
 	}
 	WaitForSingleObject(con->access_sem,INFINITE);
@@ -252,14 +263,17 @@ int console_set_title(CONSOLE*con,con_char_t*buf)
 static DWORD WINAPI thread_proc(CONSOLE*con)
 {
 	WNDCLASS cl;
-	DWORD st=WS_BORDER|WS_CAPTION|WS_OVERLAPPED|WS_SYSMENU, 
+	DWORD st=WS_BORDER|WS_CAPTION|WS_OVERLAPPED, 
 		st_ex=0;
 	RECT r;
 	MSG msg;
 	memset(&cl,0,sizeof(cl));
+	if (con->flags & CONFL_KILL) st |= WS_SYSMENU;
 	cl.style=CS_HREDRAW|CS_VREDRAW;
 	cl.lpfnWndProc=wnd_proc;
 	cl.lpszClassName=CONSOLE_WINDOW_CLASS;
+	cl.hCursor = LoadCursor(NULL, IDC_ARROW);
+	cl.hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAIN));
 	RegisterClass(&cl);
 	r.left=0;
 	r.top=0;
@@ -491,6 +505,7 @@ static void on_char(CONSOLE*con,con_char_t c)
 {
 	int np;
 	WaitForSingleObject(con->access_sem,INFINITE);
+//	printf("on_char: read %i write %i\n",con->read_pos,con->write_pos);
 	np=con->write_pos+1;
 	if (np==CONSOLE_QUEUE_LENGTH) np=0;
 	if (np==con->read_pos) {
@@ -499,7 +514,10 @@ static void on_char(CONSOLE*con,con_char_t c)
 		return;
 	}
 	con->queue[con->write_pos]=c;
-	if (con->write_pos==con->read_pos) SetEvent(con->read_sem);
+	if (con->write_pos==con->read_pos) {
+//		puts("on_char: set event");
+		SetEvent(con->read_sem);
+	} else ResetEvent(con->read_sem);
 	con->write_pos=np;
 	ReleaseMutex(con->access_sem);
 
@@ -535,7 +553,7 @@ static void console_close(CONSOLE*con)
 		}
 //		TerminateProcess(GetCurrentProcess(),100);
 	}
-	PostQuitMessage(0);
+//	PostQuitMessage(0);
 }
 
 static LRESULT CALLBACK wnd_proc(HWND wnd,UINT msg,WPARAM wp,LPARAM lp)
@@ -654,7 +672,7 @@ int console_eof(CONSOLE*con)
 
 int console_printf(CONSOLE*con,con_char_t*fmt,...)
 {
-	con_char_t buf[MAX_PATH];
+	con_char_t buf[4096];
 	int r;
 	va_list l;
 	va_start(l,fmt);
@@ -665,3 +683,12 @@ int console_printf(CONSOLE*con,con_char_t*fmt,...)
 	return r;
 }
 
+int console_hide(CONSOLE*con,int hid)
+{
+	if (!con) return -1;
+	ShowWindow(con->hcon, hid?SW_HIDE:SW_SHOW);
+	if (!hid) {
+		SetForegroundWindow(con->hcon);
+	}
+	return 0;
+}

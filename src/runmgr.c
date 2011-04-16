@@ -1,8 +1,14 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
 #include "runmgr.h"
 #include "runmgrint.h"
 #include "runstate.h"
 
 #include "localize.h"
+#include "common.h"
 
 #include "resource.h"
 
@@ -166,6 +172,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	sr->config = c;
 	sr->cursystype = sys_types[c->systype]; // translate compatible system type
 	sr->base_w = hmain;
+	sr->gconfig = &g_config;
 
 	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
 

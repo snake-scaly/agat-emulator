@@ -1,13 +1,21 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "common.h"
 #include "debug.h"
 #include "localize.h"
 
 #define INI_NAME ".\\emulator.ini"
+
+struct GLOBAL_CONFIG g_config = { EMUL_FLAGS_DEFAULT };
 
 
 void usleep(int microsec)
@@ -61,6 +69,14 @@ const char*sys_get_parameter(const char*name)
 	return NULL;
 }
 
+BOOL WritePrivateProfileInt(LPCTSTR lpAppName, LPCTSTR lpKeyName, INT iValue, LPCTSTR lpFileName)
+{
+	TCHAR buf[64];
+	wsprintf(buf, TEXT("%i"), iValue);
+	return WritePrivateProfileString(lpAppName, lpKeyName, buf, lpFileName);
+}
+
+
 int main(int argc, const char* argv[])
 {
 	const char*cfgname = NULL;
@@ -84,6 +100,7 @@ int main(int argc, const char* argv[])
 		GetPrivateProfileString(TEXT("Environment"), TEXT("Lang"), TEXT("russian"), lang, 256, TEXT(INI_NAME));
 		localize_set_lang(lang);
 	}
+	g_config.flags = GetPrivateProfileInt(TEXT("Environment"), TEXT("Flags"), EMUL_FLAGS_DEFAULT, TEXT(INI_NAME));
 	debug_init();
 	InitCommonControls();
 	if (cfgname) {
@@ -94,6 +111,7 @@ int main(int argc, const char* argv[])
 	} else {
 		r = maindlg_run(NULL);
 	}
+	WritePrivateProfileInt(TEXT("Environment"), TEXT("Flags"), g_config.flags, TEXT(INI_NAME));
 	debug_term();
 	localize_term();
 	return r;

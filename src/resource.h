@@ -6,6 +6,7 @@
 #define IDD_MAIN                        101
 #define IDC_COPY                        101
 #define IDD_ABOUT                       102
+#define IDC_DEBUGGER                    102
 #define IDD_CONFIG                      103
 #define IDD_MEMORY                      104
 #define IDD_DEVSEL                      105
@@ -46,6 +47,7 @@
 #define IDD_A1ROM                       127
 #define IDD_ROMA1                       127
 #define IDB_PRAVETZ82_LOGO              128
+#define IDD_GCONFIG                     128
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -53,6 +55,7 @@
 #define IDC_ABOUT                       204
 #define IDC_STOP                        205
 #define IDC_CALLHELP                    206
+#define IDC_GCONFIG                     207
 #define IDC_CFGLIST                     1000
 #define IDC_SYSTYPE                     1001
 #define IDC_PERIPHERAL                  1002
@@ -129,9 +132,17 @@
 #define IDC_TTYSPEED                    1064
 #define IDC_SIZE3                       1065
 #define IDC_TTYCLEAR                    1065
+#define IDC_ENABLE_DEBUGGER             1065
 #define IDC_SMALL                       1066
+#define IDC_DEBUG_ILLEGAL_CMDS          1066
 #define IDC_MED                         1067
+#define IDC_BACKGROUND_ACTIVE           1067
 #define IDC_LARGE                       1068
+#define IDC_FULLSCREEN_DEFAULT          1068
+#define IDC_SHUGART_SOUNDS              1069
+#define IDC_TEAC_SOUNDS                 1070
+#define IDC_DEBUG_ILLEGAL_CMDS2         1071
+#define IDC_SYNC_UPDATE                 1071
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -141,7 +152,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        129
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1067
-#define _APS_NEXT_SYMED_VALUE           102
+#define _APS_NEXT_CONTROL_VALUE         1071
+#define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif

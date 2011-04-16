@@ -17,8 +17,8 @@
 static struct RESIZE_DIALOG resize =
 {
 	RESIZE_LIMIT_MIN | RESIZE_NO_SIZEBOX,
-	{{187,179},{0,0}},
-	11,
+	{{187,200},{0,0}},
+	12,
 	{
 		{IDC_CFGLIST,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_BOTTOM}},
 		{IDOK,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_NONE}},
@@ -31,6 +31,7 @@ static struct RESIZE_DIALOG resize =
 		{12,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 		{IDC_CALLHELP,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 		{IDC_ABOUT,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
+		{IDC_GCONFIG,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_TOP}},
 
 	}
 };
@@ -565,6 +566,9 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 		return 0;
 	case IDC_DELETE:
 		if (delete_config(hwnd) < 0) MessageBeep(MB_ICONEXCLAMATION);
+		return 0;
+	case IDC_GCONFIG:
+		global_config(hwnd, &g_config);
 		return 0;
 	}
 	return 1;

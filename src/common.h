@@ -12,3 +12,20 @@ const char*sys_get_parameter(const char*name);
 
 int load_buf_res(int no, void*buf, int len);
 
+
+#define EMUL_FLAGS_FULLSCREEN_DEFAULT	1
+#define EMUL_FLAGS_BACKGROUND_ACTIVE	2
+#define EMUL_FLAGS_SHUGART_SOUNDS	4
+#define EMUL_FLAGS_TEAC_SOUNDS		8
+#define EMUL_FLAGS_ENABLE_DEBUGGER	16
+#define EMUL_FLAGS_DEBUG_ILLEGAL_CMDS	32
+#define EMUL_FLAGS_SYNC_UPDATE		64
+
+#define EMUL_FLAGS_DEFAULT	(EMUL_FLAGS_BACKGROUND_ACTIVE | EMUL_FLAGS_SHUGART_SOUNDS | EMUL_FLAGS_TEAC_SOUNDS)
+
+struct GLOBAL_CONFIG
+{
+	unsigned int flags;
+};
+
+extern struct GLOBAL_CONFIG g_config;

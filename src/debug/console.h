@@ -1,3 +1,8 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
 
 
 typedef struct S_CONSOLE CONSOLE;
@@ -28,6 +33,9 @@ int console_clear_input(CONSOLE*con);
 
 int console_get_title(CONSOLE*con,con_char_t*buf,int nchars);
 int console_set_title(CONSOLE*con,con_char_t*buf);
+
+int console_hide(CONSOLE*con,int hid);
+
 
 #define CONFL_CRLF 1
 #define CONFL_ECHO 2

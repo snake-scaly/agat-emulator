@@ -54,6 +54,8 @@ struct CPU_STATE
 
 	struct CPU_TIMER timers[MAX_CPU_TIMERS];
 
+	int  new_addr;
+
 
 	int  (*hook_proc)(void*p);
 	void *hook_data;

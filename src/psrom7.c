@@ -3,6 +3,7 @@
 	Copyright (c) NOP, nnop@newmail.ru
 	xram - extended memory module emulation for AGAT-7
 */
+
 #include "sysconf.h"
 #include "types.h"
 #include "streams.h"

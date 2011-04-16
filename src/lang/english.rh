@@ -480,6 +480,8 @@ BEGIN
 	9400	"TTY speed: %i%%"
 	9401	"; TTY clear"
 	9402	"Maximum TTY speed"
+	9500	"Start Debugger...\tF8"
+	9501    "Stop Debugger...\tF8"
 // Configuration module: 10000
 	10000	"ROM files (*.rom)@*.rom@All files@*.*@"
 	10001	"Select ROM file"
@@ -505,6 +507,8 @@ BEGIN
 	10021	"Select keyboard layout"
 	10022	"Screen palette (*.pal)@*.pal@All files@*.*@"
 	10023	"Select screen palette"
+	10024	"Select text file for input"
+	10025	"Select raw binary file for input"
 
 	10100	"Resource"
 	10101	"Device"

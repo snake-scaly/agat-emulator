@@ -67,6 +67,9 @@ struct SYS_RUN_STATE
 	ISTREAM*input_data;
 	int input_recode;
 	int input_size, input_pos, input_cntr;
+
+	void*debug_ptr;
+	struct GLOBAL_CONFIG * gconfig;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

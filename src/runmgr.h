@@ -42,6 +42,8 @@ enum {
 	SYS_COMMAND_MOUSE_EVENT,    // mouse notification (data&1 - left button, 2 - right button, 0x80 - move)
 	SYS_COMMAND_BOOST,	    // temporary cpu performance boost, data = cpu ticks period
 	SYS_COMMAND_SET_STATUS_TEXT,// set window status text, param = str
+	SYS_COMMAND_EXEC,           // set PC=param
+
 	SYS_N_COMMANDS
 };
 

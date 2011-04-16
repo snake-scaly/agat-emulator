@@ -1371,6 +1371,9 @@ int cmd_6502(struct CPU_STATE*cs, int cmd, int data, long param)
 	case SYS_COMMAND_DUMPCPUREGS:
 		dumpregs(cs);
 		return 1;
+	case SYS_COMMAND_EXEC:
+		st->pc = param;
+		return 0;
 	}
 	return 0;
 }

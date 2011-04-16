@@ -1,3 +1,8 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
 #include "sysconf.h"
 #include "runstate.h"
 #include <windows.h>

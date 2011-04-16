@@ -182,6 +182,51 @@ int select_save_bin(HWND hpar, TCHAR fname[CFGSTRLEN])
 }
 
 
+int select_save_dump(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 14, buf[0], sizeof(buf[0])); 
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 15, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	ofn.lpstrInitialDir = path;
+	ofn.lpstrDefExt = TEXT("bin");
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetSaveFileName(&ofn)) return FALSE;
+	return TRUE;
+}
+
+int select_open_dump(HWND hpar, TCHAR fname[CFGSTRLEN])
+{
+	OPENFILENAME ofn;
+	TCHAR path[MAX_PATH], buf[2][256];
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hpar;
+	ofn.lpstrFilter = localize_str(LOC_CFG, 14, buf[0], sizeof(buf[0])); 
+	repl_at(buf[0]);
+	ofn.lpstrFile = fname;
+	ofn.nMaxFile = CFGSTRLEN;
+	ofn.lpstrTitle = localize_str(LOC_CFG, 25, buf[1], sizeof(buf[1]));
+	GetCurrentDirectory(MAX_PATH, path);
+//	GetModuleFileName(NULL, path, MAX_PATH);
+//	PathRemoveFileSpec(path);
+	ofn.lpstrInitialDir = path;
+	ofn.lpstrDefExt = TEXT("bin");
+	ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
+	if (!GetOpenFileName(&ofn)) return FALSE;
+	return TRUE;
+}
+
+
 int select_save_tiff(HWND hpar, TCHAR fname[CFGSTRLEN])
 {
 	OPENFILENAME ofn;

@@ -1,3 +1,8 @@
+/*
+	Agat Emulator version 1.19
+	Copyright (c) NOP, nnop@newmail.ru
+*/
+
 #include <windows.h>
 #include "resource.h"
 
@@ -7,6 +12,7 @@
 #include "runmgrint.h"
 #include "videow.h"
 #include "runstate.h"
+#include "debug/debugwnd.h"
 
 #include "localize.h"
 #include <stdio.h>
@@ -122,6 +128,7 @@ int create_video_buffer(struct SYS_RUN_STATE*sr)
 
 int free_video_buffer(struct SYS_RUN_STATE*sr)
 {
+	if (sr->debug_ptr) debug_detach(sr);
 	sr->bmp_bits = NULL;
 	SelectObject(sr->mem_dc, sr->old_bmp);
 	DeleteObject(sr->mem_bmp);
@@ -191,6 +198,24 @@ int init_video_window(struct SYS_RUN_STATE*sr)
 	puts("init_video_window ok");*/
 	cr_proc(sr);
 	return 0;
+}
+
+
+void toggle_debugger(struct SYS_RUN_STATE*sr)
+{
+	TCHAR lbuf[1024];
+	MENUITEMINFO inf;
+
+	puts("toggle debugger");
+	if (sr->debug_ptr) debug_detach(sr);
+	else debug_attach(sr);
+
+	localize_str(LOC_VIDEO, sr->debug_ptr?501:500, lbuf, sizeof(lbuf));
+	inf.cbSize = sizeof(inf);
+	inf.fMask = MIIM_TYPE;
+	inf.fType = MF_STRING;
+	inf.dwTypeData = lbuf;
+	SetMenuItemInfo(sr->popup_menu,IDC_DEBUGGER,FALSE,&inf);
 }
 
 void set_video_size(struct SYS_RUN_STATE*sr, int w, int h)
@@ -379,6 +404,12 @@ static byte xmem_read(word a, struct SYS_RUN_STATE*sr)
 	return mem_read(a, sr);
 }
 
+static void xmem_write(word a, byte b, struct SYS_RUN_STATE*sr)
+{
+	if (a >= 0xC000 && a < 0xD000) return;
+	mem_write(a, b, sr);
+}
+
 int lock_mouse(struct SYS_RUN_STATE*sr)
 {
 	RECT r;
@@ -421,10 +452,47 @@ int dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
 	if (!f) return -1;
 	for (;size; --size, ++start) {
 		byte b = xmem_read(start, sr);
-		fwrite(&b, 1, 1, f);
+		if (fwrite(&b, 1, 1, f) != 1) {
+			fclose(f);
+			return -2;
+		}
 	}
 	fclose(f);
 	return 0;
+}
+
+
+int read_dump_mem(struct SYS_RUN_STATE*sr, int start, int size, const char*fname)
+{
+	FILE*f = fopen(fname, "rb");
+	int n = 0;
+	if (!f) return -1;
+	if (!size) {
+		for (; !feof(f); ++start) {
+			byte b;
+			int r;
+			r = fread(&b, 1, 1, f);
+			if (r < 0) {
+				fclose(f);
+				return -2;
+			}
+			if (!r) break;
+			xmem_write(start, b, sr);
+			++ n;
+		}
+	} else {
+		for (;size; --size, ++start) {
+			byte b;
+			if (fread(&b, 1, 1, f) != 1) {
+				fclose(f);
+				return -2;
+			}
+			xmem_write(start, b, sr);
+			++ n;
+		}
+	}
+	fclose(f);
+	return n;
 }
 
 int on_input_file(HWND w, struct SYS_RUN_STATE*sr)
@@ -595,6 +663,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			AppendMenu(m,MF_STRING,IDC_COPY,
 				localize_str(LOC_VIDEO, 300, lbuf, sizeof(lbuf))); //TEXT("Копирование в буфер обмена\tF7"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
+			AppendMenu(m,MF_STRING,IDC_DEBUGGER,
+				localize_str(LOC_VIDEO, 500, lbuf, sizeof(lbuf))); //TEXT("Запустить отладчик\tF8"));
+			AppendMenu(m,MF_SEPARATOR,0,0);
 #ifdef UNDER_CE
 			AppendMenu(m,MF_SEPARATOR,0,0);
 			AppendMenu(m,MF_STRING,IDCLOSE,
@@ -760,6 +831,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F7:
 			copy_clipboard(sr);
 			break;
+		case VK_F8:
+			toggle_debugger(sr);
+			break;
 		case VK_APPS:
 			system_command(sr, SYS_COMMAND_FAST, 1, 0);
 			break;
@@ -872,6 +946,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			break;
 		case IDC_SAVESTATE:
 			on_save_state(w, sr);
+			break;
+		case IDC_DEBUGGER:
+			toggle_debugger(sr);
 			break;
 		case IDC_LOADSTATE:
 			on_load_state(w, sr);

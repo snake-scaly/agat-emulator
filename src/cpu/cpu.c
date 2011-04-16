@@ -65,6 +65,9 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		return cpu_intr(cs, CPU_INTR_NOIRQ, 0);
 	case SYS_COMMAND_NONMI:
 		return cpu_intr(cs, CPU_INTR_NONMI, 0);
+	case SYS_COMMAND_EXEC:
+		cs->new_addr = (word)param;
+		return 0;
 	case SYS_COMMAND_START:
 		cpu_pause(cs, 0);
 		return 0;
@@ -166,6 +169,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cs->lim_fetches = 1000;
 	cs->freq_6502 = cf->cfgint[CFG_INT_CPU_SPEED]*10;
 	cs->undoc = cf->cfgint[CFG_INT_CPU_EXT];
+	cs->new_addr = -1;
 
 	cs->wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
 	cs->response = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -345,6 +349,10 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 				_CMSG("got terminate request after wakeup");
 				return 0;
 			}
+		}
+		if (cs->new_addr != -1) {
+			cpu_cmd(cs, SYS_COMMAND_EXEC, 0, cs->new_addr);
+			cs->new_addr = -1;
 		}
 //		puts("exec_op");
 		if  (cs->hook_proc) {
