@@ -18,24 +18,25 @@
 // Dialog
 //
 
-IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
+IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 190
 STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
     WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX
 CAPTION VERSION_NAME_STR
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
-                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,155
+                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,176
     DEFPUSHBUTTON   "&Start",IDOK,130,7,50,14
     PUSHBUTTON      "S&top",IDC_STOP,130,26,50,14,WS_DISABLED
     PUSHBUTTON      "&Quit",IDCANCEL,130,46,50,14
     PUSHBUTTON      "&Create...",IDC_NEW,130,69,50,14
     PUSHBUTTON      "C&hange...",IDC_CONFIG,130,87,50,14
     PUSHBUTTON      "&Delete",IDC_DELETE,130,105,50,14
-    PUSHBUTTON      "&Help",IDC_CALLHELP,130,130,50,14
-    PUSHBUTTON      "&About",IDC_ABOUT,130,148,50,14
+    PUSHBUTTON      "S&ettings...",IDC_GCONFIG,130,133,50,14
+    PUSHBUTTON      "&Help",IDC_CALLHELP,130,151,50,14
+    PUSHBUTTON      "&About",IDC_ABOUT,130,169,50,14
     CONTROL         "",11,"Static",SS_ETCHEDHORZ,130,65,50,1
-    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,125,49,1
+    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,128,49,1
 END
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
@@ -415,6 +416,37 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,129,69,50,14
     LTEXT           "ROM image: ",IDC_STATIC,7,10,67,8
 END
+
+
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 150
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Agat Emulator Settings"
+FONT 9, "Tahoma"
+BEGIN
+    CONTROL         "Start systems in full-screen mode",
+                    IDC_FULLSCREEN_DEFAULT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,7,173,10
+    CONTROL         "Work in a background",IDC_BACKGROUND_ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,22,113,10
+    CONTROL         "Emulate of the Shugart drive sounds",IDC_SHUGART_SOUNDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,149,10
+    CONTROL         "Emulate of the Teac drive sounds",IDC_TEAC_SOUNDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,140,10
+    CONTROL         "Enable internal debugger",IDC_ENABLE_DEBUGGER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,98,10
+    CONTROL         "Disassemble in the debugger undocumented CPU commands",
+                    IDC_DEBUG_ILLEGAL_CMDS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,82,258,10
+    CONTROL         "Disassemble in the debugger new CPU commands",
+                    IDC_DEBUG_NEW_CMDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,97,227,10
+    CONTROL         "Use synchronous screen update",IDC_SYNC_UPDATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
+    DEFPUSHBUTTON   "OK",IDOK,73,129,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,154,129,50,14
+END
+
+
 
 STRINGTABLE
 BEGIN

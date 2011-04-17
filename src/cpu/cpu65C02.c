@@ -1379,6 +1379,85 @@ static void dumpregs(struct STATE_65C02*st)
 		st->s);
 }
 
+static int get_regs(struct STATE_65C02*st, struct REGS_6502* regs)
+{
+	regs->A = st->a;
+	regs->X = st->x;
+	regs->Y = st->y;
+	regs->S = st->s;
+	regs->F = st->f;
+	regs->PC = st->pc;
+	return 1;
+}
+
+
+static int set_regs(struct STATE_65C02*st, int mask, const struct REGS_6502* regs)
+{
+	if (mask & (1<<REG6502_A)) st->a = regs->A;
+	if (mask & (1<<REG6502_X)) st->x = regs->X;
+	if (mask & (1<<REG6502_Y)) st->y = regs->Y;
+	if (mask & (1<<REG6502_S)) st->s = regs->S;
+	if (mask & (1<<REG6502_F)) st->f = regs->F;
+	if (mask & (1<<REG6502_PC)) st->pc = regs->PC;
+	return 1;
+}
+
+static int get_reg(struct STATE_65C02*st, int reg, void*val)
+{
+	switch (reg) {
+	case REG6502_A:
+		*(byte*)val = st->a;
+		break;
+	case REG6502_X:
+		*(byte*)val = st->x;
+		break;
+	case REG6502_Y:
+		*(byte*)val = st->y;
+		break;
+	case REG6502_S:
+		*(byte*)val = st->s;
+		break;
+	case REG6502_F:
+		*(byte*)val = st->f;
+		break;
+	case REG6502_PC:
+		*(word*)val = st->pc;
+		break;
+	default:
+		return -1;
+	}
+	return 1;
+}
+
+
+static int set_reg(struct STATE_65C02*st, int reg, long val)
+{
+	switch (reg) {
+	case REG6502_A:
+		st->a = val;
+		break;
+	case REG6502_X:
+		st->x = val;
+		break;
+	case REG6502_Y:
+		st->y = val;
+		break;
+	case REG6502_S:
+		st->s = val;
+		break;
+	case REG6502_F:
+		st->f = val;
+		break;
+	case REG6502_PC:
+		st->pc = val;
+		break;
+	default:
+		return -1;
+	}
+	return 1;
+}
+
+
 int cmd_65c02(struct CPU_STATE*cs, int cmd, int data, long param)
 {
 	struct STATE_65C02*st = cs->state;
@@ -1389,6 +1468,14 @@ int cmd_65c02(struct CPU_STATE*cs, int cmd, int data, long param)
 	case SYS_COMMAND_EXEC:
 		st->pc = param;
 		return 0;
+	case SYS_COMMAND_GETREGS6502:
+		return get_regs(st, (struct REGS_6502*)param);
+	case SYS_COMMAND_SETREGS6502:
+		return set_regs(st, data, (const struct REGS_6502*)param);
+	case SYS_COMMAND_GETREG:
+		return get_reg(st, data, (void*)param);
+	case SYS_COMMAND_SETREG:
+		return set_reg(st, data, param);
 	}
 	return 0;
 }

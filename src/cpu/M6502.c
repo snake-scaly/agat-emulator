@@ -337,6 +337,83 @@ static void dumpregs(struct CPU_STATE*cs)
 		st->S);
 }
 
+static int get_regs(M6502*st, struct REGS_6502* regs)
+{
+	regs->A = st->A;
+	regs->X = st->X;
+	regs->Y = st->Y;
+	regs->S = st->S;
+	regs->F = st->P;
+	regs->PC = st->PC.W;
+	return 1;
+}
+
+static int set_regs(M6502*st, int mask, const struct REGS_6502* regs)
+{
+	if (mask & (1<<REG6502_A)) st->A = regs->A;
+	if (mask & (1<<REG6502_X)) st->X = regs->X;
+	if (mask & (1<<REG6502_Y)) st->Y = regs->Y;
+	if (mask & (1<<REG6502_S)) st->S = regs->S;
+	if (mask & (1<<REG6502_F)) st->P = regs->F;
+	if (mask & (1<<REG6502_PC)) st->PC.W = regs->PC;
+	return 1;
+}
+
+static int get_reg(M6502*st, int reg, void*val)
+{
+	switch (reg) {
+	case REG6502_A:
+		*(byte*)val = st->A;
+		break;
+	case REG6502_X:
+		*(byte*)val = st->X;
+		break;
+	case REG6502_Y:
+		*(byte*)val = st->Y;
+		break;
+	case REG6502_S:
+		*(byte*)val = st->S;
+		break;
+	case REG6502_F:
+		*(byte*)val = st->P;
+		break;
+	case REG6502_PC:
+		*(word*)val = st->PC.W;
+		break;
+	default:
+		return -1;
+	}
+	return 1;
+}
+
+
+static int set_reg(M6502*st, int reg, long val)
+{
+	switch (reg) {
+	case REG6502_A:
+		st->A = val;
+		break;
+	case REG6502_X:
+		st->X = val;
+		break;
+	case REG6502_Y:
+		st->Y = val;
+		break;
+	case REG6502_S:
+		st->S = val;
+		break;
+	case REG6502_F:
+		st->P = val;
+		break;
+	case REG6502_PC:
+		st->PC.W = val;
+		break;
+	default:
+		return -1;
+	}
+	return 1;
+}
+
 int cmd_M6502(struct CPU_STATE*cs, int cmd, int data, long param)
 {
 	M6502*st = cs->state;
@@ -347,6 +424,14 @@ int cmd_M6502(struct CPU_STATE*cs, int cmd, int data, long param)
 	case SYS_COMMAND_EXEC:
 		st->PC.W = param;
 		return 0;
+	case SYS_COMMAND_GETREGS6502:
+		return get_regs(st, (struct REGS_6502*)param);
+	case SYS_COMMAND_SETREGS6502:
+		return set_regs(st, data, (const struct REGS_6502*)param);
+	case SYS_COMMAND_GETREG:
+		return get_reg(st, data, (void*)param);
+	case SYS_COMMAND_SETREG:
+		return set_reg(st, data, param);
 	}
 	return 0;
 }

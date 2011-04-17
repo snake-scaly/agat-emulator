@@ -89,6 +89,15 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 			r = new_timer(cs, data, param);
 		}
 		return r?1:0; }
+	case SYS_COMMAND_GETREGS6502:
+		r = cpu_cmd(cs, cmd, data, param);
+		if (r < 0) return r;
+		((struct REGS_6502*)param)->TSC = cs->tsc_6502;
+		return r;
+	case SYS_COMMAND_GETREG:
+		if (data == REG6502_TSC) { *(dword*)param = cs->tsc_6502; r = 1; }
+		else r = cpu_cmd(cs, cmd, data, param);
+		return r;
 	default:
 		return cpu_cmd(cs, cmd, data, param);
 	}

@@ -19,6 +19,7 @@ enum {
 struct SYSMON_STATE
 {
 	word addr[3], raddr, waddr;
+	int  last_regs, reg_index;
 };
 
 struct DEBUG_INFO

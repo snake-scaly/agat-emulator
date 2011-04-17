@@ -19,25 +19,27 @@
 // Dialog
 //
 
-IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 169
-STYLE DS_ABSALIGN | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | 
-    WS_THICKFRAME | WS_MAXIMIZEBOX | WS_MINIMIZEBOX
+IDD_MAIN DIALOG DISCARDABLE  65535, 65535, 187, 190
+STYLE DS_ABSALIGN | DS_CENTER | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION VERSION_NAME_STR
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
-                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,155
+                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,176
     DEFPUSHBUTTON   "&Запуск",IDOK,130,7,50,14
     PUSHBUTTON      "&Стоп",IDC_STOP,130,26,50,14,WS_DISABLED
     PUSHBUTTON      "&Выход",IDCANCEL,130,46,50,14
     PUSHBUTTON      "&Создать...",IDC_NEW,130,69,50,14
     PUSHBUTTON      "&Изменить...",IDC_CONFIG,130,87,50,14
     PUSHBUTTON      "&Удалить",IDC_DELETE,130,105,50,14
-    PUSHBUTTON      "С&правка",IDC_CALLHELP,130,130,50,14
-    PUSHBUTTON      "&О программе",IDC_ABOUT,130,148,50,14
+    PUSHBUTTON      "&Настройки...",IDC_GCONFIG,130,133,50,14
+    PUSHBUTTON      "С&правка",IDC_CALLHELP,130,151,50,14
+    PUSHBUTTON      "&О программе",IDC_ABOUT,130,169,50,14
     CONTROL         "",11,"Static",SS_ETCHEDHORZ,130,65,50,1
-    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,125,49,1
+    CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,128,49,1
 END
+
 
 IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
@@ -415,6 +417,37 @@ BEGIN
     PUSHBUTTON      "Отмена",IDCANCEL,129,69,50,14
     LTEXT           "Имя образа PROM: ",IDC_STATIC,7,10,67,8
 END
+
+
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 150
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка эмулятора"
+FONT 9, "Tahoma"
+BEGIN
+    CONTROL         "Запускать системы в полноэкранном режиме",
+                    IDC_FULLSCREEN_DEFAULT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,7,173,10
+    CONTROL         "Продолжать работу в фоне",IDC_BACKGROUND_ACTIVE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,22,113,10
+    CONTROL         "Имитировать звуки дисковода Shugart",IDC_SHUGART_SOUNDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,149,10
+    CONTROL         "Имитировать звуки дисковода Teac",IDC_TEAC_SOUNDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,140,10
+    CONTROL         "Использовать отладчик",IDC_ENABLE_DEBUGGER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,98,10
+    CONTROL         "Отображать в отладчике недокументированные команды процессора",
+                    IDC_DEBUG_ILLEGAL_CMDS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,82,258,10
+    CONTROL         "Отображать в отладчике расширенные команды процессора",
+                    IDC_DEBUG_NEW_CMDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,97,227,10
+    CONTROL         "Синхронное обновление экрана",IDC_SYNC_UPDATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
+    DEFPUSHBUTTON   "OK",IDOK,73,129,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,154,129,50,14
+END
+
+
 
 STRINGTABLE
 BEGIN

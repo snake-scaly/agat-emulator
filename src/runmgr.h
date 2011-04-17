@@ -43,8 +43,30 @@ enum {
 	SYS_COMMAND_BOOST,	    // temporary cpu performance boost, data = cpu ticks period
 	SYS_COMMAND_SET_STATUS_TEXT,// set window status text, param = str
 	SYS_COMMAND_EXEC,           // set PC=param
+	SYS_COMMAND_GETREGS6502,    // param = ptr to REGS_6502, data=0
+	SYS_COMMAND_SETREGS6502,    // param = ptr to REGS_6502 data=mask
+	SYS_COMMAND_GETREG,    	    // data = reg index, param = pointer to value
+	SYS_COMMAND_SETREG,    	    // data = reg index, param = value
 
 	SYS_N_COMMANDS
+};
+
+
+struct REGS_6502 // for GETREGS6502/SETREGS6502
+{
+	byte A, X, Y, S, F;
+	word PC;
+	dword TSC;
+};
+
+enum { // for GETREG/SETREG
+	REG6502_A,	// byte
+	REG6502_X,	// byte
+	REG6502_Y,	// byte
+	REG6502_S,	// byte
+	REG6502_F,	// byte
+	REG6502_PC,	// word
+	REG6502_TSC,	// dword
 };
 
 struct SYS_RUN_STATE;

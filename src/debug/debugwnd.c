@@ -689,6 +689,11 @@ static const struct CMD_6502 cmds65c02[256]=
   MAKE_COMMAND_NEW(BBS7,REL,2)    //FF
 };
 
+void sysmon_err(struct DEBUG_INFO*inf)
+{
+	console_printf(inf->con, "ERR");
+	MessageBeep(MB_ICONEXCLAMATION);
+}
 
 void sysmon_l(struct DEBUG_INFO*inf)
 {
@@ -793,8 +798,7 @@ void sysmon_write(struct DEBUG_INFO*inf, int aarg)
 	}
 	console_hide(inf->con, 0);
 	if (dump_mem(inf->sr, inf->sst.addr[1], inf->sst.addr[2] - inf->sst.addr[1]+1, dname)) {
-		console_printf(inf->con, "ERR");
-		MessageBeep(0);
+		sysmon_err(inf);
 	}
 }
 
@@ -811,12 +815,42 @@ void sysmon_read(struct DEBUG_INFO*inf, int aarg)
 	console_hide(inf->con, 0);
 	n = read_dump_mem(inf->sr, inf->sst.addr[1], sz, dname);
 	if (n <= 0) {
-		console_printf(inf->con, "ERR");
-		MessageBeep(0);
+		sysmon_err(inf);
 		return;
 	}
 	inf->sst.addr[1] += n;
 }
+
+void sysmon_show_regs(struct DEBUG_INFO*inf)
+{
+	struct REGS_6502 regs;
+	int r;
+	r = system_command(inf->sr, SYS_COMMAND_GETREGS6502, 0, (long)&regs);
+	if (r <= 0) {
+		sysmon_err(inf);
+		return;
+	}
+	console_printf(inf->con, "\n%04X-    A=%02X X=%02X Y=%02X P=%02X S=%02X",
+		regs.PC, regs.A, regs.X, regs.Y, regs.F, regs.S);
+	inf->sst.last_regs = 1;
+	inf->sst.reg_index = 0;
+}
+
+void sysmon_set_reg(struct DEBUG_INFO*inf, byte data)
+{
+	static const int regitems[] = {
+		REG6502_A, REG6502_X, REG6502_Y, REG6502_F, REG6502_S
+	};
+	int r;
+	if (inf->sst.reg_index == sizeof(regitems) / sizeof(regitems[0])) return;
+	r = system_command(inf->sr, SYS_COMMAND_SETREG, regitems[inf->sst.reg_index], data);
+	if (r <= 0) {
+		sysmon_err(inf);
+		return;
+	}
+	++ inf->sst.reg_index;
+}
+
 
 void sysmon_help(struct DEBUG_INFO*inf)
 {
@@ -829,6 +863,7 @@ void sysmon_help(struct DEBUG_INFO*inf)
 		"a1<a2.a3M      Move memory\n"
 		"a1<a2.a3V      Verify memory\n"
 		"[a]G           Change execution flow\n"
+		"P              Show/edit registers\n"
 		"Q              Quit debugger\n"
 		"?              Show this help"
 	);
@@ -902,6 +937,7 @@ void parse_sysmon(struct DEBUG_INFO*inf, const con_char_t*buf)
 			if (adig) {
 				inf->sst.addr[1] = inf->sst.waddr = adr;
 				inf->sst.addr[2] = (inf->sst.addr[1] + 1) | 7;
+				inf->sst.last_regs = 0;
 			}
 			adig = 0;
 			adr = 0;
@@ -913,8 +949,12 @@ void parse_sysmon(struct DEBUG_INFO*inf, const con_char_t*buf)
 			if (p > buf && p[-1] == ' ') break;
 			if (lcmd == ':') {
 				if (!adig) break;
-				mem_write(inf->sst.waddr, adr, inf->sr);
-				++ inf->sst.waddr;
+				if (inf->sst.last_regs)
+					sysmon_set_reg(inf, adr);
+				else {
+					mem_write(inf->sst.waddr, adr, inf->sr);
+					++ inf->sst.waddr;
+				}
 				adig = 0;
 				adr = 0;
 				aarg = 0;
@@ -995,6 +1035,13 @@ void parse_sysmon(struct DEBUG_INFO*inf, const con_char_t*buf)
 		case 'M':
 			inf->sst.addr[2] = adr;
 			sysmon_move(inf);
+			adig = 0;
+			adr = 0;
+			aarg = 0;
+			lcmd = c;
+			break;
+		case 'P':
+			sysmon_show_regs(inf);
 			adig = 0;
 			adr = 0;
 			aarg = 0;
