@@ -146,12 +146,14 @@ static byte keyb_apple_read(word adr, struct SYS_RUN_STATE*sr)
 static byte keyb_lang_read(word adr, struct SYS_RUN_STATE*sr)
 {
 //	printf("hbit: %i\n", sr->input_hbit);
-	return ((sr->input_hbit||!sr->input_8bit)?0x80:0x00) | (sr->input_8bit?0x40:0x00);
+//	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
+	return ((sr->input_hbit||!sr->input_8bit)?0x80:0x00) | (sr->input_8bit?0x00:0x40);
 }
 
 static void keyb_lang_write(word adr, byte data, struct SYS_RUN_STATE*sr)
 {
 //	printf("lang_write: %02X\n", data);
+//	system_command(sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	sr->input_8bit = data & 1;
 }
 
