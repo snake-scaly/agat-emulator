@@ -560,11 +560,11 @@ static byte translate_capslock(struct SYS_RUN_STATE*sr, byte k)
 		} else {
 			if (k >= 0xC0 && k < 0xE0) { k += 0x20; sh = !sh; }
 		}
-		if (!sh) k |= 0x80;
+		if (sh) k |= 0x80;
 		else if (k >= 0xC0) k &= 0x7F;
 		return k;
 	}
-	if (sr->caps_lock || sr->cursystype != SYSTEM_E) return k;
+	if (!sr->caps_lock || sr->cursystype != SYSTEM_E) return k;
 	if ((k >> 5) == 2) k |= 0x20;
 	else if ((k >> 5) == 3) k &= ~0x20;
 	return k;
