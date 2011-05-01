@@ -23,14 +23,14 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	switch (msg) {
 	case WM_INITDIALOG:
 //		puts("init");
+		resize_init(data->resize);
+		resize_attach(data->resize,hwnd);
+		resize_init_placement(hwnd, data->res_id);
 		r = data->init ? data->init(hwnd, data->param) : 0;
 		if (r < 0) {
 			EndDialog(hwnd, -2);
 			return FALSE;
 		}
-		resize_init(data->resize);
-		resize_attach(data->resize,hwnd);
-		resize_init_placement(hwnd, data->res_id);
 		return FALSE;
 	case WM_DESTROY:
 //		puts("destroy");

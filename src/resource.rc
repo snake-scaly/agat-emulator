@@ -126,7 +126,7 @@ CAPTION "Agat v1.xx"
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
-                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,176
+                    WS_BORDER | WS_TABSTOP,7,7,113,176
     DEFPUSHBUTTON   "&Запуск",IDOK,130,7,50,14
     PUSHBUTTON      "&Стоп",IDC_STOP,130,26,50,14,WS_DISABLED
     PUSHBUTTON      "&Выход",IDCANCEL,130,46,50,14
@@ -510,7 +510,7 @@ BEGIN
     LTEXT           "Имя образа PROM: ",IDC_STATIC,7,10,67,8
 END
 
-IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 150
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 163
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка эмулятора"
 FONT 9, "Tahoma"
@@ -534,8 +534,10 @@ BEGIN
                     7,97,227,10
     CONTROL         "Синхронное обновление экрана",IDC_SYNC_UPDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
-    DEFPUSHBUTTON   "OK",IDOK,73,129,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,154,129,50,14
+    LTEXT           "Переключение языка ввода:",100,7,126,99,8
+    COMBOBOX        IDC_LANGSEL,118,124,153,52,CBS_DROPDOWNLIST | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,73,142,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,154,142,50,14
 END
 
 
@@ -716,8 +718,9 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 271
+        VERTGUIDE, 26
         TOPMARGIN, 7
-        BOTTOMMARGIN, 143
+        BOTTOMMARGIN, 156
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -969,6 +972,9 @@ BEGIN
     11062                   "Ошибка удаления системы"
     11070                   "Имеются запущенные системы. Завершить работу?"
     11071                   "Завершение работы"
+
+    11100                   "Системная раскладка клавиатуры"
+    11101                   "Комбинация клавиш Ctrl+Shift"
 END
 
 STRINGTABLE DISCARDABLE 

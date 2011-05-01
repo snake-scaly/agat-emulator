@@ -27,14 +27,18 @@ static LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp);
 
 static ATOM at;
 
-WORD get_keyb_language()
+static WORD get_keyb_language()
 {
 	return PRIMARYLANGID(LOWORD(GetKeyboardLayout(0)));
 }
 
 int is_keyb_english(struct SYS_RUN_STATE*sr)
 {
-	return get_keyb_language() == LANG_ENGLISH;
+	if (sr->gconfig->flags & EMUL_FLAGS_LANGSEL) {
+		return !sr->cur_lang;
+	} else {
+		return get_keyb_language() == LANG_ENGLISH;
+	}
 }
 
 void update_alt_state(struct SYS_RUN_STATE*sr)
@@ -644,7 +648,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			m=sr->popup_menu=CreatePopupMenu();
 #else
 			m=sr->popup_menu=GetSystemMenu(w,FALSE);
-			AppendMenu(m,MF_SEPARATOR,0,0);
+			if (!m) 
+				m=sr->popup_menu=CreatePopupMenu();
+			else
+				AppendMenu(m,MF_SEPARATOR,0,0);
 #endif
 			AppendMenu(m,MF_STRING,IDC_RESET,
 				localize_str(LOC_VIDEO, 100, lbuf, sizeof(lbuf))); //TEXT("&—брос\tCtrl+Break"));
@@ -784,6 +791,14 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		case VK_F11:
 			dump_mem(sr, 0, 0x10000, "memdump.bin");
 			break;
+		case VK_F10:
+			if (GetKeyState(VK_MENU)&0x8000) {
+			RECT r;
+			GetWindowRect(w, &r);
+			TrackPopupMenu(sr->popup_menu,TPM_CENTERALIGN,
+				(r.left + r.right) / 2, (r.bottom + r.top) / 2,
+				0,w,NULL);
+			} break;
 		case VK_F4:
 			goto def;
 		case VK_RETURN:
@@ -804,6 +819,15 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			break;
 		}
 	case WM_KEYDOWN:
+//		printf("key_down: %X %X\n", wp, lp);
+		if (sr->gconfig->flags & EMUL_FLAGS_LANGSEL) {
+			if (wp == VK_SHIFT && !(lp&0x40000000)) {
+				if (GetKeyState(VK_CONTROL)&0x8000) sr->cur_lang = !sr->cur_lang;
+			} else if (wp == VK_CONTROL && !(lp&0x40000000)) {
+				if (GetKeyState(VK_SHIFT)&0x8000) sr->cur_lang = !sr->cur_lang;
+			}
+			sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
+		}
 		{
 			int d;
 			if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
@@ -1017,7 +1041,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		break;
 	case WM_INPUTLANGCHANGE:
 //		printf("%x\n",lp);
-		sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
+		if (!(sr->gconfig->flags & EMUL_FLAGS_LANGSEL)) {
+			sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
+		}	
 		break;
 	}
 def:

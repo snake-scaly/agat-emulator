@@ -174,7 +174,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	sr->base_w = hmain;
 	sr->gconfig = &g_config;
 
-	sr->keyreg = (get_keyb_language() == LANG_RUSSIAN)?0x7F:0xFF;
+	sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
 
 	set_run_state_ptr(sr->name, sr);
 

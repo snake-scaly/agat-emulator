@@ -124,6 +124,7 @@ static int scan_configs(HWND hwnd)
 	} while (FindNextFile(ff, &fd));
 	FindClose(ff);
 	main_cfg_set_sel(hwnd, sel);
+	ListView_Arrange(hlist, LVA_DEFAULT);
 	SendMessage(hlist,WM_SETREDRAW,1,0);
 	return 0;
 }
@@ -597,6 +598,9 @@ static int  dialog_message(HWND hwnd, void*param, UINT msg, WPARAM wp, LPARAM lp
 	switch (msg) {
 	case WM_HELP:
 		on_help(hwnd);
+		break;
+	case WM_SIZE:
+		ListView_Arrange(GetDlgItem(hwnd, IDC_CFGLIST), LVA_DEFAULT);
 		break;
 	}
 	return 1;

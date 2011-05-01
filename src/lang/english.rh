@@ -25,7 +25,7 @@ CAPTION VERSION_NAME_STR
 FONT 9, "Tahoma"
 BEGIN
     CONTROL         "List1",IDC_CFGLIST,"SysListView32",LVS_SHOWSELALWAYS | 
-                    LVS_AUTOARRANGE | WS_BORDER | WS_TABSTOP,7,7,113,176
+                    WS_BORDER | WS_TABSTOP,7,7,113,176
     DEFPUSHBUTTON   "&Start",IDOK,130,7,50,14
     PUSHBUTTON      "S&top",IDC_STOP,130,26,50,14,WS_DISABLED
     PUSHBUTTON      "&Quit",IDCANCEL,130,46,50,14
@@ -418,7 +418,7 @@ BEGIN
 END
 
 
-IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 150
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 163
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Agat Emulator Settings"
 FONT 9, "Tahoma"
@@ -442,8 +442,10 @@ BEGIN
                     7,97,227,10
     CONTROL         "Use synchronous screen update",IDC_SYNC_UPDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
-    DEFPUSHBUTTON   "OK",IDOK,73,129,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,154,129,50,14
+    LTEXT           "Input language switching:",100,7,126,99,8
+    COMBOBOX        IDC_LANGSEL,118,124,153,52,CBS_DROPDOWNLIST | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,73,142,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,154,142,50,14
 END
 
 
@@ -575,6 +577,9 @@ BEGIN
 
 	11070	"Some systems are running. Exit emulator?"
 	11071	"Exiting"
+
+	11100	"System keyboard layout switcher"
+	11101	"Ctrl+Shift keys combination"
 
 // System configuration: 12000
 	12000	"\x97\x97\x97"       // 1
