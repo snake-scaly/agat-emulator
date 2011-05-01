@@ -64,6 +64,7 @@ IDB_PRAVETZ82_LOGO      BITMAP  DISCARDABLE     "bmps\\pravetz82_logo.bmp"
 // remains consistent on all systems.
 IDI_MAIN                ICON    DISCARDABLE     "bmps\\agat.ico"
 IDI_DISK                ICON    DISCARDABLE     "bmps\\diskette.ico"
+IDI_HDV                 ICON    DISCARDABLE     "bmps\\hdd.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

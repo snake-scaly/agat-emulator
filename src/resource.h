@@ -29,6 +29,7 @@
 #define IDI_DISK                        115
 #define IDB_APPLE2E                     115
 #define IDD_PRN9CFG                     116
+#define IDI_HDV                         116
 #define IDB_APPLE2E_LOGO                116
 #define IDD_PRNACFG                     117
 #define IDB_APPLE2P_LOGO                117
