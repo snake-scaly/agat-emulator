@@ -173,6 +173,8 @@ static int dialog_init(HWND hwnd, void*p)
 {
 	HWND hlist;
 	init_run_states();
+	SetClassLong(hwnd, GCL_HICON, 
+		(LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAIN)));
 	CreateLogoWindow(hwnd);
 
 	him = ImageList_Create(64, 64, ILC_COLOR24, 0, 5);
@@ -184,8 +186,6 @@ static int dialog_init(HWND hwnd, void*p)
 	ListView_SetExtendedListViewStyle(hlist, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 	scan_configs(hwnd);
 	update_controls(hwnd);
-	SetClassLong(hwnd, GCL_HICON, 
-		(LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_MAIN)));
 	return 0;
 }
 

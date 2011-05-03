@@ -9,6 +9,7 @@ HINSTANCE res_instance = NULL;
 static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
 	int r = -1;
+	BOOL res = TRUE;
 	struct DIALOG_DATA*data = (struct DIALOG_DATA*)GetWindowLong(hwnd, DWL_USER);
 	if (msg == WM_INITDIALOG) {
 		SetWindowLong(hwnd, DWL_USER, lp);
@@ -16,6 +17,18 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	}
 //	printf("msg = %i\n", msg);
 	if (!data) return FALSE;
+	switch (msg) {
+	case WM_SIZE:
+//		puts("size");
+		resize_realign(data->resize,hwnd,LOWORD(lp),HIWORD(lp));
+		res = FALSE;
+		break;
+	case WM_SIZING:
+//		puts("sizing");
+		resize_sizing(data->resize,hwnd,wp,(LPRECT)lp);
+		res = TRUE;
+		break;
+	}
 	if (data&&data->message) {
 		r = data->message(hwnd, data->param, msg, wp, lp);
 		if (!r) return TRUE;
@@ -23,14 +36,15 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	switch (msg) {
 	case WM_INITDIALOG:
 //		puts("init");
-		resize_init(data->resize);
-		resize_attach(data->resize,hwnd);
-		resize_init_placement(hwnd, data->res_id);
 		r = data->init ? data->init(hwnd, data->param) : 0;
 		if (r < 0) {
 			EndDialog(hwnd, -2);
 			return FALSE;
 		}
+		resize_init(data->resize);
+		resize_attach(data->resize,hwnd);
+		resize_init_placement(hwnd, data->res_id);
+		if (data&&data->message) data->message(hwnd, data->param, WM_SIZE, 0, 0);
 		return FALSE;
 	case WM_DESTROY:
 //		puts("destroy");
@@ -45,14 +59,6 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		else if (data->cancel) data->cancel(hwnd, data->param);
 		else EndDialog(hwnd, FALSE);
 		break;
-	case WM_SIZE:
-//		puts("size");
-		resize_realign(data->resize,hwnd,LOWORD(lp),HIWORD(lp));
-		return 0;
-	case WM_SIZING:
-//		puts("sizing");
-		resize_sizing(data->resize,hwnd,wp,(LPRECT)lp);
-		return TRUE;
 	case WM_COMMAND:
 //		puts("command");
 		if (HIWORD(wp) == BN_CLICKED) {
@@ -87,7 +93,7 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 	default:
 		return FALSE;
 	}
-	return TRUE;
+	return res;
 }
 
 
