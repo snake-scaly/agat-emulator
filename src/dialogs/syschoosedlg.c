@@ -52,6 +52,7 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 		IDB_APPLE2EE,
 		IDB_PRAVETZ82,
 		IDB_PRAVETZ8A,
+		IDB_ACORN_ATOM,
 	};
 
 	if (id == IDC_SYSLIST && notify == LBN_SELCHANGE) {

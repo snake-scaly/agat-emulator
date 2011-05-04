@@ -22,6 +22,7 @@
 
 extern int init_system_1(struct SYS_RUN_STATE*sr);
 extern int init_system_2e(struct SYS_RUN_STATE*sr);
+extern int init_system_aa(struct SYS_RUN_STATE*sr);
 extern int init_systems(struct SYS_RUN_STATE*sr); // other systems
 
 int  chargen_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf);
@@ -158,7 +159,8 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		SYSTEM_1, // apple 1
 		SYSTEM_E, // apple 2ee -> apple 2e
 		SYSTEM_A, // pravetz 82 -> apple 2
-		SYSTEM_E  // pravetz 8A -> apple 2e
+		SYSTEM_E,  // pravetz 8A -> apple 2e
+		SYSTEM_AA  // acorn atom
 	};
 
 	_RMSG("entry");
@@ -194,6 +196,9 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 		break;
 	case SYSTEM_E:
 		r = init_system_2e(sr);
+		break;
+	case SYSTEM_AA:
+		r = init_system_aa(sr);
 		break;
 	default:
 		r = init_systems(sr);

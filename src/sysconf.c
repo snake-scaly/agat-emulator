@@ -21,28 +21,31 @@ char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1},
 };
 
 
 const unsigned memsizes_b[NMEMSIZES] = {
-	0,
-	4 * 1024,
-	8 * 1024,
-	16 * 1024,
-	32 * 1024,
-	48 * 1024,
-	64 * 1024,
-	128 * 1024,
-	12 * 1024,
-	20 * 1024,
-	24 * 1024,
-	36 * 1024,
-	256 * 1024,
-	512 * 1024,
-	768 * 1024,
-	1024 * 1024,
-	2 * 1024 * 1024,
-	4 * 1024 * 1024,
+	0,			// 0, 1
+	4 * 1024,		// 1, 2
+	8 * 1024,		// 2, 4
+	16 * 1024,		// 3, 8
+	32 * 1024,		// 4, 16
+	48 * 1024,		// 5, 32
+	64 * 1024,		// 6, 64
+	128 * 1024,		// 7, 128
+	12 * 1024,		// 8, 256
+	20 * 1024,		// 9, 512
+	24 * 1024,		// 10, 1024
+	36 * 1024,		// 11, 2048
+	256 * 1024,		// 12, 4096
+	512 * 1024,		// 13, 8192
+	768 * 1024,		// 14, 16384
+	1024 * 1024,		// 15, 32768
+	2 * 1024 * 1024,	// 16, 65536
+	4 * 1024 * 1024,	// 17, 131072
+	1 * 1024,		// 18, 262144
+	2 * 1024		// 19, 524288
 };
 
 
@@ -96,6 +99,8 @@ int reset_config(struct SYSCONFIG*c, int systype)
 		reset_slot_config(c->slots+CONF_SLOT0, DEV_MEMORY_XRAMA, systype);
 		reset_slot_config(c->slots+CONF_SLOT6, DEV_FDD_SHUGART, systype);
 		break;
+	case SYSTEM_AA:
+		break;
 	}
 	for (i = CONF_EXT; i < NCONFTYPES; i++) {
 		reset_slot_config(c->slots+i, DEV_SYSTEM, systype);
@@ -110,7 +115,8 @@ int reset_sysicon(struct SYSCONFIG*c, int systype)
 	HBITMAP bmp;
 	int codes[]={IDB_AGAT7_LOGO, IDB_AGAT9_LOGO, IDB_APPLE2_LOGO, 
 		IDB_APPLE2P_LOGO, IDB_APPLE2E_LOGO, IDB_APPLE1_LOGO, 
-		IDB_APPLE2EE_LOGO, IDB_PRAVETZ82_LOGO, IDB_PRAVETZ8A_LOGO};
+		IDB_APPLE2EE_LOGO, IDB_PRAVETZ82_LOGO, IDB_PRAVETZ8A_LOGO,
+		IDB_ATOM_LOGO};
 	HDC dc;
 	int r;
 	bmp = LoadBitmap(localize_get_def_lib(), MAKEINTRESOURCE(codes[systype]));
@@ -286,6 +292,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_MEM_SIZE] = 7;
 				c->cfgint[CFG_INT_MEM_MASK] = 64 | 128;
 				return 0;
+			case SYSTEM_AA:
+				c->cfgint[CFG_INT_MEM_SIZE] = 8;
+				c->cfgint[CFG_INT_MEM_MASK] = 256 | 524288;
+				return 0;
 			}
 			break;
 		case CONF_MONITOR:
@@ -296,6 +306,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			case SYSTEM_7:
 			case SYSTEM_9:
+			case SYSTEM_AA:
 				c->dev_type = DEV_NULL;
 				return 0;
 			case SYSTEM_A:
@@ -334,6 +345,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_EE:
 			case SYSTEM_1:
 			case SYSTEM_82:
+			case SYSTEM_AA:
 				c->dev_type = DEV_TAPE_FILE;
 				break;
 			case SYSTEM_9:
@@ -345,7 +357,13 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			c->cfgint[CFG_INT_TAPE_FREQ] = 8000;
 			return 0;
 		case CONF_JOYSTICK:
-			c->dev_type = DEV_MOUSE;
+			switch (systype) {
+			case SYSTEM_AA:
+				c->dev_type = DEV_NULL;
+				break;
+			default:
+				c->dev_type = DEV_MOUSE;
+			}
 			return 0;
 		case CONF_ROM:
 			c->cfgint[CFG_INT_ROM_FLAGS] = 0;
@@ -381,38 +399,40 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			case SYSTEM_P:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\APPLE2.ROM"));
-				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x3000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0x1000;
 				return 0;
 			case SYSTEM_82:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\PRAVETZ82.ROM"));
-				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x3000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0x1000;
 				return 0;
 			case SYSTEM_E:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\APPLE2E.ROM"));
-				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
 				return 0;
 			case SYSTEM_EE:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\APPLE2EE.ROM"));
-				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
 				return 0;
 			case SYSTEM_8A:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\PRAVETZ8C.ROM"));
-				c->cfgint[CFG_INT_ROM_RES] = 13;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
 				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
 				c->cfgint[CFG_INT_ROM_OFS] = 0;
+				return 0;
+			case SYSTEM_AA:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\ACORN_ATOM.ROM"));
+				c->cfgint[CFG_INT_ROM_SIZE] = 0x4000;
+				c->cfgint[CFG_INT_ROM_MASK] = 0x3FFF;
+				c->cfgint[CFG_INT_ROM_OFS] = 0;
+				c->cfgint[CFG_INT_ROM_FLAGS] |= CFG_INT_ROM_FLAG_AATOM;
 				return 0;
 			}
 			break;
@@ -457,6 +477,10 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\PRAVETZ8A.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 3;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
+				return 0;
+			case SYSTEM_AA:
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\ACORN.FNT"));
+				c->cfgint[CFG_INT_ROM_RES] = 3;
 				return 0;
 			}
 			break;

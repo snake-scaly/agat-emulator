@@ -28,6 +28,7 @@ enum {
 	SYSTEM_EE, // apple 2e enhanced
 	SYSTEM_82, // pravetz 82
 	SYSTEM_8A, // pravetz 8A
+	SYSTEM_AA, // acorn atom
 
 	NSYSTYPES
 };
@@ -105,6 +106,7 @@ enum {
 	CONF_SLOT6,
 	CONF_SLOT7,
 
+	CONF_PRINTER = 9,
 	CONF_EXT = 10,
 	CONF_CPU = 10,
 	CONF_MEMORY,
@@ -151,7 +153,7 @@ struct SYSCONFIG
 };
 
 
-#define NMEMSIZES 18
+#define NMEMSIZES 20
 LPCTSTR get_memsizes_s(int n);
 const unsigned memsizes_b[];
 
@@ -244,6 +246,7 @@ enum {
 #define CFG_INT_ROM_FLAG_F8ACTIVE	2
 #define CFG_INT_ROM_FLAG_F8MOD		0x20
 #define CFG_INT_ROM_FLAG_A1		0x80
+#define CFG_INT_ROM_FLAG_AATOM		0x100
 
 enum {
 	CFG_INT_TAPE_FREQ,
