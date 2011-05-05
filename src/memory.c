@@ -2,7 +2,7 @@
 
 void empty_write(word adr,byte data,void*d){ /*printf("mem[%04X]:=%02X\n", adr, data);*/ }
 byte empty_read(word adr,void*d) { return 0xFF; }
-byte zero_read(word adr,void*d) { return 0; }
+byte empty_read_zero(word adr,void*d) { return 0; }
 byte empty_read_addr(word adr,void*d) { return adr>>8; }
 
 void fill_read_proc(struct MEM_PROC*p, int cnt, void *read, void *pr)

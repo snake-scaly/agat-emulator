@@ -45,7 +45,8 @@ const unsigned memsizes_b[NMEMSIZES] = {
 	2 * 1024 * 1024,	// 16, 65536
 	4 * 1024 * 1024,	// 17, 131072
 	1 * 1024,		// 18, 262144
-	2 * 1024		// 19, 524288
+	2 * 1024,		// 19, 524288
+	40 * 1024		// 20, 1048576
 };
 
 
@@ -294,7 +295,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				return 0;
 			case SYSTEM_AA:
 				c->cfgint[CFG_INT_MEM_SIZE] = 8;
-				c->cfgint[CFG_INT_MEM_MASK] = 256 | 524288;
+				c->cfgint[CFG_INT_MEM_MASK] = 256 | 524288 | 1048576;
 				return 0;
 			}
 			break;
@@ -345,11 +346,11 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_EE:
 			case SYSTEM_1:
 			case SYSTEM_82:
-			case SYSTEM_AA:
 				c->dev_type = DEV_TAPE_FILE;
 				break;
 			case SYSTEM_9:
 			case SYSTEM_8A:
+			case SYSTEM_AA:
 				c->dev_type = DEV_TAPE_NONE;
 				break;
 			}
@@ -481,6 +482,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 			case SYSTEM_AA:
 				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\ACORN.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 3;
+				c->cfgint[CFG_INT_ROM_SIZE] = 0xC00;
 				return 0;
 			}
 			break;

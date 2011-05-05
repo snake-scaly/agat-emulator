@@ -282,7 +282,7 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 	_RMSG("updating base window");
 	PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 
-	and_run_state_flags(sr->name, ~RUNSTATE_RUNNING);
+	and_run_state_flags(sr->name, ~(RUNSTATE_RUNNING|RUNSTATE_PAUSED));
 	set_run_state_ptr(sr->name, NULL);
 
 	_RMSG("starting video window termination");
@@ -316,11 +316,12 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 	}
 	switch (id) {
 	case SYS_COMMAND_START:
+		and_run_state_flags(sr->name, ~RUNSTATE_PAUSED);
 		or_run_state_flags(sr->name, RUNSTATE_RUNNING);
 		PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 		break;
 	case SYS_COMMAND_STOP:
-		and_run_state_flags(sr->name, ~RUNSTATE_RUNNING);
+		or_run_state_flags(sr->name, RUNSTATE_PAUSED);
 		PostMessage(sr->base_w, WM_COMMAND, MAKEWPARAM(IDC_UPDATE,0), 0);
 		break;
 	case SYS_COMMAND_HRESET:

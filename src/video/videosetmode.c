@@ -38,6 +38,9 @@ void video_update_mode(struct VIDEO_STATE*vs)
 	case VIDEO_MODE_APPLE_1:
 		video_set_size(vs, CHAR_W * 40, CHAR_H * 24);
 		break;
+	case VIDEO_MODE_ACORN:
+		video_set_size(vs, CHAR_W * 32, CHAR_H * 24);
+		break;
 	}
 }
 

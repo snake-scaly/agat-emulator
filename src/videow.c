@@ -41,6 +41,22 @@ int is_keyb_english(struct SYS_RUN_STATE*sr)
 	}
 }
 
+int is_shift_pressed(struct SYS_RUN_STATE*sr)
+{
+	return keyb_is_pressed(sr, VK_SHIFT);
+}
+
+int is_ctrl_pressed(struct SYS_RUN_STATE*sr)
+{
+	return keyb_is_pressed(sr, VK_CONTROL);
+}
+
+int is_alt_pressed(struct SYS_RUN_STATE*sr)
+{
+	return keyb_is_pressed(sr, VK_MENU);
+}
+
+
 void update_alt_state(struct SYS_RUN_STATE*sr)
 {
 	if (keyb_is_pressed(sr, VK_LMENU)) sr->mousebtn|=0x10;
@@ -670,8 +686,10 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 				localize_str(LOC_VIDEO, 112, lbuf, sizeof(lbuf))); //TEXT("Сбросить состояние..."));
 			AppendMenu(m,MF_SEPARATOR,0,0);
 
-			AppendMenu(m,MF_STRING,IDC_INPUT_FILE,
-				localize_str(LOC_VIDEO, 200, lbuf, sizeof(lbuf))); //TEXT("Ввод из текстового файла...\tF6"));
+			if (sr->cursystype != SYSTEM_AA) {
+				AppendMenu(m,MF_STRING,IDC_INPUT_FILE,
+					localize_str(LOC_VIDEO, 200, lbuf, sizeof(lbuf))); //TEXT("Ввод из текстового файла...\tF6"));
+			}
 			AppendMenu(m,MF_STRING,IDC_COPY,
 				localize_str(LOC_VIDEO, 300, lbuf, sizeof(lbuf))); //TEXT("Копирование в буфер обмена\tF7"));
 			AppendMenu(m,MF_SEPARATOR,0,0);
@@ -819,6 +837,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			break;
 		}
 	case WM_KEYDOWN:
+		if (lp & 0x40000000) ++sr->key_rept;
 //		printf("key_down: %X %X\n", wp, lp);
 		if (sr->gconfig->flags & EMUL_FLAGS_LANGSEL) {
 			if (wp == VK_SHIFT && !(lp&0x40000000)) {
@@ -872,6 +891,8 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			break;
 		}
 //			printf("d=%x\n",d);
+			if (wp == VK_CAPITAL || wp == VK_INSERT || wp == VK_DELETE || wp == VK_BACK)
+				sr->key_down = wp;
 			if (d) {
 				sr->input_hbit = d>>7;
 				sr->cur_key = d | 0x80;
@@ -896,6 +917,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		break;
 	case WM_KEYUP:
+		sr->key_rept = 0;
 		if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 		switch (wp) {
 		case VK_APPS:

@@ -86,6 +86,11 @@ static byte sound_r(word adr, struct SLOT_RUN_STATE*st) // C030-C03F
 	return empty_read(adr, st);
 }
 
+int sound_write_bit(struct SYS_RUN_STATE*sr, int v)
+{
+	sound_write(sr->slots + CONF_SOUND, v);
+	return 0;
+}
 
 int  sound_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {

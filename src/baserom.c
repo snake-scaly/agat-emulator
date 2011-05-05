@@ -30,19 +30,23 @@ static byte rom1_read(word adr,struct BASEROM_STATE*st);
 static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
 {
 	struct BASEROM_STATE*st = ss->data;
-	if (ss->sr->cursystype != SYSTEM_1) {
-		int sz = st->rom_size;
-		int nb;
-		if (sz > 0x3000) sz = 0x3000;
-		nb = sz>>BASEMEM_BLOCK_SHIFT;
-//		printf("rom_size = %i (%x); nb = %i\n", sz, sz, nb);
-		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - sz) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
-		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
-	} else {
-		int sz = st->rom_size, nb;
-		nb = sz>>BASEMEM_BLOCK_SHIFT;
+
+	int sz = st->rom_size, nb;
+	nb = sz>>BASEMEM_BLOCK_SHIFT;
+
+	switch (ss->sr->cursystype) {
+	case SYSTEM_1:
 		if (!nb) nb = 1;
 		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom1_read, st);
+		break;
+	case SYSTEM_AA:
+		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
+		break;
+	default:	
+		if (sz > 0x3000) sz = 0x3000;
+		nb = sz>>BASEMEM_BLOCK_SHIFT;
+		fill_read_proc(ss->sr->base_mem + (0xD000>>BASEMEM_BLOCK_SHIFT), (0x3000 - sz) >> BASEMEM_BLOCK_SHIFT, empty_read_addr, NULL);
+		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
 	}
 }
 

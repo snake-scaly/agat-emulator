@@ -1,6 +1,9 @@
 #include "memory.h"
 #include "keyb.h"
 
+
+#define MEM_1K_SIZE		0x400
+
 #define BASEMEM_BLOCK_SIZE	0x800
 #define BASEMEM_BLOCK_SHIFT	11
 #define BASEMEM_NBLOCKS		0x20
@@ -72,6 +75,7 @@ struct SYS_RUN_STATE
 	struct GLOBAL_CONFIG * gconfig;
 	int sync_update;
 	int cur_lang; // 0 - english, 1 - russian
+	int key_rept;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

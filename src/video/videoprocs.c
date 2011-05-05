@@ -1155,6 +1155,527 @@ void aepaint_dhgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 
 void apaint_apple1(struct VIDEO_STATE*vs, dword addr, RECT*r);
 
+
+
+void aapaint_text0_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=addr&31;
+	int y=(addr>>5)&15;
+	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H*12/8+x*CHAR_W2));
+	const byte*mem = ramptr(vs->sr);
+	byte ch = mem_read(addr, vs->sr);
+	int  tc = vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
+	const byte*fnt=vs->font[0][0]+ch*12;
+	int mask;
+	int xi, yi, xn, yn;
+	r->left=x*CHAR_W;
+	r->top=y*CHAR_H*12/8;
+	r->right=r->left+CHAR_W;
+	r->bottom=r->top+CHAR_H*12/8;
+//	printf("%x: %i,%i: %02X (%i,%i)\n",addr,x,y,ch,bc,tc);
+	for (yn=12;yn;yn--,fnt++) {
+		byte*p=ptr;
+		for (xn=8,mask=0x80;xn;xn--,mask>>=1,p++) {
+			byte cl;
+#ifdef DOUBLE_X
+			byte c=((*fnt)&mask)?tc:bc;
+			cl=c|(c<<4);
+#else
+			byte c1, c2;
+			c1=((*fnt)&mask)?tc:bc;
+			mask>>=1;
+			xn--;
+			c2=((*fnt)&mask)?tc:bc;
+			cl=c2|(c1<<4);
+#endif
+			p[0]=cl;
+#ifdef DOUBLE_Y
+			p[bmp_pitch]=cl;
+#endif
+		}
+		ptr+=bmp_pitch;
+#ifdef DOUBLE_Y
+		ptr+=bmp_pitch;
+#endif
+	}
+}
+
+// 64x64 colour
+void aapaint_cgraph1_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<2)&63)<<2;
+	int y=((addr>>4)&63)*3;
+	int sx=32, sy=3;
+	int clr[4]={2,3,4,1};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=4;i;i--,b<<=2,ptr+=4) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*2+1]=c;
+		ptr[2]=c;
+		ptr[3]=c;
+		ptr[bmp_pitch+2]=c;
+		ptr[bmp_pitch+3]=c;
+		ptr[bmp_pitch*2+2]=c;
+		ptr[bmp_pitch*2+3]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*3+1]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*4+1]=c;
+		ptr[bmp_pitch*5]=c;
+		ptr[bmp_pitch*5+1]=c;
+		ptr[bmp_pitch*3+2]=c;
+		ptr[bmp_pitch*3+3]=c;
+		ptr[bmp_pitch*4+2]=c;
+		ptr[bmp_pitch*4+3]=c;
+		ptr[bmp_pitch*5+2]=c;
+		ptr[bmp_pitch*5+3]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=4;i;i--,b<<=2,ptr+=2) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch*2]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch+1]=c;
+		ptr[bmp_pitch*2+1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*5]=c;
+		ptr[bmp_pitch*3+1]=c;
+		ptr[bmp_pitch*4+1]=c;
+		ptr[bmp_pitch*5+1]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 128x64 mono
+void aapaint_mgraph1_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&127)<<1;
+	int y=((addr>>4)&63)*3;
+	int sx=16, sy=3;
+	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=8;i;i--,b<<=1,ptr+=2) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*2+1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*3+1]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*4+1]=c;
+		ptr[bmp_pitch*5]=c;
+		ptr[bmp_pitch*5+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=8;i;i--,b<<=1,ptr++) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch*2]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*5]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 128x64 colour
+void aapaint_cgraph2_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&255);
+	int y=((addr>>5)&127)*3;
+	int sx=16, sy=3;
+	int clr[4]={2,3,4,1};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=4;i;i--,b<<=2,ptr+=2) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*2+1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*3+1]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*4+1]=c;
+		ptr[bmp_pitch*5]=c;
+		ptr[bmp_pitch*5+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=4;i;i--,b<<=2,ptr++) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch*2]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*4]=c;
+		ptr[bmp_pitch*5]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 128x96 mono
+void aapaint_mgraph2_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&127)<<1;
+	int y=((addr>>4)&127)<<1;
+	int sx=16, sy=2;
+	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=8;i;i--,b<<=1,ptr+=2) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*2+1]=c;
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*3+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=8;i;i--,b<<=1,ptr++) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*3]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 128x96 colour
+void aapaint_cgraph3_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&255);
+	int y=((addr>>5)&127)<<1;
+	int sx=16, sy=2;
+	int clr[4]={2,3,4,1};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=4;i;i--,b<<=2,ptr+=2) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*2+1]=c;
+		ptr[bmp_pitch*3]=c;
+		ptr[bmp_pitch*3+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=4;i;i--,b<<=2,ptr++) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[bmp_pitch]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch*2]=c;
+		ptr[bmp_pitch*3]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 128x192 mono
+void aapaint_mgraph3_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&127)<<1;
+	int y=(addr>>4)&255;
+	int sx=16, sy=1;
+	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=8;i;i--,b<<=1,ptr+=2) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=8;i;i--,b<<=1,ptr++) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// color 128x192
+void aapaint_cgraph4_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=((addr<<3)&255);
+	int y=(addr>>5)&255;
+	int sx=16, sy=1;
+	int clr[4]={2,3,4,1};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=4;i;i--,b<<=2,ptr+=2) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+		ptr[1]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+		ptr[bmp_pitch+1]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=4;i;i--,b<<=2,ptr++) {
+		byte c;
+		c=clr[b>>6];
+		c|=(c<<4);
+		ptr[0]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
+// 256x192 mono
+void aapaint_mgraph4_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
+{
+	int bmp_pitch = vs->sr->bmp_pitch;
+	byte*bmp_bits = vs->sr->bmp_bits;
+	int x=(addr<<3)&255;
+	int y=(addr>>5)&255;
+	int sx=8, sy=1;
+	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
+	int i;
+	byte b=mem_read(addr, vs->sr);
+	byte *ptr;
+#ifdef DOUBLE_X
+	x<<=1;
+	sx<<=1;
+#endif
+#ifdef DOUBLE_Y
+	y<<=1;
+	sy<<=1;
+#endif
+	r->left=x;
+	r->top=y;
+	r->right=r->left+sx;
+	r->bottom=r->top+sy;
+//	printf("%x: (%i,%i)\n",addr,x,y);
+	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
+#ifdef DOUBLE_X
+	for (i=8;i;i--,b<<=1,ptr++) {
+		byte c;
+		c=clr[(b&0x80)?1:0];
+		c|=(c<<4);
+		ptr[0]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+#endif //DOUBLE_Y
+	}
+#else
+	for (i=4;i;i--,b<<=1,ptr++) {
+		byte c1, c2, c;
+		c1=clr[(b&0x80)?1:0];
+		b<<=1;
+		c2=clr[(b&0x80)?1:0];
+		c=c2|(c1<<4);
+		ptr[0]=c;
+#ifdef DOUBLE_Y
+		ptr[bmp_pitch]=c;
+#endif //DOUBLE_Y
+	}
+#endif //DOUBLE_X
+}
+
 void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 {
 	paint_lgr_addr, //0
@@ -1172,4 +1693,13 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r) =
 	apaint_apple1, //12
 	aepaint_t80_addr, // 13
 	aepaint_dhgr_addr, // 14
+	aapaint_text0_addr, // 15 (0), atom mode 0
+	aapaint_cgraph1_addr, // 16 (1), atom mode 1a
+	aapaint_mgraph1_addr, // 17 (3), atom mode 1
+	aapaint_cgraph2_addr, // 18 (5), atom mode 2a
+	aapaint_mgraph2_addr, // 19 (7), atom mode 2
+	aapaint_cgraph3_addr, // 20 (9), atom mode 3a
+	aapaint_mgraph3_addr, // 21 (b), atom mode 3
+	aapaint_cgraph4_addr, // 22 (d), atom mode 4a
+	aapaint_mgraph4_addr, // 23 (f), atom mode 4
 };

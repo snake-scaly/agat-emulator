@@ -115,7 +115,8 @@ enum {
 	VIDEO_MODE_INVALID,
 	VIDEO_MODE_AGAT,
 	VIDEO_MODE_APPLE,
-	VIDEO_MODE_APPLE_1
+	VIDEO_MODE_APPLE_1,
+	VIDEO_MODE_ACORN,
 };
 
 
@@ -139,6 +140,7 @@ int video_set_mono(struct VIDEO_STATE*vs, int a, int x); // and with a then xor 
 void videosel_7(struct VIDEO_STATE*vs, int mode);
 void videosel_9(struct VIDEO_STATE*vs, int mode);
 int  videosel(struct VIDEO_STATE*vs, int mode);
+void videosel_aa(struct VIDEO_STATE*vs, int mode);
 
 void update_video_ap(struct VIDEO_STATE*vs);
 void vsel_ap(struct VIDEO_STATE*vs, word adr);

@@ -143,7 +143,7 @@ int get_n_running_systems()
 {
 	int i, r = 0;
 	for (i = 0; i < n_runs; ++ i) {
-		if (runs[i].name && runs[i].st && (runs[i].flags & RUNSTATE_RUNNING)) ++r;
+		if (runs[i].name && runs[i].st && (runs[i].flags & (RUNSTATE_RUNNING | RUNSTATE_PAUSED))) ++r;
 	}
 	return r;
 }

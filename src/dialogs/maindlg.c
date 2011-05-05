@@ -505,6 +505,7 @@ static void on_quit(HWND hwnd)
 {
 	int n;
 	n = get_n_running_systems();
+	printf("n_running_systems = %i\n", n);
 	if (n) {
 		int r;
 		TCHAR buf[2][256];

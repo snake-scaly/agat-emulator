@@ -153,7 +153,7 @@ struct SYSCONFIG
 };
 
 
-#define NMEMSIZES 20
+#define NMEMSIZES 21
 LPCTSTR get_memsizes_s(int n);
 const unsigned memsizes_b[];
 

@@ -303,6 +303,120 @@ int ram1_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTC
 	}
 	return 0;
 }
+static int ramaa_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
+{
+	struct BASERAM_STATE*st = ss->data;
+	switch (cmd) {
+	case SYS_COMMAND_HRESET:
+		clear_block(st->ram, st->ram_size);
+		break;
+	}
+	return 0;
+}
+
+static byte ramaa_read1(word adr,struct BASERAM_STATE*st) // 0..3FF
+{
+	if (adr >= MEM_1K_SIZE) return empty_read(adr, st);
+	return st->ram[adr];
+}
+
+static void ramaa_write1(word adr,byte d,struct BASERAM_STATE*st) // 0..3FF
+{
+	if (adr >= MEM_1K_SIZE) return;
+	st->ram[adr] = d;
+}
+
+static byte ramaa_read2(word adr,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	adr -= 0x2800;
+	if (adr >= MEM_1K_SIZE*5) return empty_read_zero(adr, st);
+	return st->ram[adr + MEM_1K_SIZE*7];
+}
+
+static void ramaa_write2(word adr,byte d,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	adr -= 0x2800;
+	if (adr >= MEM_1K_SIZE*5) return;
+	st->ram[adr + MEM_1K_SIZE*7] = d;
+}
+
+static byte ramaa_read3_2k(word adr,struct BASERAM_STATE*st) // 8000..83FF
+{
+	adr -= 0x8000;
+	if (adr >= MEM_1K_SIZE) return empty_read_zero(adr, st);
+	return st->ram[adr + MEM_1K_SIZE];
+}
+
+static void ramaa_write3_2k(word adr,byte d,struct BASERAM_STATE*st) // 8000..83FF
+{
+	word adr0 = adr;
+	byte ld;
+
+	adr -= 0x8000;
+	if (adr >= MEM_1K_SIZE) return;
+	adr += MEM_1K_SIZE;
+	ld = st->ram[adr];
+	if (ld == d) return;
+	st->ram[adr] = d;
+	vid_invalidate_addr(st->sr, adr0);
+}
+
+static byte ramaa_read3_12k(word adr,struct BASERAM_STATE*st) // 8000..97FF
+{
+	adr -= 0x8000;
+	return st->ram[adr + MEM_1K_SIZE];
+}
+
+static void ramaa_write3_12k(word adr,byte d,struct BASERAM_STATE*st) // 8000..97FF
+{
+	word adr0 = adr;
+	byte ld;
+//	printf("atom ram write: %04X, %02X\n", adr, d);
+	adr -= 0x8000;
+	adr += MEM_1K_SIZE;
+	ld = st->ram[adr];
+	if (ld == d) return;
+	st->ram[adr] = d;
+	vid_invalidate_addr(st->sr, adr0);
+}
+
+int ramaa_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCONFIG*sc)
+{
+
+	struct BASERAM_STATE*st;
+
+	st = ram_init(sr, ss, sc);
+	if (!st) return -1;
+
+	printf("acorn atom ram initialization\n");
+
+	ss->data = st;
+	ss->free = ram_free;
+	ss->command = ram1_command;
+
+	{
+		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
+		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
+		switch (nb) {
+		case 1: // 2K
+			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st);
+			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 1, ramaa_read3_2k, ramaa_write3_2k, st);
+			break;
+		case 6: // 12K
+			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st);
+			fill_rw_proc(sr->base_mem + (0x2800>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read2, ramaa_write2, st);
+			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read3_12k, ramaa_write3_12k, st);
+			break;
+		case 20: // 40K
+			fill_rw_proc(sr->base_mem, 20, ram_read, ram_write, st);
+			break;
+		default:
+			return -1;
+		}
+	}
+	return 0;
+}
+
 
 static void ram7_set_state(struct BASERAM_STATE*st, int state)
 {
@@ -842,6 +956,8 @@ int ram_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 		return ram1_install(sr, ss, sc);
 	case SYSTEM_E:
 		return rame_install(sr, ss, sc);
+	case SYSTEM_AA:
+		return ramaa_install(sr, ss, sc);
 	}
 	return -1;
 }

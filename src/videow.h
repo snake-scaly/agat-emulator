@@ -33,6 +33,9 @@ int video_select_80col(struct SYS_RUN_STATE*sr, int set);
 int video_get_flash(struct SYS_RUN_STATE*sr);
 int video_get_flags(struct SYS_RUN_STATE*sr, word addr); // apple 2e flags
 int is_keyb_english(struct SYS_RUN_STATE*sr);
+int is_shift_pressed(struct SYS_RUN_STATE*sr);
+int is_ctrl_pressed(struct SYS_RUN_STATE*sr);
+int is_alt_pressed(struct SYS_RUN_STATE*sr);
 
 
 #ifndef FLASH_INTERVAL

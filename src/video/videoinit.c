@@ -224,6 +224,7 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	case SYSTEM_1:
 	case SYSTEM_A:
 	case SYSTEM_P:
+	case SYSTEM_AA:
 		set_rb_count(vs, 1, 0);
 		break;
 	case SYSTEM_E:
@@ -337,6 +338,10 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		video_set_mode(vs, VIDEO_MODE_APPLE_1);
 		set_video_active_range(vs, 0, 0, 1);
 		set_video_type(vs, 12);
+		break;
+	case SYSTEM_AA:
+		video_set_mode(vs, VIDEO_MODE_ACORN);
+		videosel_aa(vs, 0);
 		break;
 	}
 	if (sr->config->systype == SYSTEM_8A) {
