@@ -48,6 +48,8 @@ enum {
 	SYS_COMMAND_GETREG,    	    // data = reg index, param = pointer to value
 	SYS_COMMAND_SETREG,    	    // data = reg index, param = value
 
+	SYS_COMMAND_WAKEUP,    	    // wakeup CPU module, data, param = 0
+
 	SYS_N_COMMANDS
 };
 

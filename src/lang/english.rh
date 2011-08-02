@@ -459,7 +459,7 @@ BEGIN
 	4001	"Invalid processor instruction. Continue?"
 	4002	" (inactive)"
 // FDD module: 5000
-	5000	"Drive 800KB (S%i,D%i)"
+	5000	"Drive 840KB (S%i,D%i)"
 	5001	"Drive 140KB (S%i,D%i)"
 	5002	"Insert disk..."
 	5003	"Remove disk"

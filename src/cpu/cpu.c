@@ -98,6 +98,9 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		if (data == REG6502_TSC) { *(dword*)param = cs->tsc_6502; r = 1; }
 		else r = cpu_cmd(cs, cmd, data, param);
 		return r;
+	case SYS_COMMAND_WAKEUP:
+		cpu_wakeup(cs, data);
+		return 0;
 	default:
 		return cpu_cmd(cs, cmd, data, param);
 	}
@@ -124,6 +127,7 @@ static int cpu_term(struct SLOT_RUN_STATE*st)
 	CloseHandle(cs->th);
 	CloseHandle(cs->wakeup);
 	CloseHandle(cs->response);
+	CloseHandle(cs->sleep);
 	cs->free(cs);
 	free(cs);
 	_CMSG("finished");
@@ -182,6 +186,7 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 
 	cs->wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
 	cs->response = CreateEvent(NULL, FALSE, FALSE, NULL);
+	cs->sleep = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	switch (cf->dev_type) {
 	case DEV_6502:
@@ -304,6 +309,13 @@ int cpu_step(struct CPU_STATE*st, int ncmd)
 	return 0;
 }
 
+static int cpu_wakeup(struct CPU_STATE*cs, int flags)
+{
+	SetEvent(cs->sleep);
+//	puts("wakeup");
+	return 0;
+}
+
 
 static void decrement_int(struct CPU_STATE*cs, int n, int id, int cmd)
 {
@@ -394,7 +406,8 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			unsigned rt=n_ticks/cs->freq_6502;
 			if (rt-t+t0>cs->min_msleep) {
 				if (rt>t-t0 && !cs->fast_mode && ! cs->fast_boost) {
- 					msleep(rt-t+t0);
+					WaitForSingleObject(cs->sleep, rt-t+t0);
+// 					msleep(rt-t+t0);
 				}
 				t0=t;
 				n_ticks=0;

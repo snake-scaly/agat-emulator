@@ -838,6 +838,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 	case WM_KEYDOWN:
 		if (lp & 0x40000000) ++sr->key_rept;
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 //		printf("key_down: %X %X\n", wp, lp);
 		if (sr->gconfig->flags & EMUL_FLAGS_LANGSEL) {
 			if (wp == VK_SHIFT && !(lp&0x40000000)) {
@@ -917,6 +918,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		}
 		break;
 	case WM_KEYUP:
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 		sr->key_rept = 0;
 		if (sr->cursystype == SYSTEM_E) update_alt_state(sr);
 		switch (wp) {
@@ -929,6 +931,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=1;
 		sr->mousechanged|=1;
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 1, 0);
 		
 /*		if (GetKeyState(VK_MENU)) 
@@ -940,11 +943,13 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 		if (sr->mouselock) lock_mouse(sr);
 		sr->mousebtn|=2;
 		sr->mousechanged|=2;
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 2, 0);
 		break;
 	case WM_LBUTTONUP:
 		sr->mousebtn&=~1;
 		sr->mousechanged|=1;
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 1, 0);
 		break;
 	case WM_NCLBUTTONDBLCLK:
@@ -956,6 +961,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	case WM_RBUTTONUP:
 		sr->mousebtn&=~2;
 		sr->mousechanged|=2;
+		system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 		system_command(sr, SYS_COMMAND_MOUSE_EVENT, 2, 0);
 		break;
 	case WM_DESTROY:
@@ -1057,6 +1063,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			sr->xmouse += sr->dxmouse;
 			sr->ymouse += sr->dymouse;
 			sr->mousechanged|=0x80;
+			system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 			system_command(sr, SYS_COMMAND_MOUSE_EVENT, 0x80, 0);
 //			printf("x=%i, y=%i\n", sr->xmousepos, sr->ymousepos);
 		}

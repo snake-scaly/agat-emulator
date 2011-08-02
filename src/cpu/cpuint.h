@@ -48,7 +48,7 @@ struct CPU_STATE
 	int need_cpusleep;
 	volatile int term_req;
 	volatile int sleep_req;
-	HANDLE wakeup, response;
+	HANDLE wakeup, response, sleep;
 
 	int int_ticks[2];
 

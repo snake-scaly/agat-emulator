@@ -88,14 +88,6 @@ int xio_control_aa(struct SYS_RUN_STATE*sr, int req)
 }
 
 
-static int aa_get_sync(struct SYS_RUN_STATE*sr)
-{
-	static int ss = 0;
-	ss ^= 1;
-	return ss;
-}
-
-
 static byte aascan_key(int row, struct SYS_RUN_STATE*sr)
 {
 	byte r = 0;
@@ -147,6 +139,21 @@ static byte aascan_key(int row, struct SYS_RUN_STATE*sr)
 	return r;
 }
 
+static int aa_get_sync(struct SYS_RUN_STATE*sr)
+{
+	int ndiv = 16667;
+	int tsc = cpu_get_tsc(sr) % ndiv;
+	return tsc > ndiv/300;
+}
+
+
+static int aa_get_timer(struct SYS_RUN_STATE*sr)
+{
+	int ndiv = 416;
+	int tsc = cpu_get_tsc(sr) % ndiv;
+	return tsc < ndiv/2;
+}
+
 static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
 {
 	struct AATOM_DATA*aa = sr->sys.ptr;
@@ -161,8 +168,10 @@ static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
 		break;
 	case 2: // port C
 		if (!aa_get_sync(sr)) r |= 0x80;
+		if (aa_get_timer(sr)) r |= 0x10;
 		if (sr->key_rept == aa->lkeyrept) r |= 0x40;
 		aa->lkeyrept = sr->key_rept;
+//		printf("r = %X\n", r);
 //		if (!is_alt_pressed(sr)) r |= 0x40; // rept
 		break;
 	case 3: // Ctrl
@@ -197,8 +206,12 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 	case 1: // port B
 		break;
 	case 2: // port C
-		if (d & 4) 
-		aabeep(sr, (d & 4)>>2);
+		aabeep(sr, d & 4);
+		if (d & 2) {
+//			puts("tape output");
+		}
+//		if (d & 4) 
+//		aabeep(sr, (d & 4)>>2);
 		break;
 	case 3: // Ctrl
 		if ((d == 5) || (d == 4)) { // speaker to input
