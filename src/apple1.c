@@ -297,7 +297,7 @@ static int restart_system_1(struct SYS_RUN_STATE*sr)
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
 	int bmp_pitch = sr->bmp_pitch;
 	byte*bmp_bits = sr->bmp_bits;
-	memset(a1, 0, sizeof(*a1));
+	a1->dsp_cr = a1->kbd_cr = a1->remains = a1->pos[0] = a1->pos[1] = a1->lsz = 0;
 	memset(bmp_bits, 0, bmp_pitch * CHAR_H * 24);
 	return 0;
 }
