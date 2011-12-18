@@ -131,6 +131,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 	drv->disk=ro?isfopen(name):iosfopen(name);
 	if (!ro&&!drv->disk) {
 		ro = 1;
+//		puts("set ro to 1");
 		drv->disk=isfopen(name);
 	}
 	if (!drv->disk) {
@@ -148,6 +149,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 //		drv->disk=0;
 //		return -1;
 	}
+//	printf("ro: %i\n", ro);
 	drv->readonly=ro;
 	if (!memcmp(std_sig,drv->disk_header,sizeof(std_sig)-1)) {
 		if (drv->disk_header[48]) drv->readonly=1;
@@ -161,6 +163,7 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 		puts("using ProDOS order");
 		drv->prodos = 1;
 	} else drv->prodos = 0;
+//	printf("readonly: %i\n", drv->readonly);
 	drv->error = 0;
 	return 0;
 }
@@ -940,6 +943,7 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 			fdd_save_track(data);
 		}
 		if (data->state.C0XD) {
+//		printf("readonly[%i]: %i\n", data->drv, data->drives[data->drv].readonly);
 			r = data->drives[data->drv].readonly?0x80:0x00;
 		}
 		break;

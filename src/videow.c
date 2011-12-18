@@ -1063,7 +1063,7 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 			sr->xmouse += sr->dxmouse;
 			sr->ymouse += sr->dymouse;
 			sr->mousechanged|=0x80;
-			system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
+//			system_command(sr, SYS_COMMAND_WAKEUP, 0, 0);
 			system_command(sr, SYS_COMMAND_MOUSE_EVENT, 0x80, 0);
 //			printf("x=%i, y=%i\n", sr->xmousepos, sr->ymousepos);
 		}

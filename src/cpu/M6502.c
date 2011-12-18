@@ -194,7 +194,7 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 void Reset6502(M6502 *R)
 {
   R->A=R->X=R->Y=0x00;
-  R->P=Z_FLAG|R_FLAG;
+  R->P=Z_FLAG|R_FLAG|I_FLAG;
   R->S=0xFF;
   R->PC.B.l=Rd6502(R,0xFFFC);
   R->PC.B.h=Rd6502(R,0xFFFD);   
@@ -441,6 +441,7 @@ int init_cpu_M6502(struct CPU_STATE*cs)
 	M6502 *st;
 	st = calloc(1, sizeof(*st));
 	st->User = cs->sr;
+	st->P = I_FLAG | R_FLAG;
 	cs->exec_op = exec_M6502;
 	cs->intr = intr_M6502;
 	cs->free = free_M6502;

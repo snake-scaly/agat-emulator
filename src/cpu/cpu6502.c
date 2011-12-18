@@ -1263,6 +1263,7 @@ static int exec_6502(struct CPU_STATE*cs)
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
+		st->f=FLAG_Z | FLAG_I | FLAG_1;
 //		puts("reset");
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
@@ -1469,6 +1470,7 @@ int init_cpu_6502(struct CPU_STATE*cs)
 	struct STATE_6502*st;
 	st = calloc(1, sizeof(*st));
 	st->sr = cs->sr;
+	st->f = FLAG_I | FLAG_1;
 	st->ints_req = INT_RESET;
 	cs->exec_op = exec_6502;
 	cs->intr = intr_6502;
