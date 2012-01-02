@@ -265,6 +265,7 @@ int cpu_intr(struct CPU_STATE*st, int t, int nticks)
 int cpu_pause(struct CPU_STATE*st, int p)
 {
 	_CMSG("start");
+//	printf("thread_id = %i, thid = %i\n", GetCurrentThreadId(), st->thid);
 	if (st->term_req) {
 		_CMSG("going to terminate");
 		return 2;
@@ -276,11 +277,11 @@ int cpu_pause(struct CPU_STATE*st, int p)
 			return 1;
 		}
 		_CMSG("reset wakeup event");
-		ResetEvent(st->wakeup);
 		ResetEvent(st->response);
+		ResetEvent(st->wakeup);
 		st->sleep_req = 1;
 		_CMSG("waiting for response");
-		WaitForSingleObject(st->response, 5000);
+		WaitForSingleObject(st->response, 500);
 		_CMSG("got response");
 		return 0;
 	} else {
@@ -290,8 +291,12 @@ int cpu_pause(struct CPU_STATE*st, int p)
 			return 1;
 		}
 		st->sleep_req = 0;
+		ResetEvent(st->response);
 		SetEvent(st->wakeup);
 		_CMSG("set wakeup event");
+		_CMSG("waiting for response");
+		WaitForSingleObject(st->response, 500);
+		_CMSG("got wakeup response");
 	}
 	_CMSG("exit");
 	return 0;
@@ -360,11 +365,14 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 		int r, t, rt;
 		while (cs->sleep_req) {
 			unsigned ta = get_n_msec();
+			_CMSG("got sleep request");
 			SetEvent(cs->response);
 			_CMSG("pulsed response event on sleep request");
 			_CMSG("waiting for wakeup event");
 			WaitForSingleObject(cs->wakeup, INFINITE);
 			_CMSG("got wakeup event");
+			SetEvent(cs->response);
+			_CMSG("pulsed response event on wakeup request");
 			t0 += get_n_msec() - ta;
 			if (cs->term_req) {
 				_CMSG("got terminate request after wakeup");

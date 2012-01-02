@@ -328,6 +328,19 @@ BEGIN
 END
 
 
+IDD_PRNAACFG DIALOG DISCARDABLE  0, 0, 206, 51
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка интерфейса принтера"
+FONT 9, "Tahoma"
+BEGIN
+    COMBOBOX        IDC_PRINT_MODE,80,8,119,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,42,28,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,109,28,50,14
+    LTEXT           "Режим вывода:",102,7,10,68,8
+END
+
+
 IDD_SCSIDLG DIALOG DISCARDABLE  0, 0, 227, 198
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Свойства SCSI"
@@ -450,6 +463,23 @@ BEGIN
 END
 
 
+IDD_FDDAACFG DIALOG DISCARDABLE  0, 0, 203, 104
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка контроллера дисковода"
+FONT 9, "Tahoma"
+BEGIN
+    LTEXT           "Образ диска по умолчанию:",14,7,7,98,8
+    EDITTEXT        IDC_IMG1,7,19,171,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_IMGSEL1,181,18,15,14
+    LTEXT           "Образ ПЗУ контроллера:",17,7,49,87,8
+    EDITTEXT        IDC_IMGROM,7,62,169,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_IMGROMSEL,181,61,15,14
+    DEFPUSHBUTTON   "OK",IDOK,43,83,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,83,50,14
+    CONTROL         "Только для чтения",IDC_RO1,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,21,35,82,10
+END
+
 
 STRINGTABLE
 BEGIN
@@ -464,6 +494,7 @@ BEGIN
 	5001	"Дисковод 140Кб (S%i,D%i)"
 	5002	"Вставить диск..."
 	5003	"Извлечь диск"
+	5004	"Дисковод 92Кб"
 // Joystick module: 6000
 // Sound module: 7000
 	7000	"8000 Гц"
@@ -650,6 +681,8 @@ BEGIN
 	12137	"Плата знакогенератора"
 	12138	"Плата Apple Firmware Card"
 	12139	"Терминал Apple I"
+	12140	"Параллельный интерфейс для Atom"
+	12141	"Дисковый интерфейс для Atom"
 
 	12200	"Слот №0"
 	12201	"Слот №1"

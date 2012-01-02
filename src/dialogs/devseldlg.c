@@ -85,6 +85,15 @@ static int dialog_init(HWND hwnd, void*p)
 	case SYSTEM_1: // apple I
 		DevList_AddItem(hlist, DEV_ACI);
 		return 0;
+	case SYSTEM_AA: // Acorn Atom
+		switch (inf->slotid) {
+		case CONF_PRINTER:
+			DevList_AddItem(hlist, DEV_PRINTER_ATOM);
+			return 0;
+		case CONF_SLOT1:
+			DevList_AddItem(hlist, DEV_FDD_ATOM);
+			return 0;
+		}
 	}
 	return -1;
 }

@@ -302,34 +302,21 @@ BEGIN
                     WS_TABSTOP,88,86,82,10
 END
 
-IDD_SHUGCFG DIALOG DISCARDABLE  0, 0, 203, 198
+IDD_FDDAACFG DIALOG DISCARDABLE  0, 0, 203, 104
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
-CAPTION "Настройка контроллера Shugart"
+CAPTION "Настройка контроллера дисковода"
 FONT 9, "Tahoma"
 BEGIN
-    LTEXT           "Выбор количества устройств:",11,7,7,104,8
-    CONTROL         "Присутствует первый дисковод",IDC_DRV1,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,21,20,125,10
-    CONTROL         "Присутствует второй дисковод",IDC_DRV2,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,21,33,124,10
-    LTEXT           "Образ диска по умолчанию:",14,7,50,98,8
-    LTEXT           "Устройство №1:",15,21,64,58,8
-    EDITTEXT        IDC_IMG1,88,62,90,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_IMGSEL1,181,61,15,14
-    LTEXT           "Устройство №2:",16,21,97,58,8
-    EDITTEXT        IDC_IMG2,88,95,90,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_IMGSEL2,181,93,15,14
-    CONTROL         "Только для чтения",IDC_RO2,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,88,110,82,10
-    LTEXT           "Образ ПЗУ контроллера:",17,7,129,87,8
-    EDITTEXT        IDC_IMGROM,7,142,169,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_IMGROMSEL,181,141,15,14
-    CONTROL         "«Быстрый» режим",IDC_FAST,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,21,161,81,10
-    DEFPUSHBUTTON   "OK",IDOK,43,177,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,110,177,50,14
+    LTEXT           "Образ диска по умолчанию:",14,7,7,98,8
+    EDITTEXT        IDC_IMG1,7,19,171,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_IMGSEL1,181,18,15,14
+    LTEXT           "Образ ПЗУ контроллера:",17,7,49,87,8
+    EDITTEXT        IDC_IMGROM,7,62,169,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_IMGROMSEL,181,61,15,14
+    DEFPUSHBUTTON   "OK",IDOK,43,83,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,110,83,50,14
     CONTROL         "Только для чтения",IDC_RO1,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,88,78,82,10
+                    WS_TABSTOP,21,35,82,10
 END
 
 IDD_SYSCHOOSE DIALOG DISCARDABLE  0, 0, 239, 147
@@ -542,6 +529,18 @@ BEGIN
     PUSHBUTTON      "Отмена",IDCANCEL,154,142,50,14
 END
 
+IDD_PRNAACFG DIALOG DISCARDABLE  0, 0, 206, 51
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+CAPTION "Настройка интерфейса принтера"
+FONT 9, "Tahoma"
+BEGIN
+    COMBOBOX        IDC_PRINT_MODE,80,8,119,54,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,42,28,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,109,28,50,14
+    LTEXT           "Режим вывода:",102,7,10,68,8
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -638,7 +637,7 @@ BEGIN
         BOTTOMMARGIN, 200
     END
 
-    IDD_SHUGCFG, DIALOG
+    IDD_FDDAACFG, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 196
@@ -646,7 +645,7 @@ BEGIN
         VERTGUIDE, 79
         VERTGUIDE, 88
         TOPMARGIN, 7
-        BOTTOMMARGIN, 191
+        BOTTOMMARGIN, 97
     END
 
     IDD_SYSCHOOSE, DIALOG
@@ -800,6 +799,7 @@ BEGIN
     5001                    "Дисковод 140Кб (S%i,D%i)"
     5002                    "Вставить диск..."
     5003                    "Извлечь диск"
+    5004                    "Дисковод 92Кб"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -1000,13 +1000,16 @@ BEGIN
     12013                   "512 Кбайт"
     12014                   "768 Кбайт"
     12015                   "1 Мбайт"
-    12016                   "2 Мбайта"  // 65536
-    12017                   "4 Мбайта"  // 131072
-    12018                   "1 Кбайт"   // 262144
-    12019                   "2 Кбайта"  // 524288
-    12020                   "40 Кбайт"
 END
 
+STRINGTABLE DISCARDABLE 
+BEGIN
+    12016                   "2 Мбайта"
+    12017                   "4 Мбайта"
+    12018                   "1 Кбайт"
+    12019                   "2 Кбайта"
+    12020                   "40 Кбайт"
+END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
@@ -1058,6 +1061,8 @@ BEGIN
     12137                   "Плата знакогенератора"
     12138                   "Плата Apple Firmware Card"
     12139                   "Терминал Apple I"
+    12140                   "Параллельный интерфейс для Atom"
+    12141                   "Дисковый интерфейс для Atom"
 END
 
 STRINGTABLE DISCARDABLE 

@@ -91,6 +91,9 @@ enum {
 	DEV_FIRMWARE, // firmware card for apple2
 	DEV_TTYA1, // terminal for Apple I
 	
+	DEV_PRINTER_ATOM, // printer interface for Acorn Atom
+	DEV_FDD_ATOM, // floppy card for Acorn Atom
+
 	NDEVTYPES
 };
 

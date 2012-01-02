@@ -15,6 +15,8 @@ struct AATOM_DATA
 	byte aa8255_ctrl;
 	int keyrow;
 	int lkeyrept;
+	byte aa8255_data[4];
+	byte aa6522_data[16];
 };
 
 void acorn_select_vmode(int mode, struct SYS_RUN_STATE*sr);
@@ -171,6 +173,8 @@ static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
 		if (aa_get_timer(sr)) r |= 0x10;
 		if (sr->key_rept == aa->lkeyrept) r |= 0x40;
 		aa->lkeyrept = sr->key_rept;
+		r |= aa->aa8255_data[adr] & 0x0F;
+//		printf("port C read: %02X\n", r);
 //		printf("r = %X\n", r);
 //		if (!is_alt_pressed(sr)) r |= 0x40; // rept
 		break;
@@ -198,6 +202,7 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 {
 	struct AATOM_DATA*aa = sr->sys.ptr;
 	adr &= 3;
+	aa->aa8255_data[adr] = d;
 	switch (adr) {
 	case 0: // port A
 		acorn_select_vmode(d >> 4, sr);
@@ -206,6 +211,7 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 	case 1: // port B
 		break;
 	case 2: // port C
+		printf("port C write: %02X\n", d);
 		aabeep(sr, d & 4);
 		if (d & 2) {
 //			puts("tape output");
@@ -214,6 +220,7 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 //		aabeep(sr, (d & 4)>>2);
 		break;
 	case 3: // Ctrl
+		printf("control write: %02X\n", d);
 		if ((d == 5) || (d == 4)) { // speaker to input
 			aabeep(sr, d & 1);
 		}
@@ -222,16 +229,34 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 	}
 }
 
+static void output_printer(struct SYS_RUN_STATE*sr, byte d)
+{
+	struct AATOM_DATA*aa = sr->sys.ptr;
+	if (sr->config->slots[CONF_PRINTER].dev_type != DEV_PRINTER_ATOM) return;
+	mem_proc_write(0, d, sr->slots[CONF_PRINTER].service_procs + 0);
+//	printf("[%c]", d);
+}
+
 
 static byte aa6522_read(word adr, struct SYS_RUN_STATE*sr)
 {
+	struct AATOM_DATA*aa = sr->sys.ptr;
 	adr &= 15;
-	return 0;
+//	printf("printer_read: %x: %x\n", adr, aa->aa6522_data[adr]);
+	return aa->aa6522_data[adr];
 }
 
 static void aa6522_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 {
+	struct AATOM_DATA*aa = sr->sys.ptr;
 	adr &= 15;
+//	printf("printer_write: %x, %x\n", adr, d);
+	switch (adr) {
+	case 1: // data register A (printer output)
+		output_printer(sr, d);
+		break;
+	}
+	aa->aa6522_data[adr] = d;
 }
 
 

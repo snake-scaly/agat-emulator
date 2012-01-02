@@ -73,6 +73,8 @@ enum { // for GETREG/SETREG
 
 struct SYS_RUN_STATE;
 
+#define N_SERVICE_PROCS 4
+
 struct SLOT_RUN_STATE
 {
 	void *data;
@@ -85,6 +87,7 @@ struct SLOT_RUN_STATE
 	struct MEM_PROC *baseio_sel; //c0y0
 	struct MEM_PROC *io_sel;  //cx00
 	struct MEM_PROC xio_sel; //c800
+	struct MEM_PROC service_procs[N_SERVICE_PROCS];
 	int	xio_en;
 };
 

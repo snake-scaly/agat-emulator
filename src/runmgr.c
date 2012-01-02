@@ -58,6 +58,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_FDD_TEAC:
 		puts("fdd_init");
 		return fdd_init(sr, st, sc);
+	case DEV_FDD_ATOM:
+		puts("fddaa_init");
+		return fddaa_init(sr, st, sc);
 	case DEV_VIDEOTERM:
 		puts("videoterm_init");
 		return videoterm_init(sr, st, sc);
@@ -88,6 +91,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_PRINTERA:
 		puts("printera_init");
 		return printera_init(sr, st, sc);
+	case DEV_PRINTER_ATOM:
+		puts("printeraa_init");
+		return printeraa_init(sr, st, sc);
 	case DEV_A2RAMCARD:
 	case DEV_RAMFACTOR:
 		puts("a2ramcard_init");

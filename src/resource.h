@@ -50,7 +50,9 @@
 #define IDB_PRAVETZ82_LOGO              128
 #define IDD_GCONFIG                     128
 #define IDB_ACORN_ATOM                  129
+#define IDD_PRNAACFG                    129
 #define IDB_ATOM_LOGO                   130
+#define IDD_FDDAACFG                    131
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -154,7 +156,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        131
+#define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1075
 #define _APS_NEXT_SYMED_VALUE           103

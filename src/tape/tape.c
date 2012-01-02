@@ -107,12 +107,12 @@ static int tape_in_init(struct TAPE_STATE*st, int tsc)
 
 static void tape_out_finish(struct TAPE_STATE*st)
 {
-	puts("tape_out_finish");
 	if (st->out_disabled) {
 		st->out_disabled = 0;
 		stop_timer(st);
 	}
 	if (!st->f) return;
+	puts("tape_out_finish");
 	stop_timer(st);
 	finish_wave_output(&st->wo, st->f);
 	fclose(st->f);
@@ -122,12 +122,12 @@ static void tape_out_finish(struct TAPE_STATE*st)
 
 static void tape_in_finish(struct TAPE_STATE*st)
 {
-	puts("tape_in_finish");
 	if (st->in_disabled) {
 		st->in_disabled = 0;
 		stop_timer(st);
 	}
 	if (!st->in) return;
+	puts("tape_in_finish");
 	stop_timer(st);
 	wave_file_free(&st->wi);
 	wave_file_clear(&st->wi);
@@ -334,9 +334,16 @@ int  tape_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	tst->freq = sc->cfgint[CFG_INT_TAPE_FREQ];
 	tst->use_fast = sc->cfgint[CFG_INT_TAPE_FAST];
 	_tcscpy(tst->basename, sc->cfgstr[CFG_STR_TAPE]);
-	fill_read_proc(sr->baseio_sel + 2, 1, tape_out_r, st);
-	fill_write_proc(sr->baseio_sel + 2, 1, tape_out_w, st);
-	fill_read_proc(sr->io6_sel + 0, 1, tape_in_r, st);
+	switch (sr->cursystype) {
+	case SYSTEM_AA:
+		fill_read_proc(st->service_procs + 0, 1, tape_out_r, st);
+		fill_read_proc(st->service_procs + 1, 1, tape_in_r, st);
+		break;
+	default:
+		fill_read_proc(sr->baseio_sel + 2, 1, tape_out_r, st);
+		fill_write_proc(sr->baseio_sel + 2, 1, tape_out_w, st);
+		fill_read_proc(sr->io6_sel + 0, 1, tape_in_r, st);
+	}
 
 	st->data = tst;
 	st->free = tape_term;
@@ -344,3 +351,4 @@ int  tape_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 
 	return 0;
 }
+

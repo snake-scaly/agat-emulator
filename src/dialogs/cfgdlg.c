@@ -485,6 +485,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return teaccfgdlg_run(hwnd, slot);
 	case DEV_FDD_SHUGART:
 		return shugcfgdlg_run(hwnd, slot);
+	case DEV_FDD_ATOM:
+		return fddaacfgdlg_run(hwnd, slot);
 	case DEV_MEMORY_PSROM7:
 	case DEV_MEMORY_XRAM7:
 	case DEV_MEMORY_XRAM9:
@@ -521,6 +523,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return prn9dlg_run(hwnd, slot);
 	case DEV_PRINTERA:
 		return prnadlg_run(hwnd, slot);
+	case DEV_PRINTER_ATOM:
+		return prnaadlg_run(hwnd, slot);
 	case DEV_MOUSE_APPLE:
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_SCSI_CMS:

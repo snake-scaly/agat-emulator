@@ -13,7 +13,7 @@
 
 char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -21,7 +21,7 @@ char conf_present[NSYSTYPES][NCONFTYPES] = {
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	{0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1},
+	{0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1},
 };
 
 
@@ -184,6 +184,9 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CENTRONI.ROM"));
 		return 0;
+	case DEV_PRINTER_ATOM:
+		c->cfgint[CFG_INT_PRINT_MODE] = PRINT_TEXT;
+		return 0;
 	case DEV_A2RAMCARD:
 		c->cfgint[CFG_INT_MEM_SIZE] = 15;
 		c->cfgint[CFG_INT_MEM_MASK] = 4096 | 8192 | 16384 | 32768;
@@ -209,6 +212,16 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 	case DEV_SCSI_CMS:
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\SCSI_CMS.ROM"));
 		return 0;
+	case DEV_FDD_ATOM:
+		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
+		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
+		c->cfgint[CFG_INT_DRV_COUNT] = 1;
+		c->cfgint[CFG_INT_DRV_RO_FLAGS] = 3;
+		c->cfgint[CFG_INT_DRV_FAST] = 1;
+		_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\ACORN_FDD.ROM"));
+		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("ACORN.DSK"));
+		return 0;
+
 	case DEV_FDD_SHUGART:
 		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
@@ -669,9 +682,18 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		_tcscat(buf, TEXT("; "));
 		_tcscat(buf, c->cfgstr[CFG_STR_ROM]);
 		return 0;
+	case DEV_PRINTER_ATOM:
+		localize_str(LOC_PRINTER, c->cfgint[CFG_INT_PRINT_MODE], buf, 1024);
+		return 0;
 	case DEV_NIPPELCLOCK:
 		buf[0] = '\x97';
 		buf[1] = 0;
+		return 0;
+	case DEV_FDD_ATOM:
+		wsprintf(buf,
+			TEXT("%s; %s"),
+			c->cfgstr[CFG_STR_DRV_IMAGE1],
+			c->cfgstr[CFG_STR_DRV_ROM]);
 		return 0;
 	case DEV_FDD_TEAC:
 	case DEV_FDD_SHUGART:

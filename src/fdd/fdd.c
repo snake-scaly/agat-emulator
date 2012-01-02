@@ -792,7 +792,7 @@ static void rotate_sector(struct FDD_DATA*data)
 		if (!drv->raw_data) load_track(data, drv);
 		if (data->state.rk&0x40) {
 			if (data->write_sync) {
-				drv->aim_track_data[drv->raw_index] |= 0x8100;
+				drv->aim_track_data[drv->raw_index] |= 0x0100; // | 0x8000
 				drv->raw_dirty = 1;
 			} else {
 				if ((drv->aim_track_data[drv->raw_index] & ~0x80FF) == 0x100) {

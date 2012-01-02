@@ -53,6 +53,22 @@ static struct RESIZE_DIALOG resizea=
 
 
 
+static struct RESIZE_DIALOG resizeaa=
+{
+	RESIZE_LIMIT_MIN,
+	{{206,51},{0,0}},
+	4,
+	{
+		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
+
+		{IDC_PRINT_MODE,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
+
+		{102,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
+	}
+};
+
+
 static void PrnList_AddItem(HWND hlist, int id, int selid)
 {
 	int no;
@@ -176,6 +192,19 @@ static struct DIALOG_DATA dialoga =
 	dialog_ok
 };
 
+static struct DIALOG_DATA dialogaa =
+{
+	&resizeaa,
+
+	dialog_init, 
+	dialog_destroy,
+	dialog_command,
+	dialog_notify,
+
+	dialog_close,
+	dialog_ok
+};
+
 int prn9dlg_run(HWND hpar, struct SLOTCONFIG *conf)
 {
 	return dialog_run(&dialog9, MAKEINTRESOURCE(IDD_PRN9CFG), hpar, conf);
@@ -184,4 +213,9 @@ int prn9dlg_run(HWND hpar, struct SLOTCONFIG *conf)
 int prnadlg_run(HWND hpar, struct SLOTCONFIG *conf)
 {
 	return dialog_run(&dialoga, MAKEINTRESOURCE(IDD_PRNACFG), hpar, conf);
+}
+
+int prnaadlg_run(HWND hpar, struct SLOTCONFIG *conf)
+{
+	return dialog_run(&dialogaa, MAKEINTRESOURCE(IDD_PRNAACFG), hpar, conf);
 }
