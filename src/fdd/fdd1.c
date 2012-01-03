@@ -122,7 +122,7 @@ static void fill_fdd1(struct FDD_DATA*data)
 int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 {
 	if (drv->disk) {
-		isclose(drv->disk);
+		iosclose(drv->disk);
 		drv->disk = NULL;
 	}
 	drv->dirty = 1;
@@ -142,10 +142,10 @@ int open_fdd1(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 		errprint(TEXT("can't open disk file %s"),name);
 		return -1;
 	}
-	if (isread(drv->disk,drv->disk_header,sizeof(drv->disk_header))!=sizeof(drv->disk_header)) {
+	if (iosread(drv->disk,drv->disk_header,sizeof(drv->disk_header))!=sizeof(drv->disk_header)) {
 		errprint(TEXT("can't read header from disk %s"),name);
 		memset(drv->disk_header, 0, sizeof(drv->disk_header));
-//		isclose(drv->disk);
+//		iosclose(drv->disk);
 //		drv->disk=0;
 //		return -1;
 	}
@@ -325,8 +325,8 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	if (!rom) {
 		load_buf_res(cf->cfgint[CFG_INT_DRV_ROM_RES], data->fdd_rom, FDD_ROM_SIZE);
 	} else {
-		isread(rom, data->fdd_rom, sizeof(data->fdd_rom));
-		isclose(rom);
+		iosread(rom, data->fdd_rom, sizeof(data->fdd_rom));
+		iosclose(rom);
 	}
 
 	fill_fdd1(data);
@@ -507,8 +507,8 @@ static int fdd_save_track_nibble(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
 	if (!d->disk) return -1;
-	osseek(d->disk, d->start_ofs + d->Track*NIBBLE_TRACK_LEN, SSEEK_SET);
-	if (oswrite(d->disk, d->TrackData, NIBBLE_TRACK_LEN) != NIBBLE_TRACK_LEN) {
+	iosseek(d->disk, d->start_ofs + d->Track*NIBBLE_TRACK_LEN, SSEEK_SET);
+	if (ioswrite(d->disk, d->TrackData, NIBBLE_TRACK_LEN) != NIBBLE_TRACK_LEN) {
 		errprint(TEXT("can't write track"));
 		d->error=1;
 		return -1;
@@ -751,14 +751,14 @@ static void fdd_save_track(struct FDD_DATA*data)
 //		dump_buf(sbuf + 3, 0x157);
 //		dump_buf(buf, 256);
 //		printf("buf: %x %x %x %x %x (%s)\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf);
-		osseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + (d->prodos?pren[vtscs[2]]:ren[vtscs[2]])) *
+		iosseek(d->disk, d->start_ofs + (d->Track*FDD_SECTOR_COUNT + (d->prodos?pren[vtscs[2]]:ren[vtscs[2]])) *
 			FDD_SECTOR_DATA_SIZE, SSEEK_SET);
-		if (oswrite(d->disk, buf, FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+		if (ioswrite(d->disk, buf, FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't write sector"));
 			d->error=1;
 		}
 	}
-	osseek(d->disk, 0, SSEEK_CUR);
+	iosseek(d->disk, 0, SSEEK_CUR);
 }
 
 
@@ -785,9 +785,9 @@ static void fdd_load_track(struct FDD_DATA*data)
 	if (drv->Track>34) drv->Track=34;
 	if (drv->rawfmt) {
 //		puts("fdd_load_track: nibble");
-		isseek(drv->disk, drv->start_ofs + drv->Track*
+		iosseek(drv->disk, drv->start_ofs + drv->Track*
 			NIBBLE_TRACK_LEN, SSEEK_SET);
-		if (isread(drv->disk,drv->TrackData,NIBBLE_TRACK_LEN)!=NIBBLE_TRACK_LEN) {
+		if (iosread(drv->disk,drv->TrackData,NIBBLE_TRACK_LEN)!=NIBBLE_TRACK_LEN) {
 			errprint(TEXT("can't read track"));
 			drv->error=1;
 		}
@@ -796,7 +796,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 		return;
 	}
 //	puts("fdd_load_track");
-	isseek(drv->disk, drv->start_ofs + drv->Track*
+	iosseek(drv->disk, drv->start_ofs + drv->Track*
 		FDD_SECTOR_DATA_SIZE*FDD_SECTOR_COUNT, SSEEK_SET);
 	memset(drv->TrackData,0xFF,128);
 	d = 128;
@@ -823,7 +823,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 		drv->TrackData[d+20] = 0xAA;
 		drv->TrackData[d+21] = 0xAD;
 		dl = d + 22;
-		if (isread(drv->disk,buf,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+		if (iosread(drv->disk,buf,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't read sector"));
 			drv->error=1;
 		}

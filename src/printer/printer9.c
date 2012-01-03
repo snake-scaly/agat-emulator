@@ -30,7 +30,7 @@ struct PRINTER_STATE
 {
 	struct SLOT_RUN_STATE*st;
 
-	byte rom1[256], rom2[2048];
+	byte rom[2048];
 	byte rom_mode; // bit 1 -> C0X3, bit 2 -> CX00
 	byte regs[3];
 
@@ -153,13 +153,13 @@ static byte printer_xrom_r(word adr, struct PRINTER_STATE*pcs) // C800-CFFF
 	if ((adr & 0xF00) == 0xF00) {
 		set_rom_mode(pcs, pcs->rom_mode & ~2);
 	}
-	return pcs->rom2[adr & (sizeof(pcs->rom2)-1)];
+	return pcs->rom[adr & (sizeof(pcs->rom)-1)];
 }
 
 static byte printer_rom_r(word adr, struct PRINTER_STATE*pcs) // CX00-CXFF
 {
 	set_rom_mode(pcs, pcs->rom_mode | 2);
-	return pcs->rom1[adr & 0xFF];
+	return pcs->rom[(adr & 0xFF) | 0x700];
 }
 
 static void printer_data(struct PRINTER_STATE*pcs, byte data)
@@ -248,12 +248,7 @@ int  printer9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 
 	rom = isfopen(cf->cfgstr[CFG_STR_ROM]);
 	if (!rom) { free(pcs); return -1; }
-	isread(rom, pcs->rom1, sizeof(pcs->rom1));
-	isclose(rom);
-
-	rom = isfopen(cf->cfgstr[CFG_STR_ROM2]);
-	if (!rom) { free(pcs); return -2; }
-	isread(rom, pcs->rom2, sizeof(pcs->rom2));
+	isread(rom, pcs->rom, sizeof(pcs->rom));
 	isclose(rom);
 
 	switch (mode) {

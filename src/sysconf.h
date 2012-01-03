@@ -93,6 +93,8 @@ enum {
 	
 	DEV_PRINTER_ATOM, // printer interface for Acorn Atom
 	DEV_FDD_ATOM, // floppy card for Acorn Atom
+	DEV_EXTROM_ATOM, // extension rom
+	DEV_EXTRAM_ATOM, // extension ram
 
 	NDEVTYPES
 };

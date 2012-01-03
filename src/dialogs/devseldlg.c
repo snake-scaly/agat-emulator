@@ -90,6 +90,10 @@ static int dialog_init(HWND hwnd, void*p)
 		case CONF_PRINTER:
 			DevList_AddItem(hlist, DEV_PRINTER_ATOM);
 			return 0;
+		case CONF_SLOT0:
+			DevList_AddItem(hlist, DEV_EXTROM_ATOM);
+			DevList_AddItem(hlist, DEV_EXTRAM_ATOM);
+			return 0;
 		case CONF_SLOT1:
 			DevList_AddItem(hlist, DEV_FDD_ATOM);
 			return 0;

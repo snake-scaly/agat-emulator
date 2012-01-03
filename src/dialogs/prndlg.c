@@ -9,22 +9,19 @@
 static struct RESIZE_DIALOG resize9=
 {
 	RESIZE_LIMIT_MIN,
-	{{206,110},{0,0}},
+	{{206,79},{0,0}},
 	10,
 	{
 		{IDOK,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 		{IDCANCEL,{RESIZE_ALIGN_CENTER,RESIZE_ALIGN_TOP}},
 
 		{IDC_FW1_NAME,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
-		{IDC_FW2_NAME,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 
 		{IDC_CHOOSE_FW1,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
-		{IDC_CHOOSE_FW2,{RESIZE_ALIGN_LEFT,RESIZE_ALIGN_CENTER}},
 
 		{IDC_PRINT_MODE,{RESIZE_ALIGN_RIGHT,RESIZE_ALIGN_CENTER}},
 
 		{100,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
-		{101,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 		{102,{RESIZE_ALIGN_NONE,RESIZE_ALIGN_CENTER}},
 	}
 };
@@ -107,7 +104,6 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 		PrnList_AddItem(hlist, PRINT_PRINT, conf->cfgint[CFG_INT_PRINT_MODE]);
 	}
 	SetDlgItemText(hwnd, IDC_FW1_NAME, conf->cfgstr[CFG_STR_ROM]);
-	SetDlgItemText(hwnd, IDC_FW2_NAME, conf->cfgstr[CFG_STR_ROM2]);
 
 	return 0;
 }
@@ -128,15 +124,6 @@ static int dialog_command(HWND hwnd, void*p, int notify, int id, HWND ctl)
 			if (r!=-1) SetDlgItemText(hwnd, IDC_FW1_NAME, buf);
 		}
 		break;
-	case IDC_CHOOSE_FW2:
-		{
-			TCHAR buf[CFGSTRLEN];
-			int r;
-			GetDlgItemText(hwnd, IDC_FW2_NAME, buf, CFGSTRLEN);
-			r = select_font(hwnd, buf, -1);
-			if (r!=-1) SetDlgItemText(hwnd, IDC_FW2_NAME, buf);
-		}
-		break;
 	}
 	return 1;
 }
@@ -149,7 +136,6 @@ static int dialog_ok(HWND hwnd, struct SLOTCONFIG*conf)
 	conf->cfgint[CFG_INT_PRINT_MODE] = ComboBox_GetItemData(hlist, ComboBox_GetCurSel(hlist));
 
 	GetDlgItemText(hwnd, IDC_FW1_NAME, conf->cfgstr[CFG_STR_ROM], CFGSTRLEN);
-	GetDlgItemText(hwnd, IDC_FW2_NAME, conf->cfgstr[CFG_STR_ROM2], CFGSTRLEN);
 	EndDialog(hwnd, TRUE);
 	return 0;
 }

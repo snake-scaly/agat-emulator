@@ -211,7 +211,7 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 	case 1: // port B
 		break;
 	case 2: // port C
-		printf("port C write: %02X\n", d);
+//		printf("port C write: %02X\n", d);
 		aabeep(sr, d & 4);
 		if (d & 2) {
 //			puts("tape output");
@@ -220,7 +220,7 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 //		aabeep(sr, (d & 4)>>2);
 		break;
 	case 3: // Ctrl
-		printf("control write: %02X\n", d);
+//		printf("control write: %02X\n", d);
 		if ((d == 5) || (d == 4)) { // speaker to input
 			aabeep(sr, d & 1);
 		}
@@ -305,3 +305,90 @@ static void aaio_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 }
 
 
+
+struct EXTROM_DATA
+{
+	byte rom[4096];
+};
+
+static byte extrom_rom_r(word adr, struct EXTROM_DATA*data) // A000-AFFF
+{
+	return data->rom[adr & 0xFFF];
+}
+
+
+
+static int extrom_term(struct SLOT_RUN_STATE*st)
+{
+	struct EXTROM_DATA*data = st->data;
+	free(data);
+	return 0;
+}
+
+int  extromaa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
+{
+	struct EXTROM_DATA*data;
+	ISTREAM*rom;
+	const char_t*name;
+	char_t buf[32];
+
+	puts("in extromaa_init");
+	data = calloc(1, sizeof(*data));
+	if (!data) return -1;
+
+	rom=isfopen(cf->cfgstr[CFG_STR_ROM]);
+	if (!rom) {
+		printf("no extension rom: %s", cf->cfgstr[CFG_STR_ROM]);
+	} else {
+		isread(rom, data->rom, sizeof(data->rom));
+		isclose(rom);
+	}
+
+	fill_read_proc(sr->base_mem + (0xA000>>BASEMEM_BLOCK_SHIFT), 2, extrom_rom_r, data);
+
+	st->data = data;
+	st->free = extrom_term;
+
+	return 0;
+}
+
+static void extram_rom_w(word adr, byte d, struct EXTROM_DATA*data) // A000-AFFF
+{
+	data->rom[adr & 0xFFF] = d;
+}
+
+
+static int save_extram(struct SLOT_RUN_STATE*st, OSTREAM*out)
+{
+	struct EXTROM_DATA*data = st->data;
+	WRITE_ARRAY(out, data->rom);
+	return 0;
+}
+
+static int load_extram(struct SLOT_RUN_STATE*st, ISTREAM*in)
+{
+	struct EXTROM_DATA*data = st->data;
+	READ_ARRAY(in, data->rom);
+	return 0;
+}
+
+
+
+int  extramaa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
+{
+	struct EXTROM_DATA*data;
+	ISTREAM*rom;
+	const char_t*name;
+	char_t buf[32];
+
+	puts("in extramaa_init");
+	data = calloc(1, sizeof(*data));
+	if (!data) return -1;
+
+	fill_rw_proc(sr->base_mem + (0xA000>>BASEMEM_BLOCK_SHIFT), 2, extrom_rom_r, extram_rom_w, data);
+
+	st->data = data;
+	st->free = extrom_term;
+
+	return 0;
+}

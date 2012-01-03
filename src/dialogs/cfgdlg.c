@@ -525,6 +525,8 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return prnadlg_run(hwnd, slot);
 	case DEV_PRINTER_ATOM:
 		return prnaadlg_run(hwnd, slot);
+	case DEV_EXTROM_ATOM:
+		return select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_MOUSE_APPLE:
 		return initial?TRUE:select_rom(hwnd, slot->cfgstr[CFG_STR_ROM]);
 	case DEV_SCSI_CMS:

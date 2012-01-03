@@ -139,7 +139,7 @@ static void xram_write(word adr, byte d, struct XRAM_STATE*st)
 
 static byte xram_read_state(word adr,struct XRAM_STATE*st)
 {
-	printf("xram_read_state: %x\n", st->ram_state & 0x7F);
+//	printf("xram_read_state: %x\n", st->ram_state & 0x7F);
 	return st->ram_state & 0x7F;
 }
 
@@ -147,7 +147,7 @@ static void xram_write_state(word adr, byte d, struct XRAM_STATE*st)
 {
 	d = adr & 0x7F;
 	if (st->ram_state == d) return;
-	printf("xram_write_state: %x\n", d);
+//	printf("xram_write_state: %x\n", d);
 	st->ram_state = d;
 	if (st->ram_state & 0x08) { // module selected
 		set_xram_procs(st);

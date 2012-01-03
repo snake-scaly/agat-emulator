@@ -316,28 +316,70 @@ static int ramaa_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param
 
 static byte ramaa_read1(word adr,struct BASERAM_STATE*st) // 0..3FF
 {
-	if (adr >= MEM_1K_SIZE) return empty_read(adr, st);
+	if (adr >= MEM_1K_SIZE) 
+		return mem_proc_read(adr, st->sr->slots[CONF_MEMORY].service_procs + 0);
 	return st->ram[adr];
 }
 
 static void ramaa_write1(word adr,byte d,struct BASERAM_STATE*st) // 0..3FF
 {
-	if (adr >= MEM_1K_SIZE) return;
-	st->ram[adr] = d;
+	if (adr >= MEM_1K_SIZE)
+		mem_proc_write(adr, d, st->sr->slots[CONF_MEMORY].service_procs + 0);
+	else {
+//		printf("ram[%X (%X)]=%X\n", adr, st->ram_size, d);
+		st->ram[adr] = d;
+	}
 }
 
 static byte ramaa_read2(word adr,struct BASERAM_STATE*st) // 2800..3BFF
 {
 	adr -= 0x2800;
-	if (adr >= MEM_1K_SIZE*5) return empty_read_zero(adr, st);
-	return st->ram[adr + MEM_1K_SIZE*7];
+	if (adr >= MEM_1K_SIZE*5)
+		return mem_proc_read(adr + 0x2800, st->sr->slots[CONF_MEMORY].service_procs + 1);
+	return st->ram[adr + MEM_1K_SIZE * 7];
 }
 
 static void ramaa_write2(word adr,byte d,struct BASERAM_STATE*st) // 2800..3BFF
 {
 	adr -= 0x2800;
-	if (adr >= MEM_1K_SIZE*5) return;
-	st->ram[adr + MEM_1K_SIZE*7] = d;
+	if (adr >= MEM_1K_SIZE*5) {
+		mem_proc_write(adr + 0x2800, d, st->sr->slots[CONF_MEMORY].service_procs + 1);
+		return;
+	}
+//	printf("ram[%X (%X)]=%X\n", adr + MEM_1K_SIZE * 7, st->ram_size, d);
+	st->ram[adr + MEM_1K_SIZE * 7] = d;
+}
+
+static byte ramaa_read2_40k(word adr,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	if ((adr - 0x2800) >= MEM_1K_SIZE*5)
+		return mem_proc_read(adr, st->sr->slots[CONF_MEMORY].service_procs + 1);
+	return st->ram[adr];
+}
+
+static void ramaa_write2_40k(word adr,byte d,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	if ((adr - 0x2800) >= MEM_1K_SIZE*5) {
+		mem_proc_write(adr, d, st->sr->slots[CONF_MEMORY].service_procs + 1);
+	}
+	st->ram[adr] = d;
+}
+
+static byte ramaa_noread2(word adr,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	adr -= 0x2800;
+	if (adr >= MEM_1K_SIZE*5)
+		return mem_proc_read(adr + 0x2800, st->sr->slots[CONF_MEMORY].service_procs + 1);
+	return empty_read_zero(adr, st);
+}
+
+static void ramaa_nowrite2(word adr,byte d,struct BASERAM_STATE*st) // 2800..3BFF
+{
+	adr -= 0x2800;
+	if (adr >= MEM_1K_SIZE*5) {
+		mem_proc_write(adr + 0x2800, d, st->sr->slots[CONF_MEMORY].service_procs + 1);
+	}
+	empty_write(adr, d, st);
 }
 
 static byte ramaa_read3_2k(word adr,struct BASERAM_STATE*st) // 8000..83FF
@@ -374,6 +416,7 @@ static void ramaa_write3_12k(word adr,byte d,struct BASERAM_STATE*st) // 8000..9
 //	printf("atom ram write: %04X, %02X\n", adr, d);
 	adr -= 0x8000;
 	adr += MEM_1K_SIZE;
+//	printf("ram[%X (%X)]=%X\n", adr + MEM_1K_SIZE, st->ram_size, d);
 	ld = st->ram[adr];
 	if (ld == d) return;
 	st->ram[adr] = d;
@@ -394,21 +437,28 @@ int ramaa_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOT
 	ss->free = ram_free;
 	ss->command = ram1_command;
 
+	fill_rw_proc(ss->service_procs, N_SERVICE_PROCS, 
+		empty_read_zero, empty_write, st);
+
 	{
 		int nb = (st->ram_size>>BASEMEM_BLOCK_SHIFT);
 		printf("ram_size = %i; nb = %i\n", st->ram_size, nb);
 		switch (nb) {
 		case 1: // 2K
-			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st);
-			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 1, ramaa_read3_2k, ramaa_write3_2k, st);
+			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st); // 1K, 0..3FF
+			fill_rw_proc(sr->base_mem + (0x2800>>BASEMEM_BLOCK_SHIFT), 3, ramaa_noread2, ramaa_nowrite2, st); // no memory
+			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 1, ramaa_read3_2k, ramaa_write3_2k, st); // 1K, 8000..83FF
 			break;
 		case 6: // 12K
-			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st);
-			fill_rw_proc(sr->base_mem + (0x2800>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read2, ramaa_write2, st);
-			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read3_12k, ramaa_write3_12k, st);
+			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st); // 1K
+			fill_rw_proc(sr->base_mem + (0x2800>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read2, ramaa_write2, st); // 5K
+			fill_rw_proc(sr->base_mem + (0x8000>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read3_12k, ramaa_write3_12k, st); // 6K
 			break;
 		case 20: // 40K
 			fill_rw_proc(sr->base_mem, 20, ram_read, ram_write, st);
+			fill_rw_proc(sr->base_mem, 1, ramaa_read1, ramaa_write1, st);
+			fill_rw_proc(sr->base_mem + (0x2800>>BASEMEM_BLOCK_SHIFT), 3, ramaa_read2_40k, ramaa_write2_40k, st);
+			fill_rw_proc(ss->service_procs, N_SERVICE_PROCS, ram_read, ram_write, st);
 			break;
 		default:
 			return -1;

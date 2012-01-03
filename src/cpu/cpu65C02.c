@@ -236,20 +236,32 @@ static void ea_show_impl(struct STATE_65C02*st, FILE*out)
 
 static byte xmem_read(word a, struct SYS_RUN_STATE*sr)
 {
-	if (a >= 0xC000 && a < 0xC800) return 0xFF;
-	return mem_read(a, sr);
+	byte b;
+	sr->in_debug = 1;
+//	if (a >= 0xC000 && a < 0xC800) return 0xFF;
+	b = mem_read(a, sr);
+	sr->in_debug = 0;
+	return b;
 }
 
 static word xmem_read_word(struct STATE_65C02*st, word a)
 {
-	if (a >= 0xBFFF && a < 0xC800) return 0xFFFF;
-	return mem_read_word(st, a);
+	word w;
+//	if (a >= 0xBFFF && a < 0xC800) return 0xFFFF;
+	st->sr->in_debug = 1;
+	w = mem_read_word(st, a);
+	st->sr->in_debug = 0;
+	return w;
 }
 
 static word xmem_read_word_page(struct STATE_65C02*st, word a)
 {
-	if (a >= 0xC000 && a < 0xC800) return 0xFFFF;
-	return mem_read_word_page(st, a);
+	word w;
+//	if (a >= 0xC000 && a < 0xC800) return 0xFFFF;
+	st->sr->in_debug = 1;
+	w = mem_read_word_page(st, a);
+	st->sr->in_debug = 0;
+	return w;
 }
 
 

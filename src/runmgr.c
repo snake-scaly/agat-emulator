@@ -61,6 +61,12 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_FDD_ATOM:
 		puts("fddaa_init");
 		return fddaa_init(sr, st, sc);
+	case DEV_EXTROM_ATOM:
+		puts("extromaa_init");
+		return extromaa_init(sr, st, sc);
+	case DEV_EXTRAM_ATOM:
+		puts("extramaa_init");
+		return extramaa_init(sr, st, sc);
 	case DEV_VIDEOTERM:
 		puts("videoterm_init");
 		return videoterm_init(sr, st, sc);

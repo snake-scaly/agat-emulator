@@ -156,7 +156,7 @@ static void fill_fdd(struct FDD_DATA*data)
 int open_fdd(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 {
 	if (drv->disk) {
-		isclose(drv->disk);
+		iosclose(drv->disk);
 		drv->disk = NULL;
 	}
 	if (!name) return 1;
@@ -174,9 +174,9 @@ int open_fdd(struct FDD_DRIVE_DATA*drv,const char_t*name,int ro, int no)
 		errprint(TEXT("can't open disk file %s"),name);
 		return -1;
 	}
-	if (isread(drv->disk,drv->disk_header,sizeof(drv->disk_header))!=sizeof(drv->disk_header)) {
+	if (iosread(drv->disk,drv->disk_header,sizeof(drv->disk_header))!=sizeof(drv->disk_header)) {
 		errprint(TEXT("can't read header from disk %s"),name);
-		isclose(drv->disk);
+		iosclose(drv->disk);
 		drv->disk=0;
 		return -1;
 	}
@@ -379,8 +379,8 @@ int  fdd_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	if (!rom) {
 		load_buf_res(cf->cfgint[CFG_INT_DRV_ROM_RES], data->fdd_rom, FDD_ROM_SIZE);
 	} else {
-		isread(rom, data->fdd_rom, sizeof(data->fdd_rom));
-		isclose(rom);
+		iosread(rom, data->fdd_rom, sizeof(data->fdd_rom));
+		iosclose(rom);
 	}
 
 	fill_fdd(data);
@@ -547,9 +547,9 @@ static void load_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	}
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
 	drv->raw_track_ofs = drv->start_ofs+(t0 * AIM_TRACK_SIZE*2);
-	isseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+	iosseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 //	printf("reading aim track %i\n", t0);
-	if (isread(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
+	if (iosread(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
 		errprint(TEXT("can't read aim track"));
 		drv->error=1;
 	}
@@ -575,9 +575,9 @@ static void save_aim_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 		drv->error=1;
 		return;
 	}
-	osseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+	iosseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 //	logprint(0,TEXT("writing aim track"));
-	if (oswrite(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
+	if (ioswrite(drv->disk,drv->aim_track_data,AIM_TRACK_SIZE*2)!=AIM_TRACK_SIZE*2) {
 		errprint(TEXT("can't write aim track"));
 		drv->error=1;
 	}
@@ -596,9 +596,9 @@ static void save_track_fdd(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	case 1: break;
 	case 2: save_aim_track(data, drv); return;
 	}
-	osseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+	iosseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 //	logprint(0,TEXT("writing raw track"));
-	if (oswrite(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
+	if (ioswrite(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
 		errprint(TEXT("can't write raw track"));
 		drv->error=1;
 	}
@@ -622,9 +622,9 @@ static void load_track(struct FDD_DATA*data, struct FDD_DRIVE_DATA*drv)
 	}
 	if (data->state.rk&0x10) t0 |= 1; else t0 &=~ 1;
 	drv->raw_track_ofs = drv->start_ofs+(t0 * RAW_TRACK_FILE_SIZE);
-	isseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
+	iosseek(drv->disk,drv->raw_track_ofs,SSEEK_SET);
 //	logprint(0,TEXT("reading raw track %i"), t0);
-	if (isread(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
+	if (iosread(drv->disk,drv->raw_track_data,RAW_TRACK_FILE_SIZE)!=RAW_TRACK_FILE_SIZE) {
 		errprint(TEXT("can't read raw track"));
 		drv->error=1;
 	}
@@ -727,11 +727,11 @@ static void write_sector(struct FDD_DATA*data)
 	}
 	ls=get_sector_num(drv->prolog[FDD_PROLOG_TRACK],
 		drv->prolog[FDD_PROLOG_SECTOR]);
-	osseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
+	iosseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
 /*	logprint(0,TEXT("write: (%i,%i): %x %x: %02X %02X %02X"),
 		drv->prolog[FDD_PROLOG_TRACK],drv->prolog[FDD_PROLOG_SECTOR],ls,ls<<8,
 		drv->sector_data[FDD_DATA_OFFSET], drv->sector_data[FDD_DATA_OFFSET + 1], drv->sector_data[FDD_DATA_OFFSET + 2]);
-*/	if (oswrite(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+*/	if (ioswrite(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 		errprint(TEXT("can't write sector"));
 		drv->error=1;
 	}
@@ -767,9 +767,9 @@ static void prepare_sector_to_read(struct FDD_DATA*data)
 	} else {
 		int ls=get_sector_num(drv->prolog[FDD_PROLOG_TRACK],
 			drv->prolog[FDD_PROLOG_SECTOR]);
-		isseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
+		iosseek(drv->disk,drv->start_ofs+(ls<<8),SSEEK_SET);
 //		printf("read: (%i,%i): %x %x\n",drv->prolog[FDD_PROLOG_TRACK],drv->prolog[FDD_PROLOG_SECTOR],ls,ls<<8);
-		if (isread(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
+		if (iosread(drv->disk,drv->sector_data+FDD_DATA_OFFSET,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't read sector"));
 			drv->error=1;
 		}

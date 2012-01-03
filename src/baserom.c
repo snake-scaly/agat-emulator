@@ -27,7 +27,7 @@ static byte rom_read(word adr,struct BASEROM_STATE*st);
 static byte rom1_read(word adr,struct BASEROM_STATE*st);
 
 
-static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
+static void rom_reset_procs(struct SLOT_RUN_STATE*ss, int init)
 {
 	struct BASEROM_STATE*st = ss->data;
 
@@ -40,7 +40,8 @@ static void rom_reset_procs(struct SLOT_RUN_STATE*ss)
 		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom1_read, st);
 		break;
 	case SYSTEM_AA:
-		fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
+		puts("reset rom");
+		if (init) fill_read_proc(ss->sr->base_mem+BASEMEM_NBLOCKS-nb, nb, rom_read, st);
 		break;
 	default:	
 		if (sz > 0x3000) sz = 0x3000;
@@ -56,11 +57,11 @@ static int rom_command(struct SLOT_RUN_STATE*ss, int cmd, int data, long param)
 	struct BASEROM_STATE*st = ss->data;
 	switch (cmd) {
 	case SYS_COMMAND_HRESET:
-		rom_reset_procs(ss);
+		rom_reset_procs(ss, 0);
 		break;
 	case SYS_COMMAND_PSROM_RELEASE:
 //		puts("baserom: restore rom");
-		rom_reset_procs(ss);
+		rom_reset_procs(ss, 0);
 		return 1;
 	}
 	return 0;
@@ -120,7 +121,7 @@ int rom_install(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*ss, struct SLOTCO
 		st->rom_size <<= 1;
 	}
 
-	rom_reset_procs(ss);
+	rom_reset_procs(ss, 1);
 	return 0;
 }
 

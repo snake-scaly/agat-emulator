@@ -289,23 +289,20 @@ BEGIN
 END
 
 
-IDD_PRN9CFG DIALOG DISCARDABLE  0, 0, 206, 110
+IDD_PRN9CFG DIALOG DISCARDABLE  0, 0, 206, 79
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Agat-9 Printer Card configuration"
 FONT 9, "Tahoma"
 BEGIN
     EDITTEXT        IDC_FW1_NAME,80,19,101,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_CHOOSE_FW1,184,19,15,12
-    EDITTEXT        IDC_FW2_NAME,80,33,101,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",IDC_CHOOSE_FW2,184,33,15,12
-    COMBOBOX        IDC_PRINT_MODE,80,52,119,54,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_PRINT_MODE,80,38,119,54,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,43,85,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,110,85,50,14
-    LTEXT           "PROM images:",IDC_STATIC,7,7,71,8
-    LTEXT           "PROM CX00:",100,7,22,73,8
-    LTEXT           "PROM C800:",101,7,36,73,8
-    LTEXT           "Output mode:",102,7,54,68,8
+    DEFPUSHBUTTON   "OK",IDOK,43,60,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,110,60,50,14
+    LTEXT           "PROM images:",IDC_STATIC,7,7,67,8
+    LTEXT           "PROM",100,7,22,73,8
+    LTEXT           "Output mode:",102,7,40,68,8
 END
 
 
@@ -555,7 +552,7 @@ BEGIN
 	10003	"Select configuration file"
 	10004	"Font files (*.fnt)@*.fnt@All files@*.*@"
 	10005	"Select font file"
-	10006	"All disk image files (*.dsk, *.img, *.nib, *.aim, *.po, *.do, *.hdv)@*.dsk;*.img;*.nib;*.aim;*.po;*.do;*.hdv@Disk image files (*.dsk, *.po, *.do)@*.dsk;*.po;*.do@RAW image files (*.nib)@*.nib@AIM image files (*.aim)@*.aim@Hard disk image files (*.hdv)@*.hdv@All files@*.*@"
+	10006	"All disk image files (*.dsk, *.img, *.nib, *.aim, *.po, *.do, *.hdv, *.40t)@*.dsk;*.img;*.nib;*.aim;*.po;*.do;*.hdv;*.40t@Disk image files (*.dsk, *.po, *.do)@*.dsk;*.po;*.do@RAW image files (*.nib)@*.nib@AIM image files (*.aim)@*.aim@Hard disk image files (*.hdv)@*.hdv@Acorn Atom image files (*.40t)@*.40t@All files@*.*@"
 	10007	"Select disk image file"
 	10008	"Tape audio files (*.wav)@*.wav@All files@*.*@"
 	10009	"Select tape file for reading"
@@ -681,6 +678,8 @@ BEGIN
 	12139	"Apple I Terminal"
 	12140	"Parallel interface for Atom"
 	12141	"Disk interface for Atom"
+	12142	"Extension ROM Atom (A000)"
+	12143	"Extension RAM Atom (A000)"
 
 	12200	"Slot #0"
 	12201	"Slot #1"
