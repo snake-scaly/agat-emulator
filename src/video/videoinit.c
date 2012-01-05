@@ -216,8 +216,9 @@ int set_rb_count(struct VIDEO_STATE*vs, int n, int nint)
 		rb->prev_base[1] = -1;
 	}
 	if (nint) {
-		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
-		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 20000 / nint, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
+		int d = 1000000 / vs->video_freq;
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, d, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
+		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, d / nint, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
 	} else { // kill timers
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, 0, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
@@ -229,9 +230,11 @@ int video_init_rb(struct VIDEO_STATE*vs)
 {
 	switch (vs->sr->cursystype) {
 	case SYSTEM_7:
+		vs->video_freq = 50;
 		set_rb_count(vs, vs->rb_enabled?N_RB_7:1, N_RBINT_7);
 		break;
 	case SYSTEM_9:
+		vs->video_freq = 50;
 		switch (vs->video_mode) {
 		case VIDEO_MODE_AGAT:
 			set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
@@ -240,10 +243,15 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	case SYSTEM_1:
 	case SYSTEM_A:
 	case SYSTEM_P:
-	case SYSTEM_AA:
+		vs->video_freq = 60;
 		set_rb_count(vs, 1, 0);
 		break;
+	case SYSTEM_AA:
+		vs->video_freq = 60;
+		set_rb_count(vs, vs->rb_enabled?16:1, 20);
+		break;
 	case SYSTEM_E:
+		vs->video_freq = 60;
 		set_rb_count(vs, 1, 4);
 		break;
 	}

@@ -98,6 +98,7 @@ struct VIDEO_STATE
 	struct RASTER_BLOCK rb[MAX_RASTER_BLOCKS], rb_cur;
 	int n_rb, rbi;
 	int rb_enabled;
+	int video_freq;
 
 	RECT inv_area;
 	int  mem_access;

@@ -3,12 +3,14 @@
 	Copyright (c) NOP, nnop@newmail.ru
 */
 
-#include "runmgr.h"
+#include "video/videoint.h"
+
+/*#include "runmgr.h"
 #include "runmgrint.h"
 #include "runstate.h"
 #include "videow.h"
 
-#include "resource.h"
+#include "resource.h"*/
 
 struct AATOM_DATA
 {
@@ -146,9 +148,12 @@ static byte aascan_key(int row, struct SYS_RUN_STATE*sr)
 
 static int aa_get_sync(struct SYS_RUN_STATE*sr)
 {
-	int ndiv = 16667;
+/*	int ndiv = 16667;
 	int tsc = cpu_get_tsc(sr) % ndiv;
-	return tsc > ndiv/300;
+	return tsc > ndiv/100;*/
+	struct VIDEO_STATE*vs;
+	vs = get_video_state(sr);
+	return vs->rbi >= 0;
 }
 
 
@@ -157,6 +162,11 @@ static int aa_get_timer(struct SYS_RUN_STATE*sr)
 	int ndiv = 416;
 	int tsc = cpu_get_tsc(sr) % ndiv;
 	return tsc < ndiv/2;
+}
+
+static int aa_get_tape(struct SYS_RUN_STATE*sr)
+{
+	return 0;
 }
 
 static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
@@ -187,8 +197,9 @@ static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
 		}
 		if (aa->aa8255_ctrl & 0x08) {
 			if (aa_get_timer(sr)) r |= 0x10;
+			if (aa_get_tape(sr)) r |= 0x20;
 			if (sr->key_rept == aa->lkeyrept) r |= 0x40;
-			if (is_alt_pressed(sr)) r |= 0x40; // rept
+			if (is_alt_pressed(sr)) r &= ~0x40; // rept
 			if (!aa_get_sync(sr)) r |= 0x80;
 			aa->lkeyrept = sr->key_rept;
 		} else {
@@ -217,12 +228,20 @@ static void acorn_select_keyrow(int row, struct AATOM_DATA*aa)
 	aa->keyrow = row;
 }
 
-static void aa8255_write_c(byte d, struct SYS_RUN_STATE*sr)
+static void aa8255_write_c(byte d, byte xd, struct SYS_RUN_STATE*sr)
 {
 	struct AATOM_DATA*aa = sr->sys.ptr;
 	aabeep(sr, d & 4);
-	if (d & 2) {
-//		puts("tape output");
+	if (xd & 3) {
+		if (d & 1) {
+			if (d & 2) {
+				puts("tape output tone");
+			} else {
+				puts("tape output 0");
+			}
+		} else {
+			puts("tape output 1");
+		}
 	}
 }
 
@@ -253,8 +272,8 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 			d &= 0x0F;
 			d |= aa->aa8255_data[adr] & 0xF0;
 		}
+		aa8255_write_c(d, aa->aa8255_data[adr] ^ d, sr);
 		aa->aa8255_data[adr] = d;
-		aa8255_write_c(d, sr);
 		break;
 	case 3: // Ctrl
 		if (d & 0x80) {
@@ -268,8 +287,8 @@ static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 			if ((aa->aa8255_ctrl & 0x08) && (bit > 3)) break;
 			if (set) b |= (1<<bit);
 			else b &= ~(1<<bit);
+			aa8255_write_c(b, aa->aa8255_data[2] ^ b, sr);
 			aa->aa8255_data[2] = b;
-			aa8255_write_c(b, sr);
 		}
 		break;
 	}
