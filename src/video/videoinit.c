@@ -153,6 +153,22 @@ byte disable_ints_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 	return empty_read_addr(adr, vs);
 }
 
+
+void disable_ints9_w(word adr,byte data, struct VIDEO_STATE*vs) // C020-C02F
+{
+//	printf("disable ints_w: %x\n",adr);
+	disable_ints(vs->sr);
+	mem_proc_write(adr, data, vs->st->service_procs + 0);
+}
+
+byte disable_ints9_r(word adr, struct VIDEO_STATE*vs) // C020-C02F
+{
+//	printf("disable ints_r: %x\n",adr);
+	disable_ints(vs->sr);
+	return mem_proc_read(adr, vs->st->service_procs + 0);
+}
+
+
 /*
 byte toggle_ints_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 {
@@ -277,10 +293,13 @@ int  video_init(struct SYS_RUN_STATE*sr)
 
 
 	vs->sr = sr;
+	vs->st = st;
 	vs->video_mode = VIDEO_MODE_INVALID;
 	vs->ainf.hgr = 1;
 	vs->pal.prev_pal = -1;
 	vs->rb_enabled = 1;
+
+	fill_rw_proc(st->service_procs, N_SERVICE_PROCS, empty_read_addr, empty_write, vs);
 
 	vs->num_fonts = ch->cfgint[CFG_INT_ROM_SIZE] >> 11;
 
@@ -318,7 +337,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 		videosel(vs, 0);
 		fill_read_proc(sr->io_sel + 7, 1, videosel_r, vs);
 		fill_write_proc(sr->io_sel + 7, 1, videosel_w, vs);
-		fill_rw_proc(sr->baseio_sel + 2, 1, disable_ints_r, disable_ints_w, vs);
+		fill_rw_proc(sr->baseio_sel + 2, 1, disable_ints9_r, disable_ints9_w, vs);
 		fill_rw_proc(sr->baseio_sel + 4, 1, enable_ints_r, enable_ints_w, vs);
 		fill_rw_proc(sr->baseio_sel + 5, 1, set_palette_r, set_palette_w, vs);
 		goto l1;

@@ -561,8 +561,7 @@ static void op_bvc(struct STATE_65C02 *st)
 
 static void op_bvs(struct STATE_65C02 *st)
 {
-	if (st->f&FLAG_V) {
-		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+	if (st->f&FLAG_V) {		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
 		++st->addt;
 	} else {
 		st->pc++;

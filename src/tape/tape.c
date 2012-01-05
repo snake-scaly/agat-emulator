@@ -144,6 +144,7 @@ static double xcos(double t)
 
 static void tape_out_samples(struct TAPE_STATE*st, int pval, int val, int nsmp)
 {
+	if (!st->f) return;
 	if (!nsmp) {
 		puts("Missing samples!!!");
 	}
@@ -270,6 +271,7 @@ static byte tape_in(struct TAPE_STATE*st, int tsc, int freq)
 
 void tape_toggle(struct SLOT_RUN_STATE*st)
 {
+//	puts("toggle");
 	if (!st->data) return;
 	tape_out(st->data, cpu_get_tsc(st->sr), cpu_get_freq(st->sr));
 }
@@ -307,6 +309,14 @@ static int tape_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 		tape_in_finish(tst);
 		tape_out_finish(tst);
 		return 0;
+	case SYS_COMMAND_INIT_DONE:
+		switch (st->sr->cursystype) {
+		case SYSTEM_9:
+			fill_rw_proc(st->sr->slots[CONF_CHARSET].service_procs + 0, 1, 
+				tape_out_r, tape_out_w, st);
+			break;
+		}
+		return 0;
 	}
 	return 0;
 }
@@ -334,14 +344,19 @@ int  tape_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	tst->freq = sc->cfgint[CFG_INT_TAPE_FREQ];
 	tst->use_fast = sc->cfgint[CFG_INT_TAPE_FAST];
 	_tcscpy(tst->basename, sc->cfgstr[CFG_STR_TAPE]);
+
+	fill_read_proc(st->service_procs + 0, 1, tape_out_r, st);
+	fill_read_proc(st->service_procs + 1, 1, tape_in_r, st);
 	switch (sr->cursystype) {
 	case SYSTEM_AA:
-		fill_read_proc(st->service_procs + 0, 1, tape_out_r, st);
-		fill_read_proc(st->service_procs + 1, 1, tape_in_r, st);
+		break;
+	case SYSTEM_9:
+		fill_rw_proc(sr->slots[CONF_CHARSET].service_procs + 0, 1, 
+			tape_out_r, tape_out_w, st);
+		fill_read_proc(sr->io6_sel + 0, 1, tape_in_r, st);
 		break;
 	default:
-		fill_read_proc(sr->baseio_sel + 2, 1, tape_out_r, st);
-		fill_write_proc(sr->baseio_sel + 2, 1, tape_out_w, st);
+		fill_rw_proc(sr->baseio_sel + 2, 1, tape_out_r, tape_out_w, st);
 		fill_read_proc(sr->io6_sel + 0, 1, tape_in_r, st);
 	}
 

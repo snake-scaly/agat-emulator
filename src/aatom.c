@@ -12,10 +12,10 @@
 
 struct AATOM_DATA
 {
-	byte aa8255_ctrl;
 	int keyrow;
 	int lkeyrept;
-	byte aa8255_data[4];
+	byte aa8255_data[3], aa8255_ctrl;
+
 	byte aa6522_data[16];
 };
 
@@ -45,6 +45,8 @@ int init_system_aa(struct SYS_RUN_STATE*sr)
 	sr->sys.load_system = load_system_aa;
 	sr->sys.xio_control = xio_control_aa;
 
+	p->aa8255_ctrl = 0x9B;
+
 	fill_rw_proc(sr->base_mem, BASEMEM_NBLOCKS, empty_read_zero, empty_write, sr);
 	fill_rw_proc(sr->base_mem + (0xB000>>BASEMEM_BLOCK_SHIFT), 2, aaio_read, aaio_write, sr);
 
@@ -65,6 +67,7 @@ int restart_system_aa(struct SYS_RUN_STATE*sr)
 {
 	struct AATOM_DATA*aa = sr->sys.ptr;
 	memset(aa, 0, sizeof(*aa));
+	aa->aa8255_ctrl = 0x9B;
 	return 0;
 }
 
@@ -163,20 +166,36 @@ static byte aa8255_read(word adr, struct SYS_RUN_STATE*sr)
 	adr &= 3;
 	switch (adr) {
 	case 0: // port A
-		r = (acorn_get_vmode(sr)<<4) | aa->keyrow;
+		if (aa->aa8255_ctrl & 0x10) {
+			r = 0xFF;
+		} else {
+			r = aa->aa8255_data[adr];
+		}
 		break;
 	case 1: // port B
-		r |= aascan_key(aa->keyrow, sr);
+		if (aa->aa8255_ctrl & 0x02) {
+			r = aascan_key(aa->keyrow, sr);
+		} else {
+			r = aa->aa8255_data[adr];
+		}
 		break;
 	case 2: // port C
-		if (!aa_get_sync(sr)) r |= 0x80;
-		if (aa_get_timer(sr)) r |= 0x10;
-		if (sr->key_rept == aa->lkeyrept) r |= 0x40;
-		aa->lkeyrept = sr->key_rept;
-		r |= aa->aa8255_data[adr] & 0x0F;
+		if (aa->aa8255_ctrl & 0x01) {
+			r = aa->aa8255_data[adr] & 0x0F;
+		} else {
+			r = 0x0F;
+		}
+		if (aa->aa8255_ctrl & 0x08) {
+			if (aa_get_timer(sr)) r |= 0x10;
+			if (sr->key_rept == aa->lkeyrept) r |= 0x40;
+			if (is_alt_pressed(sr)) r |= 0x40; // rept
+			if (!aa_get_sync(sr)) r |= 0x80;
+			aa->lkeyrept = sr->key_rept;
+		} else {
+			r |= aa->aa8255_data[adr] & 0xF0;
+		}
 //		printf("port C read: %02X\n", r);
 //		printf("r = %X\n", r);
-//		if (!is_alt_pressed(sr)) r |= 0x40; // rept
 		break;
 	case 3: // Ctrl
 		r = aa->aa8255_ctrl;
@@ -198,33 +217,60 @@ static void acorn_select_keyrow(int row, struct AATOM_DATA*aa)
 	aa->keyrow = row;
 }
 
+static void aa8255_write_c(byte d, struct SYS_RUN_STATE*sr)
+{
+	struct AATOM_DATA*aa = sr->sys.ptr;
+	aabeep(sr, d & 4);
+	if (d & 2) {
+//		puts("tape output");
+	}
+}
+
 static void aa8255_write(word adr, byte d, struct SYS_RUN_STATE*sr)
 {
 	struct AATOM_DATA*aa = sr->sys.ptr;
 	adr &= 3;
-	aa->aa8255_data[adr] = d;
 	switch (adr) {
 	case 0: // port A
-		acorn_select_vmode(d >> 4, sr);
-		acorn_select_keyrow(d & 15, aa);
+		if (!(aa->aa8255_ctrl & 0x10)) {
+			aa->aa8255_data[adr] = d;
+			acorn_select_vmode(d >> 4, sr);
+			acorn_select_keyrow(d & 15, aa);
+		}
 		break;
 	case 1: // port B
+		if (!(aa->aa8255_ctrl & 0x02)) {
+			aa->aa8255_data[adr] = d;
+		}
 		break;
 	case 2: // port C
 //		printf("port C write: %02X\n", d);
-		aabeep(sr, d & 4);
-		if (d & 2) {
-//			puts("tape output");
+		if (aa->aa8255_ctrl & 0x01) {           // lower: input
+			d &= 0xF0;
+			d |= aa->aa8255_data[adr] & 0x0F;
 		}
-//		if (d & 4) 
-//		aabeep(sr, (d & 4)>>2);
+		if (aa->aa8255_ctrl & 0x08) {           // upper: input
+			d &= 0x0F;
+			d |= aa->aa8255_data[adr] & 0xF0;
+		}
+		aa->aa8255_data[adr] = d;
+		aa8255_write_c(d, sr);
 		break;
 	case 3: // Ctrl
-//		printf("control write: %02X\n", d);
-		if ((d == 5) || (d == 4)) { // speaker to input
-			aabeep(sr, d & 1);
+		if (d & 0x80) {
+//			printf("control write: %02X\n", d);
+			aa->aa8255_ctrl = d;
+		} else {
+			int bit = (d >> 1) & 3;
+			int set = d & 1;
+			byte b = aa->aa8255_data[2];
+			if ((aa->aa8255_ctrl & 0x01) && (bit < 4)) break;
+			if ((aa->aa8255_ctrl & 0x08) && (bit > 3)) break;
+			if (set) b |= (1<<bit);
+			else b &= ~(1<<bit);
+			aa->aa8255_data[2] = b;
+			aa8255_write_c(b, sr);
 		}
-		aa->aa8255_ctrl = d;
 		break;
 	}
 }

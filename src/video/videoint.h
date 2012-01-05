@@ -92,6 +92,7 @@ struct VTERM_INFO
 struct VIDEO_STATE
 {
 	struct SYS_RUN_STATE*sr;
+	struct SLOT_RUN_STATE*st;
 	int video_mode; //= VIDEO_MODE_INVALID;
 
 	struct RASTER_BLOCK rb[MAX_RASTER_BLOCKS], rb_cur;
