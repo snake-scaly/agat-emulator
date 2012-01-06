@@ -17,6 +17,7 @@ struct AATOM_DATA
 	int keyrow;
 	int lkeyrept;
 	byte aa8255_data[3], aa8255_ctrl;
+	int force_shift;
 
 	byte aa6522_data[16];
 };
@@ -94,20 +95,64 @@ int xio_control_aa(struct SYS_RUN_STATE*sr, int req)
 	return 0;
 }
 
+static int aa_table[60] = {
+	0, 0, VK_UP, VK_RIGHT, VK_CAPITAL, VK_TAB, VK_OEM_6, VK_OEM_5, VK_OEM_4, VK_SPACE,
+	'3', '2', '1', '0', VK_BACK, VK_INSERT, VK_RETURN, 0, 0, 0,
+	VK_OEM_MINUS, VK_OEM_COMMA, VK_OEM_1, VK_OEM_7, '9', '8', '7', '6', '5', '4',
+	'G', 'F', 'E', 'D', 'C', 'B', 'A', VK_OEM_3, VK_OEM_2, VK_OEM_PERIOD,
+	'Q', 'P', 'O', 'N', 'M', 'L', 'K', 'J', 'I', 'H',
+	VK_ESCAPE, 'Z', 'Y', 'X', 'W', 'V', 'U', 'T', 'S', 'R'
+};
+
+
+static int aa_keyb_is_pressed(struct SYS_RUN_STATE*sr, int k, int*sh)
+{
+	int s = aa_table[k];
+	switch (s) {
+	case VK_OEM_MINUS:
+		if (keyb_is_pressed(sr, VK_OEM_PLUS)) { (*sh) = 10; return 1; }
+		break;
+	case VK_RIGHT:
+		if (keyb_is_pressed(sr, VK_LEFT)) { (*sh) = 10; return 1; }
+		break;
+	case VK_UP:
+		if (keyb_is_pressed(sr, VK_DOWN)) { (*sh) = 10; return 1; }
+		break;
+	case VK_BACK:
+		if (keyb_is_pressed(sr, VK_DELETE)) return 1;
+		break;
+	}
+	if (!s) return 0;
+	return keyb_is_pressed(sr, s);
+}
+
 
 static byte aascan_key(int row, struct SYS_RUN_STATE*sr)
 {
-	byte r = 0;
-	int k = sr->key_down, krow, kcol;
-//	if (!(k&0x80)) return 0x3F;
-	if (!keyb_is_pressed(sr, k)) return 0x3F;
+	byte r = 0, col, colmask;
+	struct AATOM_DATA*aa = sr->sys.ptr;
+//	int k = sr->key_down, krow, kcol;
+//	if (!keyb_is_pressed(sr, k)) return 0x3F;
 
 	if (!is_shift_pressed(sr)) r |= 0x80;
 	if (!is_ctrl_pressed(sr)) r |= 0x40;
 
+	r |= 0x3F;
+
+	// scan columns
+	for (col = 0, colmask = ~1; col < 6; ++col, colmask <<= 1, colmask |= 1) { 
+		int key;
+		key = col * 10 + row; //(9 - row);
+		if (aa_keyb_is_pressed(sr, key, &aa->force_shift)) r &= colmask;
+	}
+	if (aa->force_shift) {
+		-- aa->force_shift;
+		r &= ~0x80;
+	}
+
 //	printf("k = %i\n", k);
 
-	switch (k) {
+/*	switch (k) {
 	case VK_ESCAPE:
 		k = 59;
 		break;
@@ -143,6 +188,8 @@ static byte aascan_key(int row, struct SYS_RUN_STATE*sr)
 	if (krow == row) r |= (~(1<<kcol)) & 0x3F;
 	else r |= 0x3F;
 //	printf("key[%i]=%X (%X) row = %i, col = %i\n", row, r, k, krow, kcol);
+*/
+//	printf("key[%i]=%X\n", row, r);
 	return r;
 }
 
