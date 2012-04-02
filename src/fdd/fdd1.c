@@ -782,7 +782,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 		return;
 	}	
 
-	if (drv->Track>34) drv->Track=34;
+	if (drv->Track>36) drv->Track=36;
 	if (drv->rawfmt) {
 //		puts("fdd_load_track: nibble");
 		iosseek(drv->disk, drv->start_ofs + drv->Track*
