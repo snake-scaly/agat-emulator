@@ -99,7 +99,8 @@ static void output_bitmap(struct SYS_RUN_STATE*sr, int x, int y, byte data, int 
 void flash_system_1(struct SYS_RUN_STATE*sr)
 {
 	struct APPLE1_DATA*a1 = sr->sys.ptr;
-	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
+//	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
+	output_bitmap(sr, a1->pos[0], a1->pos[1], video_get_flash(sr)?0xC0:0xA0, 0);
 }
 
 static void video_clear(struct SYS_RUN_STATE*sr)
@@ -148,7 +149,8 @@ static void video_write(byte data, struct SYS_RUN_STATE*sr)
 		scroll_bitmap(sr);
 		a1->pos[1] = 23;
 	}
-	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
+//	output_bitmap(sr, a1->pos[0], a1->pos[1], 0xC0, video_get_flash(sr));
+	output_bitmap(sr, a1->pos[0], a1->pos[1], video_get_flash(sr)?0xC0:0xA0, 0);
 }
 
 struct VIDEO_STATE

@@ -27,3 +27,5 @@ del /q installio\*.obj
 rmdir /s /q langsel\.obj
 
 del /s /q *.lib
+del /s /q *.pdb
+del /s /q *.dep
