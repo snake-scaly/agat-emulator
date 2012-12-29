@@ -838,45 +838,89 @@ static void fdd_load_track(struct FDD_DATA*data)
 	iosseek(drv->disk, drv->start_ofs + drv->Track*
 		FDD_SECTOR_DATA_SIZE*FDD_SECTOR_COUNT, SSEEK_SET);
 	memset(drv->TrackData,0x00,sizeof(drv->TrackData));
-	d = 128;
+	d = 0;
+	while (d < 128 - 4) {
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+	}
 	for (i=0; i<FDD_SECTOR_COUNT; i++) {
-		dl = d;
-		drv->TrackData[dl] = 0xD5; dl++;
-		drv->TrackData[dl] = 0xAA; dl++;
-		drv->TrackData[dl] = 0x96; dl++;
+		drv->TrackData[d++] = 0xD5;
+		drv->TrackData[d++] = 0xAA;
+		drv->TrackData[d++] = 0x96;
 		buf[0] = drv->volume;
 		buf[1] = drv->Track;
 		buf[2] = drv->prodos?pren1[i]:ren1[i];
 		buf[3] = fdd_check_sum(buf,3);
 		for (j=0; j<4; j++) {
 			fdd_code_fm(buf[j], a2);
-			drv->TrackData[dl] = a2[0];
-			drv->TrackData[dl+1] = a2[1];
-			dl+=2;
+			drv->TrackData[d++] = a2[0];
+			drv->TrackData[d++] = a2[1];
 		}
-		drv->TrackData[d+11] = 0xDE;
-		drv->TrackData[d+12] = 0xAA;
-		drv->TrackData[d+13] = 0xEB;
-		memset(drv->TrackData+d+14,0xFF,5);
-		drv->TrackData[d+19] = 0xD5;
-		drv->TrackData[d+20] = 0xAA;
-		drv->TrackData[d+21] = 0xAD;
-		dl = d + 22;
+		drv->TrackData[d++] = 0xDE;
+		drv->TrackData[d++] = 0xAA;
+		drv->TrackData[d++] = 0xEB;
+
+		drv->TrackData[d++] = 0x00;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+
+		drv->TrackData[d++] = 0xD5;
+		drv->TrackData[d++] = 0xAA;
+		drv->TrackData[d++] = 0xAD;
 		if (iosread(drv->disk,buf,FDD_SECTOR_DATA_SIZE)!=FDD_SECTOR_DATA_SIZE) {
 			errprint(TEXT("can't read sector"));
 			drv->error=1;
 		}
-		fdd_code_mfm(buf,drv->TrackData+d+22);
-		drv->TrackData[d+365] = 0xDE;
-		drv->TrackData[d+366] = 0xAA;
-		drv->TrackData[d+367] = 0xEB;
-		memset(drv->TrackData+d+368,0xFF,40);
-		d+=408;
+		fdd_code_mfm(buf,drv->TrackData+d);
+		d += 0x157;
+		drv->TrackData[d++] = 0xDE;
+		drv->TrackData[d++] = 0xAA;
+		drv->TrackData[d++] = 0xEB;
+
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
+	}
+	while (d < sizeof(drv->TrackData) - 4) {
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0xFF;
+		drv->TrackData[d++] = 0x00;
 	}
 /*	{
 		char buf[128];
 		FILE*out;
-		sprintf(buf,"track%02i.bin", drv->Track);
+		sprintf(buf,"rtrack%02i.bin", drv->Track);
 		out = fopen(buf, "wb");
 		fwrite(drv->TrackData, 1, sizeof(drv->TrackData), out);
 		fclose(out);

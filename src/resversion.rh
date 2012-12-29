@@ -20,7 +20,7 @@ BEGIN
             VALUE "FileDescription", "Agat-7,9, Apple ][ emulator\0"
             VALUE "FileVersion", VERSION_VER_STR
             VALUE "InternalName", "emulator.exe\0"
-            VALUE "LegalCopyright", "Copyright © 2008,2009 Nop\0"
+            VALUE "LegalCopyright", "Copyright © 2008-2012 Nop\0"
             VALUE "LegalTrademarks", "\0"
             VALUE "OriginalFilename", "interface.exe\0"
             VALUE "PrivateBuild", "\0"
