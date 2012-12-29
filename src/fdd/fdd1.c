@@ -402,11 +402,16 @@ int  fdd1_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCON
 	return 0;
 }
 
-static void fdd_rot(struct FDD_DRIVE_DATA *d)
+static void fdd_rot(struct FDD_DATA*data)
 {
+	struct FDD_DRIVE_DATA *d = data->drives+data->drv;
+	if (!data->state.ReadMode && !d->readonly) {
+		d->TrackData[d->TrackIndex] = d->Rotated? 0x00: data->state.WriteData;
+	}
 	d->Rotated = 1;
 	d->TrackIndex++;
 	if (d->TrackIndex>=d->TrackLen) d->TrackIndex = 0;
+	data->time += data->dt;
 }
 
 
@@ -430,7 +435,7 @@ static byte fdd_read_data(struct FDD_DATA*data)
 		r = d->TrackData[d->TrackIndex];
 		d->Rotated = 0;
 //		printf("TrackData[%i] = %X\n", d->TrackIndex, r);
-//		if (!data->sr->in_debug) fdd_rot(d);
+//		if (!data->sr->in_debug) fdd_rot(data);
 	}
 	data->last_read = r;
 	data->access++;
@@ -448,11 +453,10 @@ static void fdd_write_data(struct FDD_DATA*data)
 	data->last_tsc = tsc;
 
 	dprintf("Writing[%i]: %02X (%02X)\n", d->TrackIndex, data->state.WriteData, d->TrackData[d->TrackIndex]);
-	d->TrackData[d->TrackIndex] = data->state.WriteData;
+//	d->TrackData[d->TrackIndex] = data->state.WriteData;
 	if (!data->sr->in_debug) {
-		fdd_rot(d);
-		data->time += data->dt;
-	}	
+//		fdd_rot(data);
+	}
 }
 
 static void fdd_nowrite(struct FDD_DATA*data,byte d)
@@ -680,9 +684,11 @@ fin:
 
 static int copy_sect(struct FDD_DRIVE_DATA *d, byte*buf, int ofs, int len, int *nrot)
 {
+	int ninc = 0;;
 	for (;len; --len, ++ofs, ++buf) {
-		if (ofs == d->TrackLen) { ofs = 0; ++*nrot; }
+		if (ofs == d->TrackLen) { ofs = 0; ++*nrot; ++ninc; if (ninc == 2) break; }
 		*buf = d->TrackData[ofs];
+		if (!(*buf & 0x80)) { --buf; ++len; }
 	}
 	return ofs;
 }
@@ -765,10 +771,12 @@ static void fdd_save_track(struct FDD_DATA*data)
 		ofs = copy_sect(d, sbuf, ofs, 343+6, &nrot);
 		if (sbuf[0] != 0xD5 || sbuf[1] != 0xAA || sbuf[2] != 0xAD) {
 			printf("invalid sector data prefix!\n");
+			ofs = ofs1 + 1;
 			continue;
 		}
 		if (sbuf[343+3] != 0xDE/* || sbuf[343+4] != 0xAA*/) {
-			printf("invalid sector data tail!\n");
+			printf("invalid sector data tail %02X %02X!\n", sbuf[343+3], sbuf[343+4]);
+			ofs = ofs1 + 1;
 			continue;
 		}
 //		dump_buf(sbuf + 3, 0x157);
@@ -823,13 +831,13 @@ static void fdd_load_track(struct FDD_DATA*data)
 		drv->TrackIndex = 0;
 		drv->TrackLen = NIBBLE_TRACK_LEN;
 		drv->Rotated = 0;
-		data->time = 0;
+//		data->time = 0;
 		return;
 	}
 //	puts("fdd_load_track");
 	iosseek(drv->disk, drv->start_ofs + drv->Track*
 		FDD_SECTOR_DATA_SIZE*FDD_SECTOR_COUNT, SSEEK_SET);
-	memset(drv->TrackData,0xFF,128);
+	memset(drv->TrackData,0x00,sizeof(drv->TrackData));
 	d = 128;
 	for (i=0; i<FDD_SECTOR_COUNT; i++) {
 		dl = d;
@@ -876,7 +884,7 @@ static void fdd_load_track(struct FDD_DATA*data)
 	drv->TrackIndex = 0;
 	drv->TrackLen = sizeof(drv->TrackData);
 	drv->Rotated = 0;
-	data->time = 0;
+//	data->time = 0;
 }
 
 
@@ -925,7 +933,7 @@ static void fdd_begin_write(struct FDD_DATA*data)
 	data->access = 1;
 	data->state.ReadMode = 0;
 	data->last_tsc = 0;
-	fdd_rot(d);
+//	data->time -= NTICKS_BIT;
 }
 
 void fdd_io_access(unsigned short a,struct FDD_DATA*data)
@@ -939,9 +947,9 @@ void fdd_io_access(unsigned short a,struct FDD_DATA*data)
 	
 	if (!data->time || data->time > t) data->time = t;
 	dt = t - data->time;
-	if (dt > t0 * 20) dt += t0 * 25; // skip sector
+//	if (dt > t0 * 50) dt += t0 * 10; // skip sector
 //	if (dt > t0 * 20) dt -= t0 * 10; // wait for sector
-	if (dt > t0 * 1000) dt = t0 * 1000;
+	if (dt > t0 * 20000) dt = t0 * 20000;
  	data->time = t - dt;
 
 	dprintf("fdd1: state: drv=%i, motor=%i, track=%i, index=%i, read=%i, ro=%i, dt = %i\n", 
@@ -952,12 +960,13 @@ void fdd_io_access(unsigned short a,struct FDD_DATA*data)
 
  	
  	if (dt >= t0) {
-		while (data->time < t - t0) { 
+		while (data->time <= t - t0) { 
 			dprintf("fdd1: >>rotate\n");
-			fdd_rot(data->drives+data->drv);
-			data->time += data->dt;
+			fdd_rot(data);
 		}
 	}
+
+
 
 	
 	
@@ -992,7 +1001,7 @@ void fdd_io_access(unsigned short a,struct FDD_DATA*data)
 		break;
 	case 15:
 		fdd_begin_write(data);
-		data->time += NTICKS_BIT;
+//		data->time += NTICKS_BIT;
 		break;
 	}
 	dprintf("fdd1 access[%x, %s]\n", a, regs[a]);
@@ -1050,7 +1059,8 @@ void fdd_io_write(unsigned short a,unsigned char d,struct FDD_DATA*data)
 	switch (a) {
 	case 0x0D:
 		data->state.WriteData = d;
-		data->time += NTICKS_BIT;
+		data->drives[data->drv].Rotated = 0;
+//		data->time += NTICKS_BIT;
 		break;
 	}
 }
