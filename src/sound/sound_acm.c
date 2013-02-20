@@ -97,7 +97,7 @@ static void* sound_init(struct SOUNDPARAMS*par)
 	p->curbuf = -1;
 	p->prevbuf = -1;
 
-	p->maxlen = par->buflen;
+	p->maxlen = par->buflen * par->freq / 22100;
 
 	p->freq = par->freq;
 
@@ -188,9 +188,9 @@ static void CALLBACK finish_timer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, 
 //	printf("acm: finish_timer\n");
 	if (!p->out) return;
 	EnterCriticalSection(&p->crit);
-		if (p->pending) {
-//			if (p->nbuf_playing < 2)
-//			system_command(p->sr, SYS_COMMAND_BOOST, 10000, 0);
+		printf("timer: pending = %i, nbuf_playing = %i\n", p->pending, p->nbuf_playing);
+		if (p->pending && p->nbuf_playing <= 1) {
+			system_command(p->sr, SYS_COMMAND_BOOST, 100000, 0);
 			Sprintf(("posting from timer\n"));
 			post_cur_buffer(p);
 		}
@@ -202,10 +202,10 @@ static void set_timer_for_buf(struct ACM_DATA*p, WAVEHDR*h)
 {
 	int msec;
 	if (!h) msec = FIRST_DELAY;
-	else msec = h->dwBufferLength / sizeof(sample_t) * 900 / p->freq - 20;
+	else msec = h->dwBufferLength / sizeof(sample_t) * 800 / p->freq - 20;
 	if (msec <= 0) msec = 1;
 //	printf("acm: set_timer = %i msec (buf = %i)\n", msec, h?h->dwUser:-1);
-	p->timer_id = timeSetEvent(msec, 0, finish_timer, (DWORD)p, TIME_ONESHOT);
+	p->timer_id = timeSetEvent(msec, 0, finish_timer, (DWORD)p, TIME_ONESHOT | TIME_KILL_SYNCHRONOUS);
 	if (!p->timer_id) {
 		fprintf(stderr, "timer: set event failed\n");
 	}
@@ -218,7 +218,7 @@ static void post_cur_buffer(struct ACM_DATA*p)
 	if (p->prevbuf != -1) p->bufrefs[p->prevbuf] = p->curbuf;
 	p->bufrefs[p->curbuf] = -1;
 	p->prev_tick = 0;
-//	printf("acm: posting current buffer %i with size %i samples (%i msec)\n", p->curbuf, p->curofs, p->curofs * 1000 / p->freq);
+	printf("acm: posting current buffer %i with size %i samples (%i msec)\n", p->curbuf, p->curofs, p->curofs * 1000 / p->freq);
 	p->pending -= p->curofs;
 	p->hdrs[n].dwBufferLength = p->curofs * sizeof(sample_t);
 	if (!p->nbuf_playing) set_timer_for_buf(p, p->hdrs + n);
@@ -268,13 +268,15 @@ static void sound_write(struct ACM_DATA*p, sample_t val, int nsmp)
 static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 {
 	int maxnsmp = p->maxlen * 2;
-	double fsmp, mult = 1.01;
+	int lpending = p->pending;
+	double fsmp, mult = 1.0;
 	if (!p || !p->out) return -1;
 	if (val == SOUND_TOGGLE) val = (p->cur_val ^= XOR_SAMPLE);
 	else p->cur_val = val;
 	Sprintf(("acm: sound_data: %i\n", val));
-	if (!p->pending && !p->nbuf_playing && !p->flen) {
-//		system_command(p->sr, SYS_COMMAND_BOOST, 10000, 0);
+	if (!p->pending && !p->nbuf_playing) {
+		puts("boost");
+		system_command(p->sr, SYS_COMMAND_BOOST, 100000, 0);
 	}
 	if (t < p->prev_tick || !p->prev_tick || !p->pending) {
 		p->prev_tick = t - 1;
@@ -300,17 +302,18 @@ static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 			goto fin;
 		}
 	}
+	
 	// at this point flen = 0 always
 	if (fsmp > 1) {
 		sound_write(p, val, (int)fsmp);
 		fsmp -= (int)fsmp;
 	}
-	if (p->pending == 1 && !p->nbuf_playing) {
-		set_timer_for_buf(p, NULL);
-	}
 	// at this point fsmp < 1 always
 	p->fsum = ((double)val - MID_SAMPLE) / (double)(MAX_SAMPLE - MID_SAMPLE) * fsmp;
 	p->flen = fsmp;
+	if (!lpending && !p->nbuf_playing) {
+		set_timer_for_buf(p, NULL);
+	}
 fin:
 	p->prev_tick = t;
 	LeaveCriticalSection(&p->crit);
@@ -333,6 +336,7 @@ static void CALLBACK out_proc(HWAVEOUT hwo,UINT uMsg,DWORD dwInstance,
 			int n = p->bufrefs[h->dwUser];
 			Sprintf(("acm: buffer done: buf = %i, next = %i\n", h->dwUser, n));
 			InterlockedDecrement(&p->nbuf_playing);
+//			printf("playing: %i\n", p->nbuf_playing);
 			if (n != -1) set_timer_for_buf(p, p->hdrs + n);
 		}
 		break;
