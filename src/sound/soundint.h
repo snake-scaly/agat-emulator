@@ -25,7 +25,7 @@ struct SOUNDPROC
 	void* (*sound_init)(struct SOUNDPARAMS*par);
 	void  (*sound_term)(void*p);
 	int   (*sound_data)(void*p, int d, long t, long f);
-	void  (*sound_timer)(void*p);
+	int   (*sound_event)(void*p, void*d, void*par);
 };
 
 

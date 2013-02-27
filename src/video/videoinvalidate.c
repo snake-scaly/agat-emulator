@@ -26,7 +26,7 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 	dword sadr = adr;
 	int i, j;
 	if (sr->cursystype == SYSTEM_E) sadr &= 0xFFFF;
-	if (!vs->sr->bmp_bits) return;
+	if (!sr->bmp_bits) return;
 //	printf("video_invalidate: adr = %x; n_rb = %i\n", adr, vs->n_rb);
 	for (i = vs->n_rb, rb = vs->rb; i; --i, ++rb) {
 //		printf("i = %i; n_ranges = %i\n", i, rb->n_ranges);

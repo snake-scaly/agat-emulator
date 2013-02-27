@@ -49,6 +49,7 @@ enum {
 	SYS_COMMAND_SETREG,    	    // data = reg index, param = value
 
 	SYS_COMMAND_WAKEUP,    	    // wakeup CPU module, data, param = 0
+	SYS_COMMAND_SOUND_DONE,	    // finished playing sound, data = output_device, param = wavehdr
 
 	SYS_N_COMMANDS
 };

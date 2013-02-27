@@ -1068,6 +1068,9 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 //			printf("x=%i, y=%i\n", sr->xmousepos, sr->ymousepos);
 		}
 		break;
+	case MM_WOM_DONE:
+		system_command(sr, SYS_COMMAND_SOUND_DONE, wp, lp);
+		return 0;
 	case WM_INPUTLANGCHANGE:
 //		printf("%x\n",lp);
 		if (!(sr->gconfig->flags & EMUL_FLAGS_LANGSEL)) {

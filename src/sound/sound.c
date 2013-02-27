@@ -13,16 +13,12 @@ struct SOUNDDATA
 {
 	void	*data;
 	struct SOUNDPROC*proc;
-	int	timer_id;
 	struct SYS_RUN_STATE*sr;
 
 	DWORD	last_tick;
 	long	last_tsc;
 	long	sync_freq;
 };
-
-
-static void CALLBACK acm_timer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 
 
@@ -46,6 +42,13 @@ static struct SOUNDPROC* getproc(struct SLOT_RUN_STATE*st)
 
 static int sound_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
+	struct SOUNDDATA* d0 = st->data;
+	struct SOUNDPROC*p = d0->proc;
+	switch (cmd) {
+	case SYS_COMMAND_SOUND_DONE:
+		if (p->sound_event) return p->sound_event(d0->data, (void*)data, (void*)param);
+		break;
+	}
 	return 0;
 }
 
@@ -55,7 +58,6 @@ static int sound_term(struct SLOT_RUN_STATE*st)
 	struct SOUNDDATA* d0 = st->data;
 	struct SOUNDPROC*p = d0->proc;
 	if (!p) return -1;
-	if (d0->timer_id) timeKillEvent(d0->timer_id);
 	p->sound_term(d0->data);
 	return 0;
 }
@@ -107,16 +109,6 @@ int  sound_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCO
 	if (!d0) return -3;
 	data = p->sound_init(&par);
 	if (!data) { free(d0); return -2; }
-
-	if (p->sound_timer) {
-		d0->timer_id = timeSetEvent(TIMER_INTERVAL_MS, 0, (LPTIMECALLBACK)acm_timer, (DWORD_PTR)d0, TIME_PERIODIC);
-	        if (!d0->timer_id) {
-	        	p->sound_term(data);
-	        	free(d0);
-	        	return -4;
-	        }
-	} else d0->timer_id = 0;
-
 	puts("sound init ok");
 
 	fill_read_proc(sr->baseio_sel + 3, 1, sound_r, st);
@@ -132,25 +124,3 @@ int  sound_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCO
 	return 0;
 }
 
-#define ABS(a) (((a) < 0) ? -(a): (a))
-
-static void CALLBACK acm_timer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
-{
-	struct SOUNDDATA* d0 = (struct SOUNDDATA*)dwUser;
-	DWORD tick = GetTickCount();
-	long tsc = cpu_get_tsc(d0->sr);
-
-/*	if (!d0->sync_freq) d0->sync_freq = cpu_get_freq(d0->sr);
-
-	if (d0->last_tick) {
-		long cpu_tick = (tsc - d0->last_tsc) / cpu_get_freq(d0->sr);
-		long timer_tick = tick - d0->last_tick;
-		long freq;
-		freq = (tsc - d0->last_tsc) / timer_tick;
-		if (freq < d0->sync_freq || ABS(freq - d0->sync_freq) > 50) d0->sync_freq = freq - 30;
-//		printf("cpu_tick = %i; timer_tick = %i; freq = %i\n", cpu_tick, timer_tick, d0->sync_freq);
-	}*/
-	d0->last_tick = tick;
-	d0->last_tsc = tsc;
-	if (d0->proc->sound_timer) d0->proc->sound_timer(d0->data);
-}
