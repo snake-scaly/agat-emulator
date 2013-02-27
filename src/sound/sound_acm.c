@@ -146,7 +146,7 @@ static void* sound_init(struct SOUNDPARAMS*par)
 	fmt.wBitsPerSample = sizeof(sample_t) * 8;
 	fmt.nAvgBytesPerSec = fmt.nSamplesPerSec * fmt.nBlockAlign;
 
-	if (ACM_FAILED(waveOutOpen(&p->out,WAVE_MAPPER,&fmt,(DWORD)par->w,0,CALLBACK_WINDOW),TEXT("opening wave out"))) {
+	if (ACM_FAILED(waveOutOpen(&p->out,WAVE_MAPPER,&fmt,(DWORD)par->w,0,CALLBACK_WINDOW | WAVE_ALLOWSYNC),TEXT("opening wave out"))) {
 		p->out = NULL;
 		return p;
 	}
@@ -299,6 +299,7 @@ static void post_cur_buffer(struct ACM_DATA*p, int force)
 {
 	int n = p->curbuf;
 	if (p->curbuf == -1) return;
+	if (p->curofs < 100) return;
 	if (p->firstbuf == -1) p->firstbuf = p->curbuf;
 	if (p->prevbuf != -1) p->buf[p->prevbuf].next = p->curbuf;
 	p->buf[p->curbuf].next = -1;
