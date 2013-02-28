@@ -64,6 +64,9 @@ struct DSK_INFO
 	char	name[256];
 };
 
+
+#define BLOCKS_PER_TRACK 16
+
 struct CMS_STATE
 {
 	struct SLOT_RUN_STATE*st;
@@ -81,6 +84,9 @@ struct CMS_STATE
 
 	int	dev_selected; // selected device number or (-1)
 	int	fast_mode;
+
+
+	int	last_track;
 
 
 	int	phase;
@@ -404,11 +410,27 @@ static void close_device(struct CMS_STATE*cms)
 	cms->img = NULL;
 }
 
+static void sound_seek()
+{
+	PlaySound(NULL, NULL, SND_NODEFAULT);
+	PlaySound("seagate.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOWAIT);
+}
+
+
+static void scsi_seek(struct CMS_STATE*cms, unsigned long lba)
+{
+	int t = lba / BLOCKS_PER_TRACK;
+	if (t != cms->last_track) {
+		sound_seek();
+		cms->last_track = t;
+	}
+}
 
 static int scsi_read_block(struct CMS_STATE*cms, unsigned long lba, byte*data, int len)
 {
 	if (!cms->img) return 3;
 //	printf("scsi: read block with LBA=%i, size=%i\n", lba, len);
+	scsi_seek(cms, lba);
 	fseek(cms->img, lba * 512, SEEK_SET);
 	fread(data, 1, len, cms->img);
 	return 0;
@@ -419,6 +441,7 @@ static int scsi_write_block(struct CMS_STATE*cms, unsigned long lba, const byte*
 {
 //	printf("scsi: write block with LBA=%i, size=%i\n", lba, len);
 	if (!cms->img) return 3;
+	scsi_seek(cms, lba);
 	fseek(cms->img, lba * 512, SEEK_SET);
 	fwrite(data, 1, len, cms->img);
 	return 0;
@@ -428,6 +451,7 @@ static int scsi_format(struct CMS_STATE*cms, unsigned nb)
 {
 	char buf[512];
 //	printf("scsi: formatting device\n");
+	scsi_seek(cms, 0);
 	if (!cms->img) return 3;
 	memset(buf, 0, sizeof(buf));
 	for (; nb; --nb) {

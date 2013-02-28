@@ -75,6 +75,7 @@ IDI_HDV                 ICON    DISCARDABLE     "bmps\\hdd.ico"
 
 SHUGART.WAV             WAVE    MOVEABLE PURE   "shugart.wav"
 TEAC.WAV                WAVE    MOVEABLE PURE   "teac.wav"
+SEAGATE.WAV             WAVE    MOVEABLE PURE   "seagate.wav"
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
