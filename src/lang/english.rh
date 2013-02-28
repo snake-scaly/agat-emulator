@@ -428,7 +428,7 @@ BEGIN
 END
 
 
-IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 163
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 177
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Agat Emulator Settings"
 FONT 9, "Tahoma"
@@ -438,24 +438,27 @@ BEGIN
                     WS_TABSTOP,7,7,173,10
     CONTROL         "Work in a background",IDC_BACKGROUND_ACTIVE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,22,113,10
-    CONTROL         "Emulate of the Shugart drive sounds",IDC_SHUGART_SOUNDS,
+    CONTROL         "Emulate the Shugart drive sounds",IDC_SHUGART_SOUNDS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,149,10
-    CONTROL         "Emulate of the Teac drive sounds",IDC_TEAC_SOUNDS,
+    CONTROL         "Emulate the Teac drive sounds",IDC_TEAC_SOUNDS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,140,10
+    CONTROL         "Emulate the Seagate hard drive sounds",
+                    IDC_SEAGATE_SOUNDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,67,169,10
     CONTROL         "Enable internal debugger",IDC_ENABLE_DEBUGGER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,98,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,82,98,10
     CONTROL         "Disassemble in the debugger undocumented CPU commands",
                     IDC_DEBUG_ILLEGAL_CMDS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,82,258,10
+                    WS_TABSTOP,7,97,258,10
     CONTROL         "Disassemble in the debugger new CPU commands",
                     IDC_DEBUG_NEW_CMDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,97,227,10
+                    7,112,227,10
     CONTROL         "Use synchronous screen update",IDC_SYNC_UPDATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
-    LTEXT           "Input language switching:",100,7,126,99,8
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,127,125,10
+    LTEXT           "Input language switching:",100,7,141,99,8
     COMBOBOX        IDC_LANGSEL,118,124,153,52,CBS_DROPDOWNLIST | WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,73,142,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,154,142,50,14
+    DEFPUSHBUTTON   "OK",IDOK,73,156,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,154,156,50,14
 END
 
 

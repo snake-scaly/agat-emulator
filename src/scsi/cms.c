@@ -421,7 +421,7 @@ static void scsi_seek(struct CMS_STATE*cms, unsigned long lba)
 {
 	int t = lba / BLOCKS_PER_TRACK;
 	if (t != cms->last_track) {
-		sound_seek();
+		if (cms->sr->gconfig->flags & EMUL_FLAGS_SEAGATE_SOUNDS) sound_seek();
 		cms->last_track = t;
 	}
 }

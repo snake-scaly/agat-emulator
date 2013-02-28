@@ -148,6 +148,7 @@
 #define IDC_TEAC_SOUNDS                 1070
 #define IDC_SYNC_UPDATE                 1071
 #define IDC_DEBUG_NEW_CMDS              1072
+#define IDC_SEAGATE_SOUNDS              1073
 #define IDC_LANGSEL                     1074
 #define IDC_STATIC                      -1
 

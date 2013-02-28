@@ -429,7 +429,7 @@ BEGIN
 END
 
 
-IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 163
+IDD_GCONFIG DIALOG DISCARDABLE  0, 0, 278, 177
 STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Настройка эмулятора"
 FONT 9, "Tahoma"
@@ -443,20 +443,23 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,37,149,10
     CONTROL         "Имитировать звуки дисковода Teac",IDC_TEAC_SOUNDS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,52,140,10
+    CONTROL         "Имитировать звуки жёсткого диска Seagate",
+                    IDC_SEAGATE_SOUNDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,67,169,10
     CONTROL         "Использовать отладчик",IDC_ENABLE_DEBUGGER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,67,98,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,82,98,10
     CONTROL         "Отображать в отладчике недокументированные команды процессора",
                     IDC_DEBUG_ILLEGAL_CMDS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,82,258,10
+                    WS_TABSTOP,7,97,258,10
     CONTROL         "Отображать в отладчике расширенные команды процессора",
                     IDC_DEBUG_NEW_CMDS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,97,227,10
+                    7,112,227,10
     CONTROL         "Синхронное обновление экрана",IDC_SYNC_UPDATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,112,125,10
-    LTEXT           "Переключение языка ввода:",100,7,126,99,8
-    COMBOBOX        IDC_LANGSEL,118,124,153,52,CBS_DROPDOWNLIST | WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,73,142,50,14
-    PUSHBUTTON      "Отмена",IDCANCEL,154,142,50,14
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,127,125,10
+    LTEXT           "Переключение языка ввода:",100,7,141,99,8
+    COMBOBOX        IDC_LANGSEL,118,139,153,52,CBS_DROPDOWNLIST | WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,73,156,50,14
+    PUSHBUTTON      "Отмена",IDCANCEL,154,156,50,14
 END
 
 
