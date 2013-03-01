@@ -407,7 +407,7 @@ static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 {
 	int maxnsmp = p->maxlen * 10;
 	int lpending = p->pending;
-	double fsmp, mult = 0.99;
+	double fsmp;//, mult = 0.99;
 	if (!p || !p->out) return -1;
 	if (val == SOUND_TOGGLE) val = (p->cur_val ^= XOR_SAMPLE);
 	else p->cur_val = val;
@@ -416,7 +416,7 @@ static int sound_data(struct ACM_DATA*p, int val, long t, long f)
 		p->prev_tick = t - 1;
 		fsmp = 1;
 	} else {
-		fsmp = (t - p->prev_tick) * (double)p->freq/1000.0/(double)f * mult;
+		fsmp = (t - p->prev_tick) * (double)p->freq/1000.0/(double)f;// * mult;
 	}
 //	printf("delta_t = %i, nsmp = %i\n", t - p->prev_tick, nsmp);
 	if (fsmp > maxnsmp) { fsmp = 1; }
