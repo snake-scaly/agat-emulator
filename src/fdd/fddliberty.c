@@ -29,7 +29,7 @@
 #endif
 
 #define FDD_SECTOR_DATA_SIZE 512
-#define SECT_PER_TRACK 16
+#define SECT_PER_TRACK 10
 
 #define FDD_ROM_SIZE 0x800
 
@@ -67,7 +67,7 @@ struct FDD_DATA
 	int	rotate_delay;
 	int	data_remains;
 	int	step_dir;
-	int	cur_drive;
+	int	cur_drive, cur_head;
 	int	enabled;
 };
 
@@ -302,14 +302,15 @@ static byte fdd_rom_r(word adr, struct FDD_DATA*data) // CX00-CXFF
 static void fdd_read_sector(struct FDD_DATA*data, int drv)
 {
 	struct FDD_DRIVE_DATA*d = data->drives + drv;
-	int t, s, ofs, nr;
+	int t, s, h, ofs, nr;
 	if (!d->present || !d->disk) {
 		data->regs[0] |= 0x10;
 	}
 	t = data->regs[1];
 	s = data->regs[2];
-	ofs = ((t - 2) * SECT_PER_TRACK + s - 1) * FDD_SECTOR_DATA_SIZE;
-	printf("reading sector from offset %X\n", ofs);
+	h = data->cur_head;
+	ofs = ((t * 2 + h) * SECT_PER_TRACK + s - 1) * FDD_SECTOR_DATA_SIZE;
+	printf("reading sector from offset %X: sector %i, track %i head %i\n", ofs, s, t, h);
 	iosseek(d->disk, ofs, SSEEK_SET);
 	nr = iosread(d->disk, data->buffer, FDD_SECTOR_DATA_SIZE);
 	data->data_remains = nr;
@@ -326,9 +327,12 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 	data->data_remains = 0;
 	data->last_cmd = cmd;
 	data->rotate_delay = 100;
+	printf("fdd_command (%i): data_index = %i, data_remains = %i\n", cmd, data->data_index, data->data_remains);
+
 	switch (cmd >> 4) {
 	case 0x00: // recalibrate
 		puts("fdd: recalibrate");
+		data->regs[1] = 0;
 		if (data->drives[data->cur_drive].present) {
 			data->regs[0] |= 4; // track 0
 		} else {
@@ -336,16 +340,25 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		}
 		break;
 	case 0x01: // seek cylinder
+		if (!data->drives[data->cur_drive].present) {
+			puts("fdd: seek: no drive present!");
+			data->regs[0] |= 0x10; // seek error
+			break;
+		}
 		if (data->data_index != 1) {
 			puts("fdd: seek: no cylinder number!");
 			data->regs[0] |= 0x10; // seek fail
 			break;
 		}
-		data->regs[1] = data->buffer[0];
+		printf("fdd: seek from track %i to track %i\n", data->regs[1], data->buffer[0] & 0x7F);
+		data->regs[1] = data->buffer[0] & 0x7F;
+		if (data->regs[1] >= 40) {
+			data->regs[0] |= 0x10; // seek fail
+			data->regs[1] = 39;
+		}
 		if (!data->regs[1]) {
 			data->regs[0] |= 4; // track 0
 		}
-		printf("fdd: seek to track %i\n", data->regs[1]);
 		break;
 	case 0x02: // step, no change
 		puts("fdd: step, no change");
@@ -387,6 +400,11 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		break;
 	case 0x08: // read single sector
 	case 0x09: // read multiple sectors
+		if (!data->drives[data->cur_drive].present) {
+			puts("fdd: read: no drive present!");
+			data->regs[0] |= 0x80; // not ready
+			break;
+		}
 		printf("fdd: reading sector %i\n", data->regs[2]);
 		fdd_read_sector(data, data->cur_drive);
 		data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
@@ -401,7 +419,7 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		puts("fdd: read address mark");
 		data->buffer[0] = data->regs[1];
 		data->buffer[1] = 0; // side
-		data->buffer[2] = 0; // type
+		data->buffer[2] = 2; // type
 		data->buffer[3] = data->regs[2]; // sector
 		data->regs[2] =   data->regs[1]; // track to sector field
 		data->buffer[4] = 0x00; // cs
@@ -410,6 +428,7 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		break;
 	case 0x0D: // reset
 		puts("fdd: reset execution");
+		data->regs[0] &= ~1;
 		break;
 	case 0x0E: // read track
 		puts("fdd: read track");
@@ -441,8 +460,9 @@ static void fdd_write_data(struct FDD_DATA*data, byte d)
 
 static void fdd_control(struct FDD_DATA*data, byte d)
 {
-	data->cur_drive = d & 3;
-	printf("selected drive %i\n", data->cur_drive);
+	data->cur_drive = d & 1;
+	data->cur_head = (d>>1) & 1;
+	printf("selected drive %i head %i (%02X)\n", data->cur_drive, data->cur_head, d);
 }
 
 
@@ -451,7 +471,7 @@ static byte fdd_get_status(struct FDD_DATA*data)
 	if (!(data->last_cmd&0x80)) { // type I command, update index mark and head loaded
 		data->regs[0] |= 0x20; // head loaded
 		data->regs[0] |= data->regs[2]? 0x00: 0x02; // index mark
-		printf("rotate_delay = %i, sector = %i\n", data->rotate_delay, data->regs[2]);
+//		printf("rotate_delay = %i, sector = %i\n", data->rotate_delay, data->regs[2]);
 		if (data->rotate_delay) --data->rotate_delay;
 		else {
 			data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
@@ -460,8 +480,8 @@ static byte fdd_get_status(struct FDD_DATA*data)
 	}
 	if (data->status_delay) -- data->status_delay;
 //	if (data->enabled) {
-//		if (data->drives[data->cur_drive].present) 
-//			data->regs[0] |= 0x80;
+		if (!data->drives[data->cur_drive].present) 
+			data->regs[0] |= 0x80;
 		if (data->drives[data->cur_drive].readonly) 
 			data->regs[0] |= 0x40;
 //	}
@@ -486,11 +506,13 @@ static byte fdd_get_data(struct FDD_DATA*data)
 	byte r;
 	if (data->data_remains) -- data->data_remains;
 	else return 0x00;
+	r = data->buffer[data->data_index];
 	if (!data->data_remains) {
 		data->regs[0] &= ~0x01; // clear busy flag
+		data->data_index = 0;
+	} else {
+		data->data_index = (data->data_index + 1) % FDD_SECTOR_DATA_SIZE;
 	}
-	r = data->buffer[data->data_index];
-	data->data_index = (data->data_index + 1) % FDD_SECTOR_DATA_SIZE;
 	return r;
 }
 
@@ -524,20 +546,20 @@ int  fddliberty_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct S
 
 	fill_fdd1(data);
 	if (cf->cfgint[CFG_INT_DRV_TYPE1] == DRV_TYPE_SHUGART) {
-		data->drives[1].present = 1;
+		data->drives[0].present = 1;
 		sprintf(buf, "fdd1");
 		name = sys_get_parameter(buf);
 		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE1];
-		strcpy(data->drives[1].disk_name, name);
-		open_fdd1(data->drives + 1, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 1);
+		strcpy(data->drives[0].disk_name, name);
+		open_fdd1(data->drives + 0, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 1, 0);
 	}
 	if (cf->cfgint[CFG_INT_DRV_TYPE2] == DRV_TYPE_SHUGART) {
-		data->drives[2].present = 1;
+		data->drives[1].present = 1;
 		sprintf(buf, "fdd2");
 		name = sys_get_parameter(buf);
 		if (!name) name = cf->cfgstr[CFG_STR_DRV_IMAGE2];
-		strcpy(data->drives[2].disk_name, name);
-		open_fdd1(data->drives + 2, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 2);
+		strcpy(data->drives[1].disk_name, name);
+		open_fdd1(data->drives + 1, name, cf->cfgint[CFG_INT_DRV_RO_FLAGS] & 2, 1);
 	}
 	data->initialized = 1;
 
@@ -607,7 +629,7 @@ static byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 		r = fdd_get_state(data);
 		break;
 	}
-	printf("fdd_read(%X) = %X\n", a, r);
+//	printf("fdd_read(%X) = %X\n", a, r);
 	return r;
 }
 
