@@ -121,6 +121,7 @@ static void vsel_ap_w(word adr, byte data, struct VIDEO_STATE*vs) // C050-C05F
 static byte vsel_ap_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 {
 	vsel_ap(vs, adr);
+	if (adr == 0xC058) return rand();
 	return empty_read(adr, NULL);
 }
 

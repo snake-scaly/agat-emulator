@@ -169,6 +169,15 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("1.DSK"));
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE2], TEXT("2.DSK"));
 		return 0;
+	case DEV_FDD_LIBERTY:
+		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
+		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
+		c->cfgint[CFG_INT_DRV_COUNT] = 1;
+		c->cfgint[CFG_INT_DRV_RO_FLAGS] = 3;
+		c->cfgint[CFG_INT_DRV_FAST] = 1;
+		_tcscpy(c->cfgstr[CFG_STR_DRV_ROM], TEXT("ROMS\\LIBERTY.ROM"));
+		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE1], TEXT("LIBERTY.DSK"));
+		return 0;
 	case DEV_MOUSE_PAR:
 		c->cfgint[CFG_INT_MOUSE_TYPE] = MOUSE_MARS;
 		_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("ROMS\\CM6337.ROM"));
@@ -689,6 +698,7 @@ int get_slot_comment(struct SLOTCONFIG*c, TCHAR*buf)
 		buf[1] = 0;
 		return 0;
 	case DEV_FDD_ATOM:
+	case DEV_FDD_LIBERTY:
 		wsprintf(buf,
 			TEXT("%s; %s"),
 			c->cfgstr[CFG_STR_DRV_IMAGE1],

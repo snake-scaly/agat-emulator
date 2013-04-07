@@ -96,6 +96,8 @@ enum {
 	DEV_EXTROM_ATOM, // extension rom
 	DEV_EXTRAM_ATOM, // extension ram
 
+	DEV_FDD_LIBERTY, // Liberty drive
+
 	NDEVTYPES
 };
 

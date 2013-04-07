@@ -683,6 +683,7 @@ BEGIN
 	12141	"Disk interface for Atom"
 	12142	"Extension ROM Atom (A000)"
 	12143	"Extension RAM Atom (A000)"
+	12144	"Liberty Drive Card"
 
 	12200	"Slot #0"
 	12201	"Slot #1"

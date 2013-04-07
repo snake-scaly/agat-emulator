@@ -61,6 +61,9 @@ int init_slot_state(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	case DEV_FDD_ATOM:
 		puts("fddaa_init");
 		return fddaa_init(sr, st, sc);
+	case DEV_FDD_LIBERTY:
+		puts("fddliberty_init");
+		return fddliberty_init(sr, st, sc);
 	case DEV_EXTROM_ATOM:
 		puts("extromaa_init");
 		return extromaa_init(sr, st, sc);
@@ -463,13 +466,14 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 		}
 	}
 	for (i = 0; i < NCONFTYPES; ++i) {
+//		printf("slot %i: xio_en = %i\n", i, sr->slots[i].xio_en);
 		if (sr->slots[i].xio_en) {
 			sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT] = sr->slots[i].xio_sel;
-//			printf("selected xrom#%i\n", i);
+			printf("selected xrom#%i\n", i);
 			return i;
 		}
 	}
-//	printf("disabled all xrom\n");
+	printf("disabled all xrom\n");
 	if (sr->sys.xio_control) sr->sys.xio_control(sr, 0);
 	else {
 		sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].read = empty_read;
@@ -481,8 +485,10 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en)
 {
 	if (!en) {
-		int i;
-		for (i = 0; i < NCONFTYPES; ++i) ss->sr->slots[i].xio_en = 0;
+//		int i;
+//		for (i = 0; i < NCONFTYPES; ++i) ss->sr->slots[i].xio_en = 0;
+		if (ss->xio_en == en) return 0;
+		ss->xio_en = en;
 	} else {
 		if (ss->xio_en == en) return 0;
 		ss->xio_en = en;

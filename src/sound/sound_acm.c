@@ -252,7 +252,7 @@ static void on_push_timeout(struct ACM_DATA*p)
 		return;
 	}
 	p->timer_id = 0;
-	printf("%i:  push_timeout, pending = %i, nbuf_playing = %i, nbuf_ready = %i\n",
+	Qprintf("%i:  push_timeout, pending = %i, nbuf_playing = %i, nbuf_ready = %i\n",
 		get_t(),
 		p->pending, p->nbuf_playing, p->nbuf_ready);
 	if ((p->pending || p->nbuf_ready) && !p->nbuf_playing) {
@@ -289,7 +289,7 @@ static void CALLBACK finish_timer(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, 
 
 static int set_timer(struct ACM_DATA*p)
 {
-	printf("%i: set timer for %i msec\n", get_t(), FIRST_DELAY);
+	Qprintf("%i: set timer for %i msec\n", get_t(), FIRST_DELAY);
 	p->timer_id = timeSetEvent(FIRST_DELAY, 0, finish_timer, 
 		(DWORD)p, TIME_ONESHOT);
 	if (!p->timer_id) {
@@ -301,7 +301,7 @@ static int set_timer(struct ACM_DATA*p)
 static void post_queued_buffers(struct ACM_DATA*p)
 {
 	if (p->timer_id) {
-		printf("killing timer...\n");
+		Qprintf("killing timer...\n");
 		timeKillEvent(p->timer_id);
 		p->timer_id = 0;
 	}

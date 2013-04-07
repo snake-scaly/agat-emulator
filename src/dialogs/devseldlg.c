@@ -69,6 +69,7 @@ static int dialog_init(HWND hwnd, void*p)
 			DevList_AddItem(hlist, DEV_FIRMWARE);
 		}
 		DevList_AddItem(hlist, DEV_FDD_SHUGART);
+		DevList_AddItem(hlist, DEV_FDD_LIBERTY);
 		DevList_AddItem(hlist, DEV_PRINTERA);
 		DevList_AddItem(hlist, DEV_SOFTCARD);
 		if (inf->slotid == CONF_SLOT3) {

@@ -93,7 +93,7 @@ struct SLOT_RUN_STATE
 };
 
 #define CPU_TIMER_DEV_BASE 1024
-#define DEF_CPU_TIMER_ID(st) ((long)(CPU_TIMER_DEV_BASE + (((st)->sc->slot_no<<8) | (st->sc->dev_type<<2))))
+#define DEF_CPU_TIMER_ID(st) ((long)(CPU_TIMER_DEV_BASE + (((st)->sc->slot_no<<12) | (st->sc->dev_type<<6))))
 
 
 struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR name);
