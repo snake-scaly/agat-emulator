@@ -183,7 +183,7 @@ static byte ramcard_io_r(word adr, struct RAMCARD_STATE*rcs) // C0X0-C0XF
 	case 3: return read_data(rcs, rcs->curaddr++);
 	case 15: return rcs->rom_offset?1:0;
 	default:;
-		printf("ramcard: read io[%04X]\n", adr);
+//		printf("ramcard: read io[%04X]\n", adr);
 	}
 	return 0;
 }
