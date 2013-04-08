@@ -204,8 +204,16 @@ static int fdd1_command(struct SLOT_RUN_STATE*st, int cmd, int cdata, long param
 	HMENU menu;
 	int i;
 	switch (cmd) {
-	case SYS_COMMAND_RESET:
 	case SYS_COMMAND_HRESET:
+		data->rom_mode = 1;
+		memset(data->regs, 0, sizeof(data->regs));
+		data->last_cmd = 0;
+		data->data_index = data->data_remains = 0;
+		data->status_delay = data->rotate_delay = 0;
+		data->cur_drive = data->cur_head = 0;
+		data->regs[0] = 0x80;
+		break;
+	case SYS_COMMAND_RESET:
 		break;
 	case SYS_COMMAND_INITMENU:
 		menu = (HMENU) param;
@@ -418,7 +426,7 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 	case 0x0C: // read address mark
 		puts("fdd: read address mark");
 		data->buffer[0] = data->regs[1];
-		data->buffer[1] = 0; // side
+		data->buffer[1] = data->cur_head; // side
 		data->buffer[2] = 2; // type
 		data->buffer[3] = data->regs[2]; // sector
 		data->regs[2] =   data->regs[1]; // track to sector field

@@ -342,7 +342,7 @@ int system_command(struct SYS_RUN_STATE*sr, int id, int data, long param)
 	case SYS_COMMAND_HRESET:
 		if (sr->sys.restart_system)
 			sr->sys.restart_system(sr);
-		update_xio_status(sr);
+		disable_all_xio(sr);
 		system_command(sr, SYS_COMMAND_PSROM_RELEASE, 8, 0);
 		system_command(sr, SYS_COMMAND_XRAM_RELEASE, 8, 0);
 		break;
@@ -456,6 +456,15 @@ byte mem_read(word adr, struct SYS_RUN_STATE*sr)
 	return r;
 }
 
+int disable_all_xio(struct SYS_RUN_STATE*sr)
+{
+	int i;
+	for (i = 0; i < NCONFTYPES; ++i) {
+		sr->slots[i].xio_en = 0;
+	}
+	return update_xio_status(sr);
+}
+
 int update_xio_status(struct SYS_RUN_STATE*sr)
 {
 	int i;
@@ -469,11 +478,11 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 //		printf("slot %i: xio_en = %i\n", i, sr->slots[i].xio_en);
 		if (sr->slots[i].xio_en) {
 			sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT] = sr->slots[i].xio_sel;
-			printf("selected xrom#%i\n", i);
+//			printf("selected xrom#%i\n", i);
 			return i;
 		}
 	}
-	printf("disabled all xrom\n");
+//	printf("disabled all xrom\n");
 	if (sr->sys.xio_control) sr->sys.xio_control(sr, 0);
 	else {
 		sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT].read = empty_read;
