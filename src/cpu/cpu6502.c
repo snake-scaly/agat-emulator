@@ -1465,6 +1465,9 @@ int cmd_6502(struct CPU_STATE*cs, int cmd, int data, long param)
 	case SYS_COMMAND_EXEC:
 		st->pc = param;
 		return 0;
+	case SYS_COMMAND_HRESET:
+		st->s = rand();
+		break;
 	case SYS_COMMAND_GETREGS6502:
 		return get_regs(st, (struct REGS_6502*)param);
 	case SYS_COMMAND_SETREGS6502:
@@ -1483,6 +1486,7 @@ int init_cpu_6502(struct CPU_STATE*cs)
 	st = calloc(1, sizeof(*st));
 	st->sr = cs->sr;
 	st->f = FLAG_I | FLAG_1;
+	st->s = rand();
 	st->ints_req = INT_RESET;
 	cs->exec_op = exec_6502;
 	cs->intr = intr_6502;

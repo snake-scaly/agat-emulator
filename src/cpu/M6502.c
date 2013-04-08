@@ -424,6 +424,9 @@ int cmd_M6502(struct CPU_STATE*cs, int cmd, int data, long param)
 	case SYS_COMMAND_EXEC:
 		st->PC.W = param;
 		return 0;
+	case SYS_COMMAND_HRESET:
+		st->S = rand();
+		break;
 	case SYS_COMMAND_GETREGS6502:
 		return get_regs(st, (struct REGS_6502*)param);
 	case SYS_COMMAND_SETREGS6502:
@@ -442,6 +445,7 @@ int init_cpu_M6502(struct CPU_STATE*cs)
 	st = calloc(1, sizeof(*st));
 	st->User = cs->sr;
 	st->P = I_FLAG | R_FLAG;
+	st->S = rand();
 	cs->exec_op = exec_M6502;
 	cs->intr = intr_M6502;
 	cs->free = free_M6502;

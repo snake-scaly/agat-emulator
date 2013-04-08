@@ -29,6 +29,7 @@
 #endif
 
 #define FDD_SECTOR_DATA_SIZE 512
+#define FDD_MAX_SECTOR_SIZE 1024
 #define SECT_PER_TRACK 10
 
 #define FDD_ROM_SIZE 0x800
@@ -58,7 +59,7 @@ struct FDD_DATA
 	byte	fdd_rom[FDD_ROM_SIZE];
 	struct SYS_RUN_STATE	*sr;
 	struct SLOT_RUN_STATE	*st;
-	byte	buffer[FDD_SECTOR_DATA_SIZE];
+	byte	buffer[FDD_MAX_SECTOR_SIZE];
 	byte	regs[3]; // cmd, track, sector
 	int	data_index;
 	int	rom_mode;
@@ -329,8 +330,78 @@ static void fdd_read_sector(struct FDD_DATA*data, int drv)
 	data->regs[0] |= 0x02; // DRQ
 }
 
+
+static void fdd_write_sector(struct FDD_DATA*data, int drv)
+{
+	struct FDD_DRIVE_DATA*d = data->drives + drv;
+	int t, s, h, ofs, nr;
+	if (!d->present || !d->disk) {
+		data->regs[0] |= 0x80;
+	}
+	if (d->readonly) {
+		data->regs[0] |= 0x40;
+	}
+	t = data->regs[1];
+	s = data->regs[2];
+	h = data->cur_head;
+	ofs = ((t * 2 + h) * SECT_PER_TRACK + s - 1) * FDD_SECTOR_DATA_SIZE;
+	printf("writing sector into offset %X: sector %i, track %i head %i\n", ofs, s, t, h);
+	iosseek(d->disk, ofs, SSEEK_SET);
+	nr = ioswrite(d->disk, data->buffer, FDD_SECTOR_DATA_SIZE);
+	if (nr != FDD_SECTOR_DATA_SIZE) {
+		data->regs[0] |= 0x10; // CRC error
+	}
+	data->regs[0] &= ~0x02; // DRQ
+}
+
+static void fdd_post_write(struct FDD_DATA*data)
+{
+	switch (data->last_cmd >> 4) {
+	case 0x0A: // write single sector
+		fdd_write_sector(data, data->cur_drive);
+		data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
+		data->regs[0] &= ~0x01; // clear busy flag
+		break;
+	case 0x0B: // write multiple sectors
+		fdd_write_sector(data, data->cur_drive);
+		data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
+		data->data_remains = FDD_SECTOR_DATA_SIZE;
+		break;
+	}
+	data->data_index = 0;
+}
+
+static void fdd_post_read(struct FDD_DATA*data)
+{
+	data->data_index = 0;
+	switch (data->last_cmd >> 4) {
+	case 0x08: // read single sector
+		data->regs[0] &= ~0x01; // clear busy flag
+		break;
+	case 0x09: // read multiple sectors
+		fdd_read_sector(data, data->cur_drive);
+		data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
+		break;
+	}
+}
+
+static void sound_phase()
+{
+	PlaySound(NULL, NULL, SND_NODEFAULT);
+	PlaySound("teac.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOWAIT);
+}
+
+static void sound_loop(int cnt)
+{
+	PlaySound(NULL, NULL, SND_NODEFAULT);
+	for (; cnt; --cnt) {
+		PlaySound("teac.wav", GetModuleHandle(NULL), SND_RESOURCE | SND_ASYNC | SND_NOSTOP);
+	}
+}
+
 static void fdd_command(struct FDD_DATA*data, byte cmd)
 {
+	int lt;
 	data->regs[0] = 1; // busy & ready
 	data->data_remains = 0;
 	data->last_cmd = cmd;
@@ -340,6 +411,8 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 	switch (cmd >> 4) {
 	case 0x00: // recalibrate
 		puts("fdd: recalibrate");
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_loop(data->regs[1]);
 		data->regs[1] = 0;
 		if (data->drives[data->cur_drive].present) {
 			data->regs[0] |= 4; // track 0
@@ -348,17 +421,22 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		}
 		break;
 	case 0x01: // seek cylinder
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		if (!data->drives[data->cur_drive].present) {
 			puts("fdd: seek: no drive present!");
 			data->regs[0] |= 0x10; // seek error
+			data->last_cmd = 0;
 			break;
 		}
 		if (data->data_index != 1) {
 			puts("fdd: seek: no cylinder number!");
 			data->regs[0] |= 0x10; // seek fail
+			data->last_cmd = 0;
 			break;
 		}
 		printf("fdd: seek from track %i to track %i\n", data->regs[1], data->buffer[0] & 0x7F);
+		lt = data->regs[1];
 		data->regs[1] = data->buffer[0] & 0x7F;
 		if (data->regs[1] >= 40) {
 			data->regs[0] |= 0x10; // seek fail
@@ -367,12 +445,26 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		if (!data->regs[1]) {
 			data->regs[0] |= 4; // track 0
 		}
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_loop((lt > data->regs[1])?lt - data->regs[1]: data->regs[1] - lt);
 		break;
 	case 0x02: // step, no change
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		puts("fdd: step, no change");
 		break;
 	case 0x03: // step, change
 		puts("fdd: step, change");
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
+		if (data->step_dir < 0) {
+			if (data->regs[1] >= data->step_dir) data->regs[1] += data->step_dir;
+		} else {
+			if (data->regs[1] >= 40) {
+				data->regs[0] |= 0x10; // seek fail
+				data->regs[1] = 39;
+			}
+		}
 		data->regs[1] += data->step_dir;
 		if (!data->regs[1]) {
 			data->regs[0] |= 4; // track 0
@@ -381,21 +473,33 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 	case 0x04: // step forward, no change
 		puts("fdd: step forward, no change");
 		data->step_dir = 1;
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		break;
 	case 0x05: // step forward, change
 		puts("fdd: step forward, change");
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		data->step_dir = 1;
 		data->regs[1] += data->step_dir;
+		if (data->regs[1] >= 40) {
+			data->regs[0] |= 0x10; // seek fail
+			data->regs[1] = 39;
+		}
 		if (!data->regs[1]) {
 			data->regs[0] |= 4; // track 0
 		}
 		break;
 	case 0x06: // step backward, no change
 		puts("fdd: step backward, no change");
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		data->step_dir = -1;
 		break;
 	case 0x07: // step backward, change
 		puts("fdd: step backward, change");
+		if (data->st->sr->gconfig->flags & EMUL_FLAGS_TEAC_SOUNDS)
+			sound_phase();
 		data->step_dir = -1;
 		if (data->regs[1]) data->regs[1] += data->step_dir;
 		else {
@@ -411,6 +515,7 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		if (!data->drives[data->cur_drive].present) {
 			puts("fdd: read: no drive present!");
 			data->regs[0] |= 0x80; // not ready
+			data->last_cmd = 0;
 			break;
 		}
 		printf("fdd: reading sector %i\n", data->regs[2]);
@@ -419,9 +524,20 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 		break;
 	case 0x0A: // write single sector
 	case 0x0B: // write multiple sectors
+		if (!data->drives[data->cur_drive].present) {
+			puts("fdd: write: no drive present!");
+			data->regs[0] |= 0x80; // not ready
+			data->last_cmd = 0;
+			break;
+		}
+		if (data->drives[data->cur_drive].readonly) {
+			puts("fdd: write: drive is readonly");
+			data->regs[0] |= 0x40; // read only
+			data->last_cmd = 0;
+			break;
+		}
 		printf("fdd: writing sector %i\n", data->regs[2]);
 		data->data_remains = FDD_SECTOR_DATA_SIZE;
-		data->regs[2] = (data->regs[2] + 1) % SECT_PER_TRACK;
 		break;
 	case 0x0C: // read address mark
 		puts("fdd: read address mark");
@@ -462,8 +578,11 @@ static void fdd_set_sector_num(struct FDD_DATA*data, byte d)
 static void fdd_write_data(struct FDD_DATA*data, byte d)
 {
 	data->buffer[data->data_index] = d;
-	data->data_index = (data->data_index + 1) % FDD_SECTOR_DATA_SIZE;
-	if (data->data_remains) -- data->data_remains;
+	if (data->data_remains) {
+		-- data->data_remains;
+		if (!data->data_remains) fdd_post_write(data);
+	}
+	data->data_index = (data->data_index + 1) % FDD_MAX_SECTOR_SIZE;
 }
 
 static void fdd_control(struct FDD_DATA*data, byte d)
@@ -516,10 +635,11 @@ static byte fdd_get_data(struct FDD_DATA*data)
 	else return 0x00;
 	r = data->buffer[data->data_index];
 	if (!data->data_remains) {
+		fdd_post_read(data);
 		data->regs[0] &= ~0x01; // clear busy flag
 		data->data_index = 0;
 	} else {
-		data->data_index = (data->data_index + 1) % FDD_SECTOR_DATA_SIZE;
+		data->data_index = (data->data_index + 1) % FDD_MAX_SECTOR_SIZE;
 	}
 	return r;
 }
@@ -551,6 +671,8 @@ int  fddliberty_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct S
 		isread(rom, data->fdd_rom, sizeof(data->fdd_rom));
 		isclose(rom);
 	}
+
+	data->fdd_rom[0x707] = 0x3C; // to make bootable
 
 	fill_fdd1(data);
 	if (cf->cfgint[CFG_INT_DRV_TYPE1] == DRV_TYPE_SHUGART) {
