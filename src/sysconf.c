@@ -170,7 +170,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 		_tcscpy(c->cfgstr[CFG_STR_DRV_IMAGE2], TEXT("2.DSK"));
 		return 0;
 	case DEV_FDD_LIBERTY:
-		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_SHUGART;
+		c->cfgint[CFG_INT_DRV_TYPE1] = DRV_TYPE_2S1D;
 		c->cfgint[CFG_INT_DRV_TYPE2] = DRV_TYPE_NONE;
 		c->cfgint[CFG_INT_DRV_COUNT] = 1;
 		c->cfgint[CFG_INT_DRV_RO_FLAGS] = 3;

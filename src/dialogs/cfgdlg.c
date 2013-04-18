@@ -487,7 +487,7 @@ static int slot_configure(HWND hwnd, struct SLOTCONFIG *slot, int initial)
 		return shugcfgdlg_run(hwnd, slot);
 	case DEV_FDD_ATOM:
 	case DEV_FDD_LIBERTY:
-		return fddaacfgdlg_run(hwnd, slot);
+		return teaccfgdlg_run(hwnd, slot);
 	case DEV_MEMORY_PSROM7:
 	case DEV_MEMORY_XRAM7:
 	case DEV_MEMORY_XRAM9:
