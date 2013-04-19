@@ -684,6 +684,7 @@ BEGIN
 	12142	"Extension ROM Atom (A000)"
 	12143	"Extension RAM Atom (A000)"
 	12144	"Liberty Drive Card"
+	12145	"Dallas SmartWatch Clock"
 
 	12200	"Slot #0"
 	12201	"Slot #1"
@@ -693,7 +694,7 @@ BEGIN
 	12205	"Slot #5"
 	12206	"Slot #6"
 	12207	"Slot #7"
-//	12208	NULL
+	12208	"(Clock)"
 	12209	"(Printer)"
 	12210	"(Processor)"
 	12211	"(Memory)"

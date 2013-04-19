@@ -30,6 +30,8 @@ struct SYS_RUN_STATE
 	struct MEM_PROC io_sel[8];
 	struct MEM_PROC io6_sel[0x10];
 
+	struct MEM_PROC rom_c800;
+
 
 	HWND base_w;
 	SIZE v_size;

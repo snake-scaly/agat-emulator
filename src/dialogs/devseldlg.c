@@ -33,6 +33,7 @@ static int dialog_init(HWND hwnd, void*p)
 {
 	struct SELINFO*inf = p;
 	HWND hlist = GetDlgItem(hwnd, IDC_DEVLIST);
+	printf("systype: %i, slotid: %i\n", inf->systype, inf->slotid);
 	DevList_AddItem(hlist, DEV_NULL);
 	switch (inf->systype) {
 	case SYSTEM_7: // agathe 7
@@ -64,6 +65,10 @@ static int dialog_init(HWND hwnd, void*p)
 	case SYSTEM_EE: // enhanced apple //e
 	case SYSTEM_82: // pravetz 82
 	case SYSTEM_8A: // pravetz 8A
+		if (inf->slotid == CONF_CLOCK) {
+			DevList_AddItem(hlist, DEV_CLOCK_DALLAS);
+			return 0;
+		}
 		if (inf->slotid == CONF_SLOT0) {
 			DevList_AddItem(hlist, DEV_MEMORY_XRAMA);
 			DevList_AddItem(hlist, DEV_FIRMWARE);

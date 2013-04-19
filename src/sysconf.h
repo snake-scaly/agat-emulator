@@ -97,6 +97,7 @@ enum {
 	DEV_EXTRAM_ATOM, // extension ram
 
 	DEV_FDD_LIBERTY, // Liberty drive
+	DEV_CLOCK_DALLAS, // Non-slot-clock
 
 	NDEVTYPES
 };
@@ -113,6 +114,7 @@ enum {
 	CONF_SLOT6,
 	CONF_SLOT7,
 
+	CONF_CLOCK = 8,
 	CONF_PRINTER = 9,
 	CONF_EXT = 10,
 	CONF_CPU = 10,

@@ -193,6 +193,8 @@ int init_system_2e(struct SYS_RUN_STATE*sr)
 	fill_rw_proc(sr->baseio_sel + 1, 1, read_C01X, write_C01X, sr);
 	fill_read_proc(sr->io6_sel + 1, 2, keyb_apple_read, sr); // will be overwritten by a joystick
 
+	fill_rw_proc(&sr->rom_c800, 1, system_read_rom, empty_write, sr);
+
 	if (sr->config->systype == SYSTEM_8A) {
 		fill_rw_proc(sr->io6_sel + 0, 1, keyb_lang_read, keyb_lang_write, sr);
 		sr->input_8bit = 1;
@@ -239,8 +241,7 @@ int xio_control_2e(struct SYS_RUN_STATE*sr, int req)
 	switch (req) {
 	case 0:
 //		printf("xio_control_2e: switch to system rom\n");
-		fill_rw_proc(sr->base_mem + (0xC800 >> BASEMEM_BLOCK_SHIFT), 1, 
-			system_read_rom, empty_write, sr);
+		sr->base_mem[0xC800 >> BASEMEM_BLOCK_SHIFT] = sr->rom_c800;
 		break;
 	case 1:
 		return (a2e->ext_switches[3] < 0x80);

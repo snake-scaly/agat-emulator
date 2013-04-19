@@ -1067,6 +1067,7 @@ BEGIN
     12142                   "Расширенное ПЗУ для Atom (A000)"
     12143                   "Расширенное ОЗУ для Atom (A000)"
     12144                   "Контроллер дисковода Liberty Drive"
+    12145                   "Часы Dallas SmartWatch"
 END
 
 STRINGTABLE DISCARDABLE 
@@ -1083,6 +1084,7 @@ END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
+    12208                   "(Часы)"
     12209                   "(Принтер)"
     12210                   "(Процессор)"
     12211                   "(Память)"
