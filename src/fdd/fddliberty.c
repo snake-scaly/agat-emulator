@@ -430,7 +430,7 @@ static void fdd_command(struct FDD_DATA*data, byte cmd)
 {
 	int lt;
 	int st = 10;
-	int st_t = 1000;
+	int st_t = 100;
 	struct FDD_DRIVE_DATA*dd = data->drives + data->cur_drive;
 	data->regs[0] = 1; // busy & ready
 	data->data_remains = 0;

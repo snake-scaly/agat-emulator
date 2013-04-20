@@ -102,7 +102,7 @@ static void clock_bit_write(struct NOSLOTCLOCK_STATE*ncs, int v)
 				if (ncs->r_ind == 8) {
 					ncs->active = 1;
 					ncs->r_ind = 0;
-					update_clock(ncs);
+					if (!(ncs->regs[4] & 0x20)) update_clock(ncs);
 				}
 			}
 		}
@@ -125,17 +125,19 @@ static void clock_bit_write(struct NOSLOTCLOCK_STATE*ncs, int v)
 
 static byte clock_rom_read(word adr, struct NOSLOTCLOCK_STATE*ncs)
 {
+	int v;
+	v = ncs->sys_rom.read(adr, ncs->sys_rom.pr);
 	switch (adr) {
 	case 0xC800: // write 0
 	case 0xC801: // write 1
 		clock_bit_write(ncs, adr & 1);
 		break;
 	case 0xC804: // read
-		if (ncs->active) return clock_bit_read(ncs);
+		if (ncs->active) v = (v & ~1) | clock_bit_read(ncs);
 		else { ncs->b_ind = ncs->r_ind = 0; }
 		break;
 	}
-	return ncs->sys_rom.read(adr, ncs->sys_rom.pr);
+	return v;
 }
 
 static int noslotclock_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
@@ -175,8 +177,14 @@ static void update_clock(struct NOSLOTCLOCK_STATE*ncs)
 	ncs->regs[7] = cvtnum(tm.tm_year % 100, ncs);
 	ncs->regs[6] = cvtnum(tm.tm_mon + 1, ncs);
 	ncs->regs[5] = cvtnum(tm.tm_mday, ncs);
-	ncs->regs[4] = cvtnum(((tm.tm_wday + 6) % 7) + 1, ncs);
-	ncs->regs[3] = cvtnum(tm.tm_hour, ncs);
+	ncs->regs[4] = cvtnum(((tm.tm_wday + 6) % 7) + 1, ncs) | (ncs->regs[4] & 0x30);
+	if (ncs->regs[3] & 0x80) {
+		if (tm.tm_hour > 11) {
+			ncs->regs[3] = cvtnum(tm.tm_hour - 11, ncs) | 0xA0;
+		} else ncs->regs[3] = cvtnum(tm.tm_hour + 1, ncs) | 0x80;
+	} else {
+		ncs->regs[3] = cvtnum(tm.tm_hour, ncs);
+	}
 	ncs->regs[2] = cvtnum(tm.tm_min, ncs);
 	ncs->regs[1] = cvtnum(tm.tm_sec, ncs);
 	ncs->regs[0] = cvtnum(GetTickCount()%100, ncs);
