@@ -497,10 +497,9 @@ int update_xio_status(struct SYS_RUN_STATE*sr)
 int enable_slot_xio(struct SLOT_RUN_STATE*ss, int en)
 {
 	if (!en) {
-//		int i;
-//		for (i = 0; i < NCONFTYPES; ++i) ss->sr->slots[i].xio_en = 0;
-		if (ss->xio_en == en) return 0;
-		ss->xio_en = en;
+		int i;
+//		printf("disabling xrom from slot%i\n", ss->sc->slot_no);
+		for (i = 0; i < NCONFTYPES; ++i) ss->sr->slots[i].xio_en = 0;
 	} else {
 		if (ss->xio_en == en) return 0;
 		ss->xio_en = en;

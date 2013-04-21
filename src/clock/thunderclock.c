@@ -184,6 +184,7 @@ static VOID CALLBACK tcs_callback(HWND wnd, UINT msg, struct THUNDERCLOCK_STATE*
 	if (tcs->ints == 1) {
 //		puts("thunderclock tick");
 		tcs->was_int |= 0x20;
+		enable_slot_xio(tcs->st, 1);
 		system_command(tcs->st->sr, SYS_COMMAND_IRQ, 0, 0);
 	}
 	if (tcs->ints == 2) tcs->ints = 1; // skip first int
