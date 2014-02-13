@@ -80,6 +80,7 @@ struct SYS_RUN_STATE
 	int cur_lang; // 0 - english, 1 - russian
 	int key_rept;
 	int in_debug;
+	int keymask;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

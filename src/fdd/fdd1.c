@@ -1064,10 +1064,11 @@ byte fdd_io_read(unsigned short a,struct FDD_DATA*data)
 	if (!data->initialized) return 0;
 
 	switch (a) {
+	case 10: case 11:
+		if (data->drives[data->drv].present) r = rand()%0x100;
 	case 0: case 2: case 4: case 6:
 	case 1: case 3: case 5: case 7:
 	case 8: case 9:
-	case 10: case 11:
 		break;
 	case 12:
 		if (data->state.ReadMode) {

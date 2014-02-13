@@ -155,7 +155,7 @@ ret:
 
 byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr)	// C063
 {
-	return sr->keyreg;
+	return sr->keyreg & sr->keymask;
 }
 
 void keyb_clear(struct SYS_RUN_STATE*sr)	// C010-C01F

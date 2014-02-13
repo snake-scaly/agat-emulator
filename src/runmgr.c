@@ -195,6 +195,7 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	sr->gconfig = &g_config;
 
 	sr->keyreg = is_keyb_english(sr)?0xFF:0x7F;
+	sr->keymask = (sr->cursystype == SYSTEM_7)?0xC0: 0xFF;
 
 	set_run_state_ptr(sr->name, sr);
 

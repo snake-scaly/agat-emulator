@@ -801,6 +801,7 @@ BEGIN
     5002                    "Вставить диск..."
     5003                    "Извлечь диск"
     5004                    "Дисковод 92Кб"
+    5005                    "Дисковод Liberty (S%i,D%i)"
 END
 
 STRINGTABLE DISCARDABLE 

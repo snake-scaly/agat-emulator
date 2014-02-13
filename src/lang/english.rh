@@ -495,6 +495,7 @@ BEGIN
 	5002	"Insert disk..."
 	5003	"Remove disk"
 	5004	"Drive 92KB"
+	5005	"Liberty Drive (S%i,D%i)"
 // Joystick module: 6000
 // Sound module: 7000
 	7000	"8000 Hz"

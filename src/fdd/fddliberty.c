@@ -160,8 +160,8 @@ static int init_menu(struct FDD_DRIVE_DATA*drv, int s, int d, HMENU menu)
 			localize_str(LOC_FDD, 3, buf1, sizeof(buf1)));
 //			TEXT("Èçâëå÷ü äèñê"));
 
-		//TEXT("Äèñêîâîä 140Êá (S%i,D%i)"),
-		wsprintf(buf, localize_str(LOC_FDD, 4, buf1, sizeof(buf1)), s, d + 1);
+		//TEXT("Äèñêîâîä Liberty (S%i,D%i)"),
+		wsprintf(buf, localize_str(LOC_FDD, 5, buf1, sizeof(buf1)), s, d + 1);
 		AppendMenu(menu, MF_POPUP, (UINT_PTR)drv->submenu, buf);
 	} else drv->submenu = NULL;
 	return 0;
@@ -282,7 +282,7 @@ static int fdd1_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 
 static void enable_fdd_rom(struct FDD_DATA*data, int en)
 {
-	Dprintf("fdd_enable_rom: %i\n", en);
+//	printf("fdd_enable_rom: %i\n", en);
 	enable_slot_xio(data->st, en);
 }
 
