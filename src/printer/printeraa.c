@@ -23,20 +23,22 @@
 
 #include "localize.h"
 
+#include "printer_cable.h"
 #include "epson_emu.h"
 #include "export.h"
+#include "raw_file_printer.h"
 
 struct PRINTER_STATE
 {
 	struct SLOT_RUN_STATE*st;
 
-	PEPSON_EMU pemu;
+	PPRINTER_CABLE pemu;
 };
 
 static int printer_term(struct SLOT_RUN_STATE*st)
 {
 	struct PRINTER_STATE*pcs = st->data;
-	epson_free(pcs->pemu);
+	printer_cable_free(pcs->pemu);
 	free(st->data);
 	return 0;
 }
@@ -69,7 +71,7 @@ static void update_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 {
 	if (pcs->pemu) {
 		EnableMenuItem(menu, PRN_BASE_CMD + s * 10, 
-			(epson_hasdata(pcs->pemu)?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
+			(printer_cable_is_printing(pcs->pemu)?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
 	}
 }
 
@@ -82,7 +84,7 @@ static void free_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 static void wincmd(HWND wnd, int cmd, int s, struct PRINTER_STATE*pcs)
 {
 	if (pcs->pemu && cmd == PRN_BASE_CMD + s * 10) {
-		epson_flush(pcs->pemu);
+		printer_cable_reset(pcs->pemu);
 	}
 }
 
@@ -94,7 +96,7 @@ static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long par
 	case SYS_COMMAND_RESET:
 		return 0;
 	case SYS_COMMAND_HRESET:
-		if (pcs->pemu) epson_flush(pcs->pemu);
+		if (pcs->pemu) printer_cable_reset(pcs->pemu);
 		return 0;
 	case SYS_COMMAND_INITMENU:
 		menu = (HMENU) param;
@@ -119,7 +121,9 @@ static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long par
 static void printer_data(struct PRINTER_STATE*pcs, byte data)
 {
 //	printf("write printer data: %02x (%c)\n", data, data);
-	epson_write(pcs->pemu, data & 0x7F);
+	printer_cable_write_data(pcs->pemu, data & 0x7F);
+	printer_cable_write_control(pcs->pemu, 0x40);
+	printer_cable_write_control(pcs->pemu, 0xC0);
 }
 
 static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs)
@@ -133,7 +137,7 @@ int  printeraa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 	int i;
 	ISTREAM*rom;
 	struct PRINTER_STATE*pcs;
-	struct EPSON_EXPORT exp;
+	struct EPSON_EXPORT exp = {0};
 	int mode = cf->cfgint[CFG_INT_PRINT_MODE];
 	unsigned fl = 0;
 
@@ -144,35 +148,36 @@ int  printeraa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 
 	pcs->st = st;
 
-	switch (mode) {
-	case 0:
-		i = export_raw_init(&exp, 0, sr->video_w);
-		break;
-	case 1:
-		i = export_text_init(&exp, 0, sr->video_w);
-		fl = EPSON_TEXT_RECODE_FX;
-		break;
-	case 2:
-		i = export_tiff_init(&exp, EXPORT_TIFF_COMPRESS_RLE, sr->video_w);
-		fl = EPSON_TEXT_RECODE_FX;
-		break;
-	case 3:
-		i = export_print_init(&exp, 0, sr->video_w);
-		fl = EPSON_TEXT_RECODE_FX;
-		break;
-	default:
-		i = -1;
-		break;
-	}
+	if (mode == 0) {
+		pcs->pemu = raw_file_printer_create(sr->video_w);
+	} else {
+		switch (mode) {
+		case 1:
+			i = export_text_init(&exp, 0, sr->video_w);
+			fl = EPSON_TEXT_RECODE_FX;
+			break;
+		case 2:
+			i = export_tiff_init(&exp, EXPORT_TIFF_COMPRESS_RLE, sr->video_w);
+			fl = EPSON_TEXT_RECODE_FX;
+			break;
+		case 3:
+			i = export_print_init(&exp, 0, sr->video_w);
+			fl = EPSON_TEXT_RECODE_FX;
+			break;
+		default:
+			i = -1;
+			break;
+		}
 
-	if (i < 0)  {
-		free(pcs);
-		return -2;
-	}
+		if (i < 0)  {
+			free(pcs);
+			return -2;
+		}
 
-	pcs->pemu = epson_create(fl, &exp);
+		pcs->pemu = epson_create(fl, &exp);
+	}
 	if (!pcs->pemu) {
-		exp.free_data(exp.param);
+		if (exp.free_data) exp.free_data(exp.param);
 		free(pcs);
 		return -3;
 	}

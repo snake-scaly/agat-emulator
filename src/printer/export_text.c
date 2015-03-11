@@ -1,3 +1,4 @@
+#include "printer_cable.h"
 #include "epson_emu.h"
 #include "export.h"
 #include "sysconf.h"

@@ -3,12 +3,17 @@
 	Copyright (c) NOP, nnop@newmail.ru
 */
 
+#include "printer_cable.h"
+#include "printer_emu.h"
 #include "epson_emu.h"
 #include "sysconf.h"
 #include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
+
+typedef struct EPSON_EMU *PEPSON_EMU;
 
 //#define EPSON_DEBUG
 
@@ -79,42 +84,17 @@ struct EPSON_EMU
 	int (*recode)(unsigned char c);
 };
 
-PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp)
+static int epson_free(PEPSON_EMU emu)
 {
-	PEPSON_EMU emu = calloc(1, sizeof(*emu));
-	if (!emu) return NULL;
-
-	emu->flags = flags;
-	emu->exp = *exp;
-
-	switch (emu->flags & EPSON_TEXT_RECODE_MASK) {
-	case EPSON_TEXT_NO_RECODE:
-		emu->recode = no_recode;
-		break;
-	case EPSON_TEXT_RECODE_KOI:
-		emu->recode = charkoi2win;
-		break;
-	case EPSON_TEXT_RECODE_FX:
-		emu->recode = charfx2win;
-		break;
-	default:
-		free(emu);
-		return NULL;
-	}
-
-	return emu;
-}
-
-void epson_free(PEPSON_EMU emu)
-{
-	if (!emu) return;
+	if (!emu) return EINVAL;
 	if (emu->data) free(emu->data);
 	emu->data = NULL;
 	if (emu->exp.free_data) emu->exp.free_data(emu->exp.param);
 	free(emu);
+	return 0;
 }
 
-int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
+static int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
 {
 	switch (cmd) {
 	case '`':
@@ -196,7 +176,7 @@ int epson_command0b(PEPSON_EMU emu, unsigned char cmd)
 	return 0;
 }
 
-int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
+static int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 {
 	switch (cmd) {
 	case ' ':
@@ -327,7 +307,7 @@ int epson_command1b(PEPSON_EMU emu, unsigned char cmd, unsigned char data)
 	return 0;
 }
 
-int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int no)
+static int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int no)
 {
 	switch (cmd) {
 	case 'B':
@@ -386,10 +366,10 @@ int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data, int n
 	return 0;
 }
 
-int epson_write(PEPSON_EMU emu, unsigned char data)
+static int epson_write(PEPSON_EMU emu, int data)
 {
 	int r;
-	if (!emu) return -1;
+	if (!emu) return EINVAL;
 	Pprintf(("esc_mode = %i; esc_cnt = %i; char = %c (%i, 0x%02X)\n", emu->esc_mode, emu->esc_cnt, data, data, data));
 	if (emu->esc_mode) {
 		emu->esc_cnt ++;
@@ -469,20 +449,50 @@ int epson_write(PEPSON_EMU emu, unsigned char data)
 	return 0;
 }
 
-
-int epson_flush(PEPSON_EMU emu)
+static int epson_flush(PEPSON_EMU emu)
 {
-	if (!emu) return -1;
+	if (!emu) return EINVAL;
 	emu->esc_mode = 0;
-	if (emu->exp.close) emu->exp.close(emu->exp.param);
-	else return -1;
+	if (!emu->exp.close) return EINVAL;
+	emu->exp.close(emu->exp.param);
 	return 0;
 }
 
-int epson_hasdata(PEPSON_EMU emu)
+static int epson_hasdata(PEPSON_EMU emu)
 {
-	if (!emu) return 0;
+	if (!emu) { errno = EINVAL; return -1; }
 	if (emu->exp.opened) return emu->exp.opened(emu->exp.param);
 	return 0;
 }
 
+PPRINTER_CABLE epson_create(unsigned flags, struct EPSON_EXPORT*exp)
+{
+	PEPSON_EMU emu;
+	PPRINTER_CABLE result;
+
+	emu = calloc(1, sizeof(*emu));
+	if (!emu) return NULL;
+
+	emu->flags = flags;
+	emu->exp = *exp;
+
+	switch (emu->flags & EPSON_TEXT_RECODE_MASK) {
+	case EPSON_TEXT_NO_RECODE:
+		emu->recode = no_recode;
+		break;
+	case EPSON_TEXT_RECODE_KOI:
+		emu->recode = charkoi2win;
+		break;
+	case EPSON_TEXT_RECODE_FX:
+		emu->recode = charfx2win;
+		break;
+	default:
+		free(emu);
+		return NULL;
+	}
+
+	result = printer_emu_create(emu, epson_write, epson_hasdata, epson_flush, epson_free);
+	if (!result) free(emu);
+
+	return result;
+}

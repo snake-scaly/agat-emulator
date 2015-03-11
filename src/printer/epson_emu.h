@@ -25,8 +25,6 @@
 
 
 
-typedef struct EPSON_EMU *PEPSON_EMU;
-
 struct EPSON_EXPORT
 {
 	void*param;
@@ -37,11 +35,4 @@ struct EPSON_EXPORT
 	int  (*opened)(void*param);
 };
 
-PEPSON_EMU epson_create(unsigned flags, struct EPSON_EXPORT*exp);
-void epson_free(PEPSON_EMU emu);
-
-int epson_write(PEPSON_EMU emu, unsigned char data);
-
-int epson_flush(PEPSON_EMU emu);
-int epson_hasdata(PEPSON_EMU emu);
-
+PPRINTER_CABLE epson_create(unsigned flags, struct EPSON_EXPORT*exp);
