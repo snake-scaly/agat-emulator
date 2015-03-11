@@ -39,12 +39,12 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,128,49,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
-STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 172
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME
 CAPTION "About"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Close",IDOK,68,128,50,14
+    DEFPUSHBUTTON   "Close",IDOK,68,153,50,14
     CTEXT           VERSION_NAME_STR,11,7,7,173,8,SS_NOTIFY
     CTEXT           "Odintsov O.A. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
@@ -53,6 +53,7 @@ BEGIN
                     SS_NOTIFY
     CTEXT           "For information read group agat9@yahoogroups.com\n\nUses code M6502 by\nMarat Fayzullin è Alex Krasivsky.\nUses giveio driver (c) Dale Roberts.\nZ80 simulation by fuse project.",
                     15,7,64,173,61,SS_NOTIFY
+    CTEXT           "Printer module fixes\nSergey “SnakE” Gromov",16,7,119,173,17,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161

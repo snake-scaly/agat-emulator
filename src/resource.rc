@@ -143,12 +143,12 @@ BEGIN
     CONTROL         "",12,"Static",SS_ETCHEDHORZ,130,128,49,1
 END
 
-IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 149
-STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+IDD_ABOUT DIALOG DISCARDABLE  0, 0, 187, 172
+STYLE DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME
 CAPTION "О программе"
 FONT 9, "Tahoma"
 BEGIN
-    DEFPUSHBUTTON   "Закрыть",IDOK,68,128,50,14
+    DEFPUSHBUTTON   "Закрыть",IDOK,68,153,50,14
     CTEXT           "Agat v1.17",11,7,7,173,8,SS_NOTIFY
     CTEXT           "Одинцов О.А. aka Nop",12,7,18,173,8,SS_NOTIFY
     CTEXT           "nnop@newmail.ru\nhttp://agatemulator.sourceforge.net",
@@ -157,6 +157,7 @@ BEGIN
                     SS_NOTIFY
     CTEXT           "За информацией обращайтесь в группу agat9@yahoogroups.com\n\nАвторами модуля M6502 являются\nMarat Fayzullin и Alex Krasivsky.\nИспользуется драйвер giveio (c) Dale Roberts.\nЭмуляция кода Z80 взята из проекта fuse.",
                     15,7,64,173,61,SS_NOTIFY
+    CTEXT           "Исправления в модуле печати\nСергей «SnakE» Громов",16,7,127,173,17,SS_NOTIFY
 END
 
 IDD_CONFIG DIALOGEX 0, 0, 210, 161
