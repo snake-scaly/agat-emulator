@@ -31,13 +31,13 @@ struct PRINTER_STATE
 	struct SLOT_RUN_STATE*st;
 
 	byte rom1[256];
-	PPRINTER_CABLE pemu;
+	struct PRINTER_CABLE*pcab;
 };
 
 static int printer_term(struct SLOT_RUN_STATE*st)
 {
 	struct PRINTER_STATE*pcs = st->data;
-	printer_cable_free(pcs->pemu);
+	if (pcs->pcab) pcs->pcab->ops->free(pcs->pcab);
 	free(st->data);
 	return 0;
 }
@@ -62,15 +62,16 @@ static int printer_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 static void init_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 {
 	TCHAR buf1[1024];
-	AppendMenu(menu, MF_STRING, PRN_BASE_CMD + s * 10, 
+	AppendMenu(menu, MF_STRING, PRN_BASE_CMD + s * 10,
 			localize_str(LOC_PRINTER, 100, buf1, sizeof(buf1)));
 }
 
 static void update_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 {
-	if (pcs->pemu) {
-		EnableMenuItem(menu, PRN_BASE_CMD + s * 10, 
-			(printer_cable_is_printing(pcs->pemu)?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
+	if (pcs->pcab) {
+		int printing = pcs->pcab->ops->is_printing(pcs->pcab);
+		EnableMenuItem(menu, PRN_BASE_CMD + s * 10,
+			(printing?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
 	}
 }
 
@@ -82,8 +83,8 @@ static void free_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 
 static void wincmd(HWND wnd, int cmd, int s, struct PRINTER_STATE*pcs)
 {
-	if (pcs->pemu && cmd == PRN_BASE_CMD + s * 10) {
-		printer_cable_reset(pcs->pemu);
+	if (pcs->pcab && cmd == PRN_BASE_CMD + s * 10) {
+		pcs->pcab->ops->reset(pcs->pcab);
 	}
 }
 
@@ -91,11 +92,13 @@ static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long par
 {
 	struct PRINTER_STATE*pcs = st->data;
 	HMENU menu;
+
+	if (pcs->pcab) pcs->pcab->ops->slot_command(pcs->pcab, cmd, param);
+
 	switch (cmd) {
 	case SYS_COMMAND_RESET:
 		return 0;
 	case SYS_COMMAND_HRESET:
-		if (pcs->pemu) printer_cable_reset(pcs->pemu);
 		return 0;
 	case SYS_COMMAND_INITMENU:
 		menu = (HMENU) param;
@@ -125,9 +128,11 @@ static byte printer_rom_r(word adr, struct PRINTER_STATE*pcs) // CX00-CXFF
 static void printer_data(struct PRINTER_STATE*pcs, byte data)
 {
 //	printf("write printer data: %02x (%c)\n", data, data);
-	printer_cable_write_data(pcs->pemu, data & 0x7F);
-	printer_cable_write_control(pcs->pemu, 0x40);
-	printer_cable_write_control(pcs->pemu, 0xC0);
+	if (pcs->pcab) {
+		pcs->pcab->ops->write_data(pcs->pcab, data & 0x7F);
+		pcs->pcab->ops->write_control(pcs->pcab, 0x40);
+		pcs->pcab->ops->write_control(pcs->pcab, 0xC0);
+	}
 }
 
 static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-C0XF
@@ -158,8 +163,8 @@ int  printera_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 	isread(rom, pcs->rom1, sizeof(pcs->rom1));
 	isclose(rom);
 
-	pcs->pemu = printer_device_for_mode(sr, mode);
-	if (!pcs->pemu) {
+	pcs->pcab = printer_device_for_mode(sr, st, mode);
+	if (!pcs->pcab) {
 		free(pcs);
 		return -3;
 	}

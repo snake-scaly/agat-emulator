@@ -35,4 +35,4 @@ struct EPSON_EXPORT
 	int  (*opened)(void*param);
 };
 
-PPRINTER_CABLE epson_create(unsigned flags, struct EPSON_EXPORT*exp);
+struct PRINTER_CABLE* epson_create(unsigned flags, struct EPSON_EXPORT*exp);

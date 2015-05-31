@@ -12,12 +12,12 @@
 #include "runmgrint.h"
 #include "sysconf.h"
 
-static PPRINTER_CABLE create_epson_in_mode(struct SYS_RUN_STATE*sr, int mode)
+static struct PRINTER_CABLE* create_epson_in_mode(struct SYS_RUN_STATE*sr, int mode)
 {
 	struct EPSON_EXPORT exp = {0};
 	int i = -1;
 	unsigned fl = EPSON_TEXT_NO_RECODE;
-	PPRINTER_CABLE cable = NULL;
+	struct PRINTER_CABLE*cable = NULL;
 
 	switch (mode) {
 	case PRINT_TEXT:
@@ -45,7 +45,10 @@ static PPRINTER_CABLE create_epson_in_mode(struct SYS_RUN_STATE*sr, int mode)
 	return cable;
 }
 
-PPRINTER_CABLE printer_device_for_mode(struct SYS_RUN_STATE*sr, int mode)
+struct PRINTER_CABLE* printer_device_for_mode(
+	struct SYS_RUN_STATE*sr,
+	struct SLOT_RUN_STATE*st,
+	int mode)
 {
 	if (mode == PRINT_RAW) {
 		return raw_file_printer_create(sr->video_w);

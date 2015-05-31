@@ -19,6 +19,7 @@
 
 struct RAW_FILE_PRINTER
 {
+	struct PRINTER_EMU emu;
 	FILE*out;
 	HWND wnd;
 	int ignore_data;
@@ -38,73 +39,92 @@ static int get_name(HWND wnd, char*fname)
 	return 1;
 }
 
-static void open_out(struct RAW_FILE_PRINTER*emu)
+static void open_out(struct RAW_FILE_PRINTER*rfp)
 {
 	char name[MAX_PATH];
-	if (!get_name(emu->wnd, name)) return;
-	emu->out = fopen(name, "wb");
-	if (!emu->out) return;
+	if (!get_name(rfp->wnd, name)) return;
+	rfp->out = fopen(name, "wb");
+	if (!rfp->out) return;
 }
 
-static void close_out(struct RAW_FILE_PRINTER*emu)
+static void close_out(struct RAW_FILE_PRINTER*rfp)
 {
-	if (emu->out) {
-		fclose(emu->out);
-		emu->out = NULL;
+	if (rfp->out) {
+		fclose(rfp->out);
+		rfp->out = NULL;
 	}
 }
 
-static int reset(struct RAW_FILE_PRINTER*emu)
+static int reset(struct PRINTER_EMU*emu)
 {
-	if (!emu) return EINVAL;
-	close_out(emu);
-	emu->ignore_data = 0;
+	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
+	close_out(rfp);
+	rfp->ignore_data = 0;
 	return 0;
 }
 
-static int consume_byte(struct RAW_FILE_PRINTER*emu, int data)
+static int consume_byte(struct PRINTER_EMU*emu, int data)
 {
+	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
 	int err = 0;
 
-	if (!emu) return EINVAL;
-	if (emu->ignore_data) return 0;
-	if (!emu->out) open_out(emu);
-	if (!emu->out) {
-		emu->ignore_data = 1;
+	if (rfp->ignore_data) return 0;
+	if (!rfp->out) open_out(rfp);
+	if (!rfp->out) {
+		rfp->ignore_data = 1;
 		return 0;
 	}
 
-	if (fputc(data, emu->out) == EOF) err = errno;
+	if (fputc(data, rfp->out) == EOF) err = errno;
 
 	return err;
 }
 
-static int is_printing(struct RAW_FILE_PRINTER*emu)
+static int is_printing(struct PRINTER_EMU*emu)
 {
-	if (!emu) { errno = EINVAL; return -1; }
-	return emu->out != NULL;
+	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
+	return rfp->out != NULL;
 }
 
-static int free_h(struct RAW_FILE_PRINTER*emu)
+static int slot_command(struct PRINTER_EMU*emu, int id, long param)
 {
-	if (!emu) return EINVAL;
-	close_out(emu);
-	free(emu);
 	return 0;
 }
 
-PPRINTER_CABLE raw_file_printer_create(HWND wnd)
+static int free_h(struct PRINTER_EMU*emu)
 {
-	struct RAW_FILE_PRINTER*emu;
-	PPRINTER_CABLE pemu;
+	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
+	close_out(rfp);
+	free(rfp);
+	return 0;
+}
 
-	emu = calloc(1, sizeof *emu);
-	if (!emu) return NULL;
+static const struct PRINTER_EMU_OPERATIONS ops =
+{
+	consume_byte,
+	is_printing,
+	slot_command,
+	reset,
+	free_h,
+};
 
-	emu->wnd = wnd;
+struct PRINTER_CABLE* raw_file_printer_create(HWND wnd)
+{
+	int err;
 
-	pemu = printer_emu_create(emu, consume_byte, is_printing, reset, free_h);
-	if (!pemu) free(emu);
+	struct RAW_FILE_PRINTER*rfp;
 
-	return pemu;
+	rfp = calloc(1, sizeof *rfp);
+	if (!rfp) return NULL;
+
+	rfp->wnd = wnd;
+
+	err = printer_emu_init(&rfp->emu, &ops);
+	if (err) {
+		free(rfp);
+		rfp = NULL;
+		errno = err;
+	}
+
+	return (struct PRINTER_CABLE*)rfp;
 }

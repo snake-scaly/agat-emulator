@@ -69,6 +69,8 @@ static int no_recode(unsigned char c)
 
 struct EPSON_EMU
 {
+	struct PRINTER_EMU pemu;
+
 	unsigned flags;
 
 	int esc_mode;
@@ -84,9 +86,9 @@ struct EPSON_EMU
 	int (*recode)(unsigned char c);
 };
 
-static int epson_free(PEPSON_EMU emu)
+static int epson_free(struct PRINTER_EMU*pemu)
 {
-	if (!emu) return EINVAL;
+	PEPSON_EMU emu = (PEPSON_EMU)pemu;
 	if (emu->data) free(emu->data);
 	emu->data = NULL;
 	if (emu->exp.free_data) emu->exp.free_data(emu->exp.param);
@@ -366,10 +368,10 @@ static int epson_commandxb(PEPSON_EMU emu, unsigned char cmd, unsigned char data
 	return 0;
 }
 
-static int epson_write(PEPSON_EMU emu, int data)
+static int epson_write(struct PRINTER_EMU*pemu, int data)
 {
+	PEPSON_EMU emu = (PEPSON_EMU)pemu;
 	int r;
-	if (!emu) return EINVAL;
 	Pprintf(("esc_mode = %i; esc_cnt = %i; char = %c (%i, 0x%02X)\n", emu->esc_mode, emu->esc_cnt, data, data, data));
 	if (emu->esc_mode) {
 		emu->esc_cnt ++;
@@ -449,29 +451,50 @@ static int epson_write(PEPSON_EMU emu, int data)
 	return 0;
 }
 
-static int epson_flush(PEPSON_EMU emu)
+static int epson_flush(struct PRINTER_EMU*pemu)
 {
-	if (!emu) return EINVAL;
+	PEPSON_EMU emu = (PEPSON_EMU)pemu;
 	emu->esc_mode = 0;
 	if (!emu->exp.close) return EINVAL;
 	emu->exp.close(emu->exp.param);
 	return 0;
 }
 
-static int epson_hasdata(PEPSON_EMU emu)
+static int epson_hasdata(struct PRINTER_EMU*pemu)
 {
-	if (!emu) { errno = EINVAL; return -1; }
+	PEPSON_EMU emu = (PEPSON_EMU)pemu;
 	if (emu->exp.opened) return emu->exp.opened(emu->exp.param);
 	return 0;
 }
 
-PPRINTER_CABLE epson_create(unsigned flags, struct EPSON_EXPORT*exp)
+static int slot_command(struct PRINTER_EMU*pemu, int id, long param)
+{
+	return 0;
+}
+
+static const struct PRINTER_EMU_OPERATIONS ops =
+{
+	epson_write,
+	epson_hasdata,
+	slot_command,
+	epson_flush,
+	epson_free,
+};
+
+struct PRINTER_CABLE* epson_create(unsigned flags, struct EPSON_EXPORT*exp)
 {
 	PEPSON_EMU emu;
-	PPRINTER_CABLE result;
+	int err;
 
 	emu = calloc(1, sizeof(*emu));
 	if (!emu) return NULL;
+
+	err = printer_emu_init(&emu->pemu, &ops);
+	if (err) {
+		free(emu);
+		errno = err;
+		return NULL;
+	}
 
 	emu->flags = flags;
 	emu->exp = *exp;
@@ -488,11 +511,9 @@ PPRINTER_CABLE epson_create(unsigned flags, struct EPSON_EXPORT*exp)
 		break;
 	default:
 		free(emu);
+		errno = EINVAL;
 		return NULL;
 	}
 
-	result = printer_emu_create(emu, epson_write, epson_hasdata, epson_flush, epson_free);
-	if (!result) free(emu);
-
-	return result;
+	return (struct PRINTER_CABLE*)emu;
 }

@@ -5,6 +5,7 @@
 
 #include "printer_cable.h"
 #include "printer_emu.h"
+#include "runmgr.h"
 #include <errno.h>
 #include <stdlib.h>
 
@@ -13,51 +14,37 @@
 #define BUSY_BIT  0x80
 #define BYTE_MASK 0xFF
 
-struct PRINTER_EMU
-{
-	int data;
-	int control;
-	int state;
-
-	void*param;
-	printer_cable_write_t print_byte;
-	printer_cable_read_t is_printing;
-	printer_cable_action_t reset;
-	printer_cable_action_t free_h;
-};
-
 static void reset_state(struct PRINTER_EMU*emu)
 {
 	emu->control = 0xFF;
 	emu->state = 0x04;
 }
 
-static int cable_reset(struct PRINTER_EMU*emu)
+static int cable_reset(struct PRINTER_CABLE*cab)
 {
-	if (!emu) return EINVAL;
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	reset_state(emu);
-	return emu->reset(emu->param);
+	return emu->ops->reset(emu);
 }
 
-static int cable_write_data(struct PRINTER_EMU*emu, int data)
+static int cable_write_data(struct PRINTER_CABLE*cab, int data)
 {
-	if (!emu) return EINVAL;
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	emu->data = data & BYTE_MASK;
 	return 0;
 }
 
-static int cable_write_control(struct PRINTER_EMU*emu, int data)
+static int cable_write_control(struct PRINTER_CABLE*cab, int data)
 {
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	int err = 0;
 
-	if (!emu) return EINVAL;
-
 	if (!(emu->control & RESET_BIT) && (data & RESET_BIT)) {
-		err = cable_reset(emu);
+		err = cable_reset(cab);
 	}
 	else if ((emu->control ^ data) & DATA_BIT) {
 		if (data & DATA_BIT) {
-			err = emu->print_byte(emu->param, emu->data);
+			err = emu->ops->print_byte(emu, emu->data);
 			emu->state &= ~BUSY_BIT;
 		} else {
 			emu->state |= BUSY_BIT;
@@ -69,57 +56,55 @@ static int cable_write_control(struct PRINTER_EMU*emu, int data)
 	return err;
 }
 
-static int cable_read_state(struct PRINTER_EMU*emu)
+static int cable_read_state(struct PRINTER_CABLE*cab)
 {
-	if (!emu) { errno = EINVAL; return -1; }
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	return emu->state;
 }
 
-static int cable_is_printing(struct PRINTER_EMU*emu)
+static int cable_is_printing(struct PRINTER_CABLE*cab)
 {
-	if (!emu) { errno = EINVAL; return -1; }
-	return emu->is_printing(emu->param);
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
+	return emu->ops->is_printing(emu);
 }
 
-static int cable_free(struct PRINTER_EMU*emu)
+static int cable_slot_command(struct PRINTER_CABLE*cab, int id, long param)
 {
-	int err;
-	if (!emu) return EINVAL;
-	err = emu->free_h(emu->param);
-	free(emu);
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
+	int err = 0;
+
+	if (id == SYS_COMMAND_HRESET) err = cable_reset(cab);
+	if (err == 0) err = emu->ops->slot_command(emu, id, param);
+
 	return err;
 }
 
-PPRINTER_CABLE printer_emu_create(
-	void*param,
-	printer_cable_write_t print_byte,
-	printer_cable_read_t is_printing,
-	printer_cable_action_t reset,
-	printer_cable_action_t free_h)
+static int cable_free(struct PRINTER_CABLE*cab)
 {
-	struct PRINTER_EMU*emu;
-	PPRINTER_CABLE result;
+	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
+	return emu->ops->free(emu);
+}
 
-	if (print_byte == NULL || is_printing == NULL || reset == NULL ||
-		free_h == NULL)
-	{
-		return NULL;
-	}
+static const struct PRINTER_CABLE_OPERATIONS printer_emu_ops =
+{
+	cable_write_data,
+	cable_write_control,
+	cable_read_state,
+	cable_is_printing,
+	cable_slot_command,
+	cable_reset,
+	cable_free,
+};
 
-	emu = calloc(1, sizeof *emu);
-	if (!emu) return NULL;
+int printer_emu_init(
+	struct PRINTER_EMU*emu,
+	const struct PRINTER_EMU_OPERATIONS*ops)
+{
+	if (!emu || !ops) return EINVAL;
 
-	emu->param = param;
-	emu->print_byte = print_byte;
-	emu->is_printing = is_printing;
-	emu->reset = reset;
-	emu->free_h = free_h;
+	emu->cab.ops = &printer_emu_ops;
+	emu->ops = ops;
 	reset_state(emu);
 
-	result = printer_cable_create(emu, cable_write_data,
-		cable_write_control, cable_read_state, cable_is_printing,
-		cable_reset, cable_free);
-	if (!result) free(emu);
-
-	return result;
+	return 0;
 }
