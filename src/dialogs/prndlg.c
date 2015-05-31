@@ -102,6 +102,7 @@ static int dialog_init(HWND hwnd, struct SLOTCONFIG*conf)
 		PrnList_AddItem(hlist, PRINT_TEXT, conf->cfgint[CFG_INT_PRINT_MODE]);
 		PrnList_AddItem(hlist, PRINT_TIFF, conf->cfgint[CFG_INT_PRINT_MODE]);
 		PrnList_AddItem(hlist, PRINT_PRINT, conf->cfgint[CFG_INT_PRINT_MODE]);
+		PrnList_AddItem(hlist, PRINT_LPT, conf->cfgint[CFG_INT_PRINT_MODE]);
 	}
 	SetDlgItemText(hwnd, IDC_FW1_NAME, conf->cfgstr[CFG_STR_ROM]);
 

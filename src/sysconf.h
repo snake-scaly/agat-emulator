@@ -207,7 +207,8 @@ enum {
 	PRINT_RAW,
 	PRINT_TEXT,
 	PRINT_TIFF,
-	PRINT_PRINT
+	PRINT_PRINT,
+	PRINT_LPT,
 };
 
 enum {

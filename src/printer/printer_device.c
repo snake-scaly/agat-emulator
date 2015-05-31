@@ -8,6 +8,7 @@
 #include "epson_emu.h"
 #include "export.h"
 #include "raw_file_printer.h"
+#include "lpt_printer.h"
 #include "runmgr.h"
 #include "runmgrint.h"
 #include "sysconf.h"
@@ -53,6 +54,8 @@ struct PRINTER_CABLE* printer_device_for_mode(
 	if (mode == PRINT_RAW) {
 		return raw_file_printer_create(sr->video_w);
 	}
-
+	if (mode == PRINT_LPT) {
+		return lpt_printer_create(st);
+	}
 	return create_epson_in_mode(sr, mode);
 }
