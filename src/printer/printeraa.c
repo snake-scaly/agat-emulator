@@ -24,9 +24,7 @@
 #include "localize.h"
 
 #include "printer_cable.h"
-#include "epson_emu.h"
-#include "export.h"
-#include "raw_file_printer.h"
+#include "printer_device.h"
 
 struct PRINTER_STATE
 {
@@ -134,12 +132,9 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs)
 
 int  printeraa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	ISTREAM*rom;
 	struct PRINTER_STATE*pcs;
-	struct EPSON_EXPORT exp = {0};
 	int mode = cf->cfgint[CFG_INT_PRINT_MODE];
-	unsigned fl = 0;
 
 	puts("in printeraa_init");
 
@@ -148,36 +143,8 @@ int  printeraa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SL
 
 	pcs->st = st;
 
-	if (mode == 0) {
-		pcs->pemu = raw_file_printer_create(sr->video_w);
-	} else {
-		switch (mode) {
-		case 1:
-			i = export_text_init(&exp, 0, sr->video_w);
-			fl = EPSON_TEXT_RECODE_FX;
-			break;
-		case 2:
-			i = export_tiff_init(&exp, EXPORT_TIFF_COMPRESS_RLE, sr->video_w);
-			fl = EPSON_TEXT_RECODE_FX;
-			break;
-		case 3:
-			i = export_print_init(&exp, 0, sr->video_w);
-			fl = EPSON_TEXT_RECODE_FX;
-			break;
-		default:
-			i = -1;
-			break;
-		}
-
-		if (i < 0)  {
-			free(pcs);
-			return -2;
-		}
-
-		pcs->pemu = epson_create(fl, &exp);
-	}
+	pcs->pemu = printer_device_for_mode(sr, mode);
 	if (!pcs->pemu) {
-		if (exp.free_data) exp.free_data(exp.param);
 		free(pcs);
 		return -3;
 	}
