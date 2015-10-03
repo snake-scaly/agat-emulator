@@ -11,7 +11,6 @@
 
 //#define DEBUG_SOUND
 
-#pragma comment(lib,"dxguid")
 #pragma comment(lib,"dsound")
 
 //#define SFREQ 22050

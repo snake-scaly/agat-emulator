@@ -28,7 +28,6 @@
 
 #include "localize.h"
 
-#pragma comment(lib,"dxguid")
 #pragma comment(lib,"dsound")
 
 //#define DEBUG_SOUND
