@@ -57,6 +57,11 @@ static void close_out(struct RAW_FILE_PRINTER*rfp)
 
 static int reset(struct PRINTER_EMU*emu)
 {
+	return 0;
+}
+
+static int flush(struct PRINTER_EMU*emu)
+{
 	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
 	close_out(rfp);
 	rfp->ignore_data = 0;
@@ -102,9 +107,10 @@ static int free_h(struct PRINTER_EMU*emu)
 static const struct PRINTER_EMU_OPERATIONS ops =
 {
 	consume_byte,
+	reset,
 	is_printing,
 	slot_command,
-	reset,
+	flush,
 	free_h,
 };
 

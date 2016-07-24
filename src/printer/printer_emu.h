@@ -7,9 +7,8 @@
 	A PPRINTER_CABLE that takes care of the data, control, and
 	state registers and produces a ready-to-use byte stream.
 
-	This implementation calls ops->reset() when the printer reset signal
-	is received via the protocol and when SYS_COMMAND_HRESET is received
-	via the ops->slot_command() in addition to the direct calls.
+	This implementation calls ops->flush() when SYS_COMMAND_HRESET is
+	received via the ops->slot_command() in addition to the direct calls.
 
 	The user MUST call printer_emu_init() to initialize the structure. The
 	user SHOULD consider all the structure fields as private.
@@ -32,6 +31,9 @@ struct PRINTER_EMU
 	print_byte
 		Process a single byte received through the hardware protocol.
 
+	reset
+		Handle a reset command received through the hardware protocol.
+
 	Other functions are identical to those in PRINTER_CABLE_OPERATIONS.
 	They are called through by this implementation. However see PRINTER_EMU
 	docs to understand implementation requirements.
@@ -39,9 +41,10 @@ struct PRINTER_EMU
 struct PRINTER_EMU_OPERATIONS
 {
 	int (*print_byte)(struct PRINTER_EMU*emu, int data);
+	int (*reset)(struct PRINTER_EMU*emu);
 	int (*is_printing)(struct PRINTER_EMU*emu);
 	int (*slot_command)(struct PRINTER_EMU*emu, int id, long param);
-	int (*reset)(struct PRINTER_EMU*emu);
+	int (*flush)(struct PRINTER_EMU*emu);
 	int (*free)(struct PRINTER_EMU*emu);
 };
 

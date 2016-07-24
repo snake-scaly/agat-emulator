@@ -451,6 +451,11 @@ static int epson_write(struct PRINTER_EMU*pemu, int data)
 	return 0;
 }
 
+static int epson_reset(struct PRINTER_EMU*pemu)
+{
+	return 0; // FIXME: should reset some internal state?
+}
+
 static int epson_flush(struct PRINTER_EMU*pemu)
 {
 	PEPSON_EMU emu = (PEPSON_EMU)pemu;
@@ -475,6 +480,7 @@ static int slot_command(struct PRINTER_EMU*pemu, int id, long param)
 static const struct PRINTER_EMU_OPERATIONS ops =
 {
 	epson_write,
+	epson_reset,
 	epson_hasdata,
 	slot_command,
 	epson_flush,

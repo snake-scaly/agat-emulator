@@ -38,7 +38,7 @@ struct PRINTER_CABLE
 		id    - one of the SYS_COMMAND_ commands
 		param - depends on the command
 
-	reset
+	flush
 		Reset the device.
 
 		The device flushes all data, closes all files, and reverts to
@@ -56,6 +56,6 @@ struct PRINTER_CABLE_OPERATIONS
 	int (*read_state)(struct PRINTER_CABLE*cab);
 	int (*is_printing)(struct PRINTER_CABLE*cab);
 	int (*slot_command)(struct PRINTER_CABLE*cab, int id, long param);
-	int (*reset)(struct PRINTER_CABLE*cab);
+	int (*flush)(struct PRINTER_CABLE*cab);
 	int (*free)(struct PRINTER_CABLE*cab);
 };

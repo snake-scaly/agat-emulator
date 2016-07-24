@@ -84,7 +84,7 @@ static void free_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
 static void wincmd(HWND wnd, int cmd, int s, struct PRINTER_STATE*pcs)
 {
 	if (pcs->pcab && cmd == PRN_BASE_CMD + s * 10) {
-		pcs->pcab->ops->reset(pcs->pcab);
+		pcs->pcab->ops->flush(pcs->pcab);
 	}
 }
 

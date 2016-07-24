@@ -20,11 +20,11 @@ static void reset_state(struct PRINTER_EMU*emu)
 	emu->state = 0x04;
 }
 
-static int cable_reset(struct PRINTER_CABLE*cab)
+static int cable_flush(struct PRINTER_CABLE*cab)
 {
 	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	reset_state(emu);
-	return emu->ops->reset(emu);
+	return emu->ops->flush(emu);
 }
 
 static int cable_write_data(struct PRINTER_CABLE*cab, int data)
@@ -40,7 +40,7 @@ static int cable_write_control(struct PRINTER_CABLE*cab, int data)
 	int err = 0;
 
 	if (!(emu->control & RESET_BIT) && (data & RESET_BIT)) {
-		err = cable_reset(cab);
+		err = emu->ops->reset(emu);
 	}
 	else if ((emu->control ^ data) & DATA_BIT) {
 		if (data & DATA_BIT) {
@@ -73,7 +73,7 @@ static int cable_slot_command(struct PRINTER_CABLE*cab, int id, long param)
 	struct PRINTER_EMU*emu = (struct PRINTER_EMU*)cab;
 	int err = 0;
 
-	if (id == SYS_COMMAND_HRESET) err = cable_reset(cab);
+	if (id == SYS_COMMAND_HRESET) err = cable_flush(cab);
 	if (err == 0) err = emu->ops->slot_command(emu, id, param);
 
 	return err;
@@ -92,7 +92,7 @@ static const struct PRINTER_CABLE_OPERATIONS printer_emu_ops =
 	cable_read_state,
 	cable_is_printing,
 	cable_slot_command,
-	cable_reset,
+	cable_flush,
 	cable_free,
 };
 

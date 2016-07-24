@@ -82,6 +82,11 @@ static int lpt_is_printing(struct PRINTER_EMU *emu)
 
 static int lpt_reset(struct PRINTER_EMU *emu)
 {
+	return 0;
+}
+
+static int lpt_flush(struct PRINTER_EMU *emu)
+{
 	struct LPT_PRINTER *p = (struct LPT_PRINTER*)emu;
 	lpt_close(p);
 	p->bad = 0;
@@ -116,9 +121,10 @@ static int slot_command(struct PRINTER_EMU *emu, int id, long param)
 static const struct PRINTER_EMU_OPERATIONS ops =
 {
 	lpt_print_byte,
+	lpt_reset,
 	lpt_is_printing,
 	slot_command,
-	lpt_reset,
+	lpt_flush,
 	lpt_free,
 };
 
