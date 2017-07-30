@@ -521,8 +521,9 @@ static void on_quit(HWND hwnd)
 			return;
 		}
 	}
+	// Main dialog is never destroyed so store size information on quit.
+	resize_save_placement(hwnd, MAKEINTRESOURCE(IDD_MAIN));
 	PostQuitMessage(0);
-	EndDialog(hwnd, 1);
 }
 
 static int dialog_close(HWND hwnd, void*p)
@@ -616,18 +617,23 @@ static struct DIALOG_DATA dialog =
 	dialog_destroy,
 	dialog_command,
 	dialog_notify,
+
 	dialog_close,
 	NULL,
 	dialog_close,
 	NULL,
-	dialog_message
+
+	dialog_message,
+
+	LIST_NODE_INIT(dialog.modeless_list),
+	NULL,
 };
 
 int maindlg_run(HWND hpar)
 {
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
-	return dialog_run(&dialog, MAKEINTRESOURCE(IDD_MAIN), hpar, NULL);
+	return dialog_show_modeless(&dialog, MAKEINTRESOURCE(IDD_MAIN), hpar, SW_SHOW, NULL);
 }
 
 
@@ -638,11 +644,5 @@ int maindlg_run_config(HWND hpar, LPCTSTR name)
 	_mkdir(SYSTEMS_DIR);
 	_mkdir(SAVES_DIR);
 	update_save_state(name);
-	r = run_config(hpar, name);
-	if (r < 0) return r;
-	while (GetMessage(&msg, NULL, 0, 0)) {
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-	return 0;
+	return run_config(hpar, name);
 }

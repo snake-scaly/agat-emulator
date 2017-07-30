@@ -12,6 +12,7 @@
 #include "common.h"
 #include "debug.h"
 #include "localize.h"
+#include "msgloop.h"
 
 #define INI_NAME ".\\emulator.ini"
 
@@ -111,6 +112,7 @@ int main(int argc, const char* argv[])
 	} else {
 		r = maindlg_run(NULL);
 	}
+	msgloop_run();
 	WritePrivateProfileInt(TEXT("Environment"), TEXT("Flags"), g_config.flags, TEXT(INI_NAME));
 	debug_term();
 	localize_term();

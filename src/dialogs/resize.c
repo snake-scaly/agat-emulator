@@ -201,7 +201,17 @@ int resize_init_placement(HWND wnd, LPCTSTR id)
 		if (!GetPrivateProfileStruct(TEXT("placement"), id, pl, sizeof(*pl), cfg)) 
 			return -3;
 	} else return -1;
-	if (pl->length) SetWindowPlacement(wnd, pl);
+	if (pl->length) {
+		/* preserve the window's current visibility and foreground state */
+		DWORD is_visible = GetWindowStyle(wnd) & WS_VISIBLE;
+		switch (pl->showCmd) {
+		case SW_SHOWNORMAL: pl->showCmd = SW_SHOWNOACTIVATE; break;
+		case SW_SHOWMINIMIZED: pl->showCmd = SW_SHOWMINNOACTIVE; break;
+		case SW_SHOWMAXIMIZED: pl->showCmd = SW_MAXIMIZE; break;
+		}
+		SetWindowPlacement(wnd, pl);
+		if (!is_visible) ShowWindow(wnd, SW_HIDE);
+	}
 	else return -2;
 	return 0;
 }

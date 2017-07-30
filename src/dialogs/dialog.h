@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <windowsx.h>
+#include "list.h"
 
 #ifndef IDAPPLY
 #define IDAPPLY IDYES
@@ -22,7 +23,11 @@ struct DIALOG_DATA
 
 // low-level subroutine
 	int  (*message)(HWND hwnd, void*param, UINT msg, WPARAM wp, LPARAM lp);
-	
+
+// modeless dialog boxes
+	struct LIST_NODE modeless_list;
+	HWND modeless_hwnd;
+
 // internal fields
 	void* param;
 	LPCTSTR res_id;
@@ -32,6 +37,9 @@ extern HINSTANCE res_instance;
 
 int dialog_run(struct DIALOG_DATA*data, LPCTSTR res_id, HWND hpar, void* param);
 
+void dialog_init_modeless(struct DIALOG_DATA*data);
+int dialog_show_modeless(struct DIALOG_DATA*data, LPCTSTR res_id, HWND hpar, int cmd_show, void*param);
+int dialog_hide_modeless(struct DIALOG_DATA*data);
 
 // WinAPI extension
 BOOL EnableDlgItem(HWND hpar, int id, BOOL enable);
