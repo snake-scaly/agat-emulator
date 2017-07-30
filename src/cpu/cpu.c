@@ -11,6 +11,20 @@
 #define _CMSG(s)
 #endif
 
+static __declspec(thread) struct CPU_STATE*current_cpu = NULL;
+
+/* Get CPU running in the current thread. */
+struct CPU_STATE*get_cpu()
+{
+	return current_cpu;
+}
+
+struct CPU_HANDLER
+{
+	struct LIST_NODE handler_list;
+	CPU_CALLBACK callback;
+	void *param;
+};
 
 static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs);
 
@@ -128,6 +142,7 @@ static int cpu_term(struct SLOT_RUN_STATE*st)
 	CloseHandle(cs->wakeup);
 	CloseHandle(cs->response);
 	CloseHandle(cs->sleep);
+	tsq_uninit(&cs->handler_queue);
 	cs->free(cs);
 	free(cs);
 	_CMSG("finished");
@@ -187,6 +202,8 @@ int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONF
 	cs->wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
 	cs->response = CreateEvent(NULL, FALSE, FALSE, NULL);
 	cs->sleep = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+	tsq_init(&cs->handler_queue);
 
 	switch (cf->dev_type) {
 	case DEV_6502:
@@ -359,10 +376,21 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 	unsigned t0=get_n_msec();
 	long long n_ticks = 0;
 	_CMSG("start");
+	current_cpu = cs;
 	SetEvent(cs->response);
 	_CMSG("pulsed response event");
 	while (!cs->term_req) {
-		int r, t, rt;
+		int r;
+		/* run all registered handlers */
+		for (;;) {
+			struct LIST_NODE *ln;
+			struct CPU_HANDLER *ch;
+			ln = tsq_take(&cs->handler_queue);
+			if (!ln) break;
+			ch = LIST_ENTRY(ln, struct CPU_HANDLER, handler_list);
+			ch->callback(ch->param);
+			free(ch);
+		}
 		while (cs->sleep_req) {
 			unsigned ta = get_n_msec();
 			_CMSG("got sleep request");
@@ -376,6 +404,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			t0 += get_n_msec() - ta;
 			if (cs->term_req) {
 				_CMSG("got terminate request after wakeup");
+				current_cpu = NULL;
 				return 0;
 			}
 		}
@@ -423,6 +452,7 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 			}
 		}
 	}
+	current_cpu = NULL;
 	_CMSG("exit");
 	return 0;
 }
@@ -447,4 +477,19 @@ int cpu_get_fast(struct SYS_RUN_STATE*sr)
 	struct CPU_STATE*cs;
 	cs = sr->slots[CONF_CPU].data;
 	return cs->fast_mode;
+}
+
+/*
+	Execute a callback on the CPU thread.
+	This function is thread-safe.
+*/
+int cpu_exec_async(struct CPU_STATE*cs, CPU_CALLBACK callback, void *param)
+{
+	struct CPU_HANDLER *ch = calloc(1, sizeof(struct CPU_HANDLER));
+	if (!ch) return -1;
+	list_init(&ch->handler_list);
+	ch->callback = callback;
+	ch->param = param;
+	tsq_add(&cs->handler_queue, &ch->handler_list);
+	return 0;
 }

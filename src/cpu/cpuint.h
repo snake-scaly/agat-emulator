@@ -8,6 +8,7 @@
 #include "sysconf.h"
 #include "runmgr.h"
 #include "runmgrint.h"
+#include "tsq.h"
 
 struct CPU_TIMER
 {
@@ -15,6 +16,8 @@ struct CPU_TIMER
 	int  delay, remains;
 	long param;
 };
+
+typedef void (*CPU_CALLBACK)(void*p);
 
 #define MAX_CPU_TIMERS	32
 
@@ -56,6 +59,7 @@ struct CPU_STATE
 
 	int  new_addr;
 
+	struct TSQ handler_queue;
 
 	int  (*hook_proc)(void*p);
 	void *hook_data;
@@ -69,6 +73,8 @@ struct CPU_STATE
 };
 
 
+struct CPU_STATE*get_cpu();
+
 int  cpu_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*sc);
 
 int cpu_hreset(struct CPU_STATE*st);
@@ -76,6 +82,7 @@ int cpu_intr(struct CPU_STATE*st, int t, int nticks); // nticks = 0 -> no auto d
 int cpu_pause(struct CPU_STATE*st, int p);
 int cpu_step(struct CPU_STATE*st, int ncmd);
 int cpu_cmd(struct CPU_STATE*cs, int cmd, int data, long param);
+int cpu_exec_async(struct CPU_STATE*cs, CPU_CALLBACK callback, void *param);
 
 int init_cpu_6502(struct CPU_STATE*cs);
 int init_cpu_65c02(struct CPU_STATE*cs);
