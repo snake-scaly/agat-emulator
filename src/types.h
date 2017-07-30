@@ -35,8 +35,6 @@ typedef char char_t;
 #define TextOut(dc,x,y,buf,cnt) ExtTextOut(dc,x,y,0,NULL,buf,cnt,NULL)
 #endif // !UNDER_CE3
 
-#define WM_INPUTLANGCHANGE WM_USER
-
 #endif
 
 #endif //TYPES_H

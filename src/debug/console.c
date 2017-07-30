@@ -14,6 +14,7 @@
 #include <stdarg.h>
 
 #include "resource.h"
+#include "winmsg.h"
 
 #define CONSOLE_DEF_FONT TEXT("")
 #define CONSOLE_QUEUE_LENGTH 16
@@ -23,8 +24,6 @@
 #define CONSOLE_WINDOW_CLASS TEXT("Console")
 
 #define CDATA_WRITE 0
-#define CWM_CLEAR (WM_USER)
-#define CWM_TERM  (WM_USER+1)
 
 #define CON_WAIT_TIMEOUT 1000
 
