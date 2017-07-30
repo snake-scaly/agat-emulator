@@ -1,7 +1,10 @@
-#include "printer_cable.h"
 #include "epson_emu.h"
 #include "export.h"
+#include "printer_cable.h"
+#include "prnprogressdlg_interop.h"
 #include "sysconf.h"
+
+#include <direct.h>
 #include <io.h>
 #include <stdio.h>
 #include <assert.h>
@@ -31,6 +34,9 @@
 #define Pprintf(s)
 #define Pputs(s)
 #endif
+
+
+int select_save_tiff(HWND hpar, TCHAR fname[CFGSTRLEN]);
 
 
 struct FONT_INFO
@@ -86,6 +92,8 @@ struct EXPORT_TIFF
 	int	vert_pos[LINE_SIZE];
 	int	n_vert;
 
+	struct PRNPROGRESSDLG_INTEROP progress_interop;
+	struct PRNPROGRESSDLG_INFO progress_info;
 
 	void (*open_out)(struct EXPORT_TIFF*et);
 	void (*close_out)(struct EXPORT_TIFF*et);
@@ -95,6 +103,8 @@ struct EXPORT_TIFF
 	int  (*stretch)(struct EXPORT_TIFF*et, int w, int resx, int resy);
 };
 
+static void new_page(struct EXPORT_TIFF*et);
+static void tiff_close(struct EXPORT_TIFF*et);
 
 static int get_name(HWND wnd, char*fname)
 {
@@ -110,23 +120,31 @@ static int get_name(HWND wnd, char*fname)
 	return 1;
 }
 
+static struct PRNPROGRESSDLG_INTEROP_CB prnprogressdlg_interop_cb =
+{
+	.next = new_page,
+	.finish = tiff_close,
+};
+
 static void tiff_open_out(struct EXPORT_TIFF*et)
 {
 	char name[MAX_PATH];
+
 	if (et->opened) return;
+	if (prnprogressdlg_create_sync(&et->progress_interop,
+		et->wnd, 1, &prnprogressdlg_interop_cb, et)) goto fail;
+	memset(&et->progress_info, 0, sizeof(et->progress_info));
 	et->opened = 1;
-	if (!get_name(et->wnd, name)) {
-		et->out = NULL;
-		return;
-	}
+
+	if (!get_name(et->wnd, name)) return;
 	et->out = fopen(name, "wb");
-	if (!et->out) return;
-	tiff_create(et->out, &et->tiff);
+	if (!et->out) goto fail;
+	if (tiff_create(et->out, &et->tiff) != 0) goto fail_out;
 
 	et->dc = CreateCompatibleDC(NULL);
-	assert(et->dc);
+	if (!et->dc) goto fail_out;
 	et->bmp = CreateCompatibleBitmap(et->dc, et->page_w, et->page_h);
-	assert(et->bmp);
+	if (!et->bmp) goto fail_dc;
 	SelectObject(et->dc, et->bmp);
 	SetStretchBltMode(et->dc, BLACKONWHITE);
 	SetBkMode(et->dc, TRANSPARENT);
@@ -135,14 +153,23 @@ static void tiff_open_out(struct EXPORT_TIFF*et)
 
 	et->fnt_dirty = 1;
 	et->page_dirty = 0;
-	et->x0 = et->margin[0] * et->res_x;
-	et->y0 = et->margin[1] * et->res_y;
+	et->x0 = (int)(et->margin[0] * et->res_x);
+	et->y0 = (int)(et->margin[1] * et->res_y);
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	if (!et->line_h) {
 		et->line_h = SRC_FONT_H * et->res_y / SRC_VERT_DPI;
 		et->page_cur_h = et->page_h - et->line_h;
 	}
+	return;
+
+fail_dc:
+	DeleteDC(et->dc);
+fail_out:
+	fclose(et->out);
+	et->out = NULL;
+fail:
+	puts(__FUNCTION__ " failed");
 }
 
 static void tiff_close_out(struct EXPORT_TIFF*et)
@@ -155,29 +182,30 @@ static void tiff_close_out(struct EXPORT_TIFF*et)
 	}
 	DeleteObject(et->bmp);
 	DeleteDC(et->dc);
+	prnprogressdlg_destroy_async(&et->progress_interop);
 }
 
 
 static void print_open_out(struct EXPORT_TIFF*et)
 {
-	char name[MAX_PATH];
-	static PRINTDLG pd;
-	DOCINFO di;
 	if (et->opened) return;
+	if (prnprogressdlg_create_sync(&et->progress_interop,
+		et->wnd, 1, &prnprogressdlg_interop_cb, et)) goto fail;
+	memset(&et->progress_info, 0, sizeof(et->progress_info));
 	et->opened = 1;
-	pd.lStructSize=sizeof(pd);
+
+	static PRINTDLG pd;
+	pd.lStructSize = sizeof(pd);
 	pd.hwndOwner=et->wnd;
 	pd.Flags|=PD_NOPAGENUMS|PD_NOSELECTION|PD_RETURNDC;
-	if (!PrintDlg(&pd)) {
-		et->dc = NULL;
-		return;
-	} else {
-		et->dc = pd.hDC;
-	}
-	ZeroMemory(&di,sizeof(di));
+	if (!PrintDlg(&pd)) return;
+	et->dc = pd.hDC;
+
+	DOCINFO di;
+	ZeroMemory(&di, sizeof(di));
 	di.cbSize = sizeof(di);
 	di.lpszDocName = TEXT("Agat printer output");
-	StartDoc(et->dc, &di);
+	if (StartDoc(et->dc, &di) <= 0) goto fail_dc;
 
 	SetStretchBltMode(et->dc, BLACKONWHITE);
 	SetBkMode(et->dc, TRANSPARENT);
@@ -191,8 +219,8 @@ static void print_open_out(struct EXPORT_TIFF*et)
 	et->page_cur_h = et->page_h;
 	et->fnt_dirty = 1;
 	et->page_dirty = 0;
-	et->x0 = et->margin[0] * et->res_x;
-	et->y0 = et->margin[1] * et->res_y;
+	et->x0 = (int)(et->margin[0] * et->res_x);
+	et->y0 = (int)(et->margin[1] * et->res_y);
 	et->pos_x = et->x0;
 	et->pos_y = et->y0;
 	if (!et->line_h) {
@@ -200,6 +228,12 @@ static void print_open_out(struct EXPORT_TIFF*et)
 		et->page_cur_h = et->page_h - et->line_h;
 	}
 	Pprintf(("res: %ix%i\nsize: %ix%i\n", et->res_x, et->res_y, et->page_w, et->page_h));
+	return;
+
+fail_dc:
+	DeleteDC(et->dc);
+fail:
+	puts(__FUNCTION__ " failed");
 }
 
 static void print_close_out(struct EXPORT_TIFF*et)
@@ -211,6 +245,7 @@ static void print_close_out(struct EXPORT_TIFF*et)
 		EndDoc(et->dc);
 		DeleteDC(et->dc);
 	}
+	prnprogressdlg_destroy_async(&et->progress_interop);
 }
 
 
@@ -286,8 +321,6 @@ static void page_cr(struct EXPORT_TIFF*et)
 	et->pos_x = et->x0;
 	et->was_cr = 1;
 }
-
-static void new_page(struct EXPORT_TIFF*et);
 
 static void page_lf(struct EXPORT_TIFF*et)
 {
@@ -485,6 +518,9 @@ static void new_page(struct EXPORT_TIFF*et)
 	et->page_dirty = 0;
 	et->prev_char = 0;
 	et->was_cr = et->was_lf = 1;
+	et->progress_info.printed_page = 0;
+	et->progress_info.page_num++;
+	prnprogressdlg_update_async(&et->progress_interop, &et->progress_info);
 }
 
 static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
@@ -532,6 +568,9 @@ static void tiff_write_char(struct EXPORT_TIFF*et, int ch)
 	}
 	et->was_cr = et->was_lf = 0;
 	printch(et, ch);
+	et->progress_info.printed_total++;
+	et->progress_info.printed_page++;
+	prnprogressdlg_update_async(&et->progress_interop, &et->progress_info);
 }
 
 
@@ -836,6 +875,7 @@ static void tiff_free_data(struct EXPORT_TIFF*et)
 		DeleteObject(et->fnt);
 		DeleteObject(et->bbmp);
 		DeleteDC(et->bdc);
+		prnprogressdlg_interop_uninit(&et->progress_interop);
 		free(et);
 	}
 }
@@ -850,6 +890,7 @@ int export_comm_init(struct EXPORT_TIFF*et)
 {
 	et->margin[0] = 0;
 	et->margin[1] = 0.3; // inches
+	prnprogressdlg_interop_init(&et->progress_interop);
 	return 0;
 }
 
@@ -866,9 +907,9 @@ int  export_tiff_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->flags = flags;
 	et->wnd = wnd;
 	et->res_x = et->res_y = 300; // dpi
-	et->page_w = 8.25 * et->res_x;
+	et->page_w = (int)(8.25 * et->res_x);
 	et->page_w = (et->page_w + 31) & ~31;
-	et->page_h = 11.75 * et->res_y;
+	et->page_h = (int)(11.75 * et->res_y);
 	et->page_cur_h = et->page_h;
 	et->x0 = et->y0 = 40;
 	et->pos_x = et->x0;
@@ -917,10 +958,10 @@ int  export_print_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	et->flags = flags;
 	et->wnd = wnd;
 	et->res_x = et->res_y = 300; // dpi
-	et->page_w = 8.25 * et->res_x;
+	et->page_w = (int)(8.25 * et->res_x);
 	et->page_w = (et->page_w + 31) & ~31;
 	et->page_cur_h = et->page_h;
-	et->page_h = 11.75 * et->res_y;
+	et->page_h = (int)(11.75 * et->res_y);
 	et->x0 = et->y0 = 40;
 	et->auto_lf = et->auto_cr = 1;
 	et->y_set = 0;

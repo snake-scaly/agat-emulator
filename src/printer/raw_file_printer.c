@@ -3,12 +3,15 @@
 	Author: Sergey "SnakE" Gromov, snake.scaly@gmail.com
 */
 
+#include <direct.h>
+#include <errno.h>
+#include <io.h>
 #include <stdio.h>
 #include <windows.h>
-#include <errno.h>
 
 #include "printer_cable.h"
 #include "printer_emu.h"
+#include "prnprogressdlg_interop.h"
 #include "raw_file_printer.h"
 #include "sysconf.h"
 
@@ -23,6 +26,8 @@ struct RAW_FILE_PRINTER
 	FILE*out;
 	HWND wnd;
 	int ignore_data;
+	struct PRNPROGRESSDLG_INTEROP progress_interop;
+	struct PRNPROGRESSDLG_INFO progress_info;
 };
 
 static int get_name(HWND wnd, char*fname)
@@ -39,12 +44,27 @@ static int get_name(HWND wnd, char*fname)
 	return 1;
 }
 
+static int flush(struct PRINTER_EMU*emu);
+
+static struct PRNPROGRESSDLG_INTEROP_CB prnprogressdlg_interop_cb =
+{
+	.finish = flush,
+};
+
 static void open_out(struct RAW_FILE_PRINTER*rfp)
 {
+	if (prnprogressdlg_create_sync(&rfp->progress_interop,
+		rfp->wnd, 0, &prnprogressdlg_interop_cb, rfp)) goto fail;
+	memset(&rfp->progress_info, 0, sizeof(rfp->progress_info));
+
 	char name[MAX_PATH];
 	if (!get_name(rfp->wnd, name)) return;
 	rfp->out = fopen(name, "wb");
-	if (!rfp->out) return;
+	if (!rfp->out) goto fail;
+	return;
+
+fail:
+	puts(__FUNCTION__ " failed");
 }
 
 static void close_out(struct RAW_FILE_PRINTER*rfp)
@@ -53,6 +73,7 @@ static void close_out(struct RAW_FILE_PRINTER*rfp)
 		fclose(rfp->out);
 		rfp->out = NULL;
 	}
+	prnprogressdlg_destroy_async(&rfp->progress_interop);
 }
 
 static int reset(struct PRINTER_EMU*emu)
@@ -71,7 +92,6 @@ static int flush(struct PRINTER_EMU*emu)
 static int consume_byte(struct PRINTER_EMU*emu, int data)
 {
 	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
-	int err = 0;
 
 	if (rfp->ignore_data) return 0;
 	if (!rfp->out) open_out(rfp);
@@ -80,9 +100,11 @@ static int consume_byte(struct PRINTER_EMU*emu, int data)
 		return 0;
 	}
 
-	if (fputc(data, rfp->out) == EOF) err = errno;
+	if (fputc(data, rfp->out) == EOF) return errno;
 
-	return err;
+	rfp->progress_info.printed_total++;
+	prnprogressdlg_update_async(&rfp->progress_interop, &rfp->progress_info);
+	return 0;
 }
 
 static int is_printing(struct PRINTER_EMU*emu)
@@ -100,6 +122,7 @@ static int free_h(struct PRINTER_EMU*emu)
 {
 	struct RAW_FILE_PRINTER*rfp = (struct RAW_FILE_PRINTER*)emu;
 	close_out(rfp);
+	prnprogressdlg_interop_uninit(&rfp->progress_interop);
 	free(rfp);
 	return 0;
 }
@@ -116,21 +139,25 @@ static const struct PRINTER_EMU_OPERATIONS ops =
 
 struct PRINTER_CABLE* raw_file_printer_create(HWND wnd)
 {
-	int err;
+	int err = 0;
 
 	struct RAW_FILE_PRINTER*rfp;
 
 	rfp = calloc(1, sizeof *rfp);
-	if (!rfp) return NULL;
+	if (!rfp) goto fail;
 
 	rfp->wnd = wnd;
+	prnprogressdlg_interop_init(&rfp->progress_interop);
 
 	err = printer_emu_init(&rfp->emu, &ops);
-	if (err) {
-		free(rfp);
-		rfp = NULL;
-		errno = err;
-	}
+	if (err) goto fail_rfp;
 
 	return (struct PRINTER_CABLE*)rfp;
+
+fail_rfp:
+	free(rfp);
+fail:
+	puts(__FUNCTION__ " failed");
+	errno = err;
+	return NULL;
 }

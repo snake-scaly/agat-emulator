@@ -53,6 +53,8 @@
 #define IDD_PRNAACFG                    129
 #define IDB_ATOM_LOGO                   130
 #define IDD_FDDAACFG                    131
+#define IDD_PRNPROGRESS                 133
+#define IDD_PRNPROGRESS_NOPAGE          134
 #define IDC_NEW                         200
 #define IDC_RESET                       201
 #define IDC_CONFIG                      202
@@ -150,6 +152,12 @@
 #define IDC_DEBUG_NEW_CMDS              1072
 #define IDC_SEAGATE_SOUNDS              1073
 #define IDC_LANGSEL                     1074
+#define IDC_NEWPAGE                     1075
+#define IDC_FINISH                      1076
+#define IDC_PRINT_ICON                  1077
+#define IDC_BYTESREC                    1078
+#define IDC_BYTESPAGE                   1079
+#define IDC_PAGENUM                     1080
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

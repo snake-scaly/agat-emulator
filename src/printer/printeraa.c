@@ -55,66 +55,13 @@ static int printer_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 	return 0;
 }
 
-#define PRN_BASE_CMD 9000
-
-
-static void init_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
-{
-	TCHAR buf1[1024];
-	AppendMenu(menu, MF_STRING, PRN_BASE_CMD + s * 10,
-			localize_str(LOC_PRINTER, 100, buf1, sizeof(buf1)));
-}
-
-static void update_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
-{
-	if (pcs->pcab) {
-		int printing = pcs->pcab->ops->is_printing(pcs->pcab);
-		EnableMenuItem(menu, PRN_BASE_CMD + s * 10,
-			(printing?MF_ENABLED:MF_GRAYED)|MF_BYCOMMAND);
-	}
-}
-
-static void free_menu(struct PRINTER_STATE*pcs, int s, HMENU menu)
-{
-	DeleteMenu(menu, PRN_BASE_CMD + s * 10, MF_BYCOMMAND);
-}
-
-
-static void wincmd(HWND wnd, int cmd, int s, struct PRINTER_STATE*pcs)
-{
-	if (pcs->pcab && cmd == PRN_BASE_CMD + s * 10) {
-		pcs->pcab->ops->flush(pcs->pcab);
-	}
-}
 
 static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct PRINTER_STATE*pcs = st->data;
-	HMENU menu;
 
 	if (pcs->pcab) pcs->pcab->ops->slot_command(pcs->pcab, cmd, param);
 
-	switch (cmd) {
-	case SYS_COMMAND_RESET:
-		return 0;
-	case SYS_COMMAND_HRESET:
-		return 0;
-	case SYS_COMMAND_INITMENU:
-		menu = (HMENU) param;
-		init_menu(pcs, st->sc->slot_no, menu);
-		return 0;
-	case SYS_COMMAND_UPDMENU:
-		menu = (HMENU) param;
-		update_menu(pcs, st->sc->slot_no, menu);
-		break;
-	case SYS_COMMAND_FREEMENU:
-		menu = (HMENU) param;
-		free_menu(pcs, st->sc->slot_no, menu);
-		break;
-	case SYS_COMMAND_WINCMD:
-		wincmd((HWND)param, data, st->sc->slot_no, pcs);
-		break;
-	}
 	return 0;
 }
 

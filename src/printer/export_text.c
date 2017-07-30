@@ -1,7 +1,9 @@
 #include "printer_cable.h"
 #include "epson_emu.h"
 #include "export.h"
+#include "prnprogressdlg_interop.h"
 #include "sysconf.h"
+#include <direct.h>
 #include <io.h>
 #include <stdio.h>
 
@@ -19,6 +21,9 @@ struct EXPORT_TEXT
 	int buf_pos;
 
 	int  opened;
+
+	struct PRNPROGRESSDLG_INTEROP progress_interop;
+	struct PRNPROGRESSDLG_INFO progress_info;
 };
 
 
@@ -36,13 +41,28 @@ static int get_name(HWND wnd, char*fname)
 	return 1;
 }
 
+static void txt_close(struct EXPORT_TEXT*et);
+
+static struct PRNPROGRESSDLG_INTEROP_CB progress_cb =
+{
+	.finish = txt_close,
+};
+
 static void open_out(struct EXPORT_TEXT*et)
 {
-	char name[MAX_PATH];
+	if (prnprogressdlg_create_sync(&et->progress_interop,
+		et->wnd, 0, &progress_cb, et)) goto fail;
+	memset(&et->progress_info, 0, sizeof(et->progress_info));
 	et->opened = 1;
+
+	char name[MAX_PATH];
 	if (!get_name(et->wnd, name)) return;
 	et->out = fopen(name, "wt");
-	if (!et->out) return;
+	if (!et->out) goto fail;
+	return;
+
+fail:
+	puts(__FUNCTION__ " failed");
 }
 
 
@@ -74,6 +94,8 @@ static void txt_write_char(struct EXPORT_TEXT*et, int ch)
 		open_out(et);
 	}
 	if (!et->out) return;
+	et->progress_info.printed_total++;
+	prnprogressdlg_update_async(&et->progress_interop, &et->progress_info);
 	switch (ch) {
 	case 8:
 		buf_back(et);
@@ -108,12 +130,14 @@ static void txt_close(struct EXPORT_TEXT*et)
 		buf_flush(et);
 		fclose(et->out);
 	}
+	prnprogressdlg_destroy_async(&et->progress_interop);
 }
 
 static void txt_free_data(struct EXPORT_TEXT*et)
 {
 	if (et) {
 		txt_close(et);
+		prnprogressdlg_interop_uninit(&et->progress_interop);
 		free(et);
 	}
 }
@@ -141,6 +165,8 @@ int  export_text_init(struct EPSON_EXPORT*exp, unsigned flags, HWND wnd)
 	exp->close = txt_close;
 	exp->free_data = txt_free_data;
 	exp->opened = txt_opened;
+
+	prnprogressdlg_interop_init(&et->progress_interop);
 	return 0;
 }
 
