@@ -63,34 +63,29 @@ int resize_free(struct RESIZE_DIALOG*r)
 	return 0;
 }
 
-int resize_sizing(struct RESIZE_DIALOG*r,HWND wnd,int side,RECT*rw)
+int resize_minmaxinfo(struct RESIZE_DIALOG*r, HWND wnd, LPMINMAXINFO mmi)
 {
-	int sz[2]={rw->right-rw->left,rw->bottom-rw->top};
-	RECT rr[2]={{0,0,r->limits[0][0],r->limits[0][1]},{0,0,r->limits[1][0],r->limits[1][1]}};
+	RECT window_rect, client_rect;
+	int border_size[2];
+	RECT limits = { r->limits[0][0], r->limits[0][1], r->limits[1][0], r->limits[1][1] };
 
-	MapDialogRect(wnd,rr+0);
-	MapDialogRect(wnd,rr+1);
+	GetWindowRect(wnd, &window_rect);
+	GetClientRect(wnd, &client_rect);
+	border_size[0] = window_rect.right - window_rect.left - client_rect.right;
+	border_size[1] = window_rect.bottom - window_rect.top - client_rect.bottom;
 
-	if (r->flags&RESIZE_LIMIT_MIN&&sz[0]<rr[0].right) sz[0]=rr[0].right;
-	if (r->flags&RESIZE_LIMIT_MIN&&sz[1]<rr[0].bottom) sz[1]=rr[0].bottom;
-	if (r->flags&RESIZE_LIMIT_MAX&&sz[0]>rr[1].right) sz[0]=rr[1].right;
-	if (r->flags&RESIZE_LIMIT_MAX&&sz[1]>rr[1].bottom) sz[1]=rr[1].bottom;
-	switch (side) {
-	case WMSZ_LEFT: case WMSZ_BOTTOMLEFT: case WMSZ_TOPLEFT:
-		rw->left=rw->right-sz[0];
-		break;
-	case WMSZ_RIGHT: case WMSZ_TOPRIGHT: case WMSZ_BOTTOMRIGHT:
-		rw->right=rw->left+sz[0];
-		break;
+	MapDialogRect(wnd, &limits);
+
+	if (r->flags & RESIZE_LIMIT_MIN) {
+		mmi->ptMinTrackSize.x = limits.left + border_size[0];
+		mmi->ptMinTrackSize.y = limits.top + border_size[1];
 	}
-	switch (side) {
-	case WMSZ_BOTTOM: case WMSZ_BOTTOMLEFT: case WMSZ_BOTTOMRIGHT:
-		rw->bottom=rw->top+sz[1];
-		break;
-	case WMSZ_TOP: case WMSZ_TOPLEFT: case WMSZ_TOPRIGHT:
-		rw->top=rw->bottom-sz[1];
-		break;
+	if (r->flags & RESIZE_LIMIT_MAX) {
+		mmi->ptMaxTrackSize.x = limits.right + border_size[0];
+		mmi->ptMaxTrackSize.y = limits.bottom + border_size[1];
+		mmi->ptMaxSize = mmi->ptMaxTrackSize;
 	}
+
 	return 0;
 }
 

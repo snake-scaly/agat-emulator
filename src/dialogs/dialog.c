@@ -23,10 +23,9 @@ static BOOL CALLBACK dialog_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 		resize_realign(data->resize,hwnd,LOWORD(lp),HIWORD(lp));
 		res = FALSE;
 		break;
-	case WM_SIZING:
-//		puts("sizing");
-		resize_sizing(data->resize,hwnd,wp,(LPRECT)lp);
-		res = TRUE;
+	case WM_GETMINMAXINFO:
+		resize_minmaxinfo(data->resize,hwnd,(LPMINMAXINFO)lp);
+		res = FALSE;
 		break;
 	}
 	if (data&&data->message) {

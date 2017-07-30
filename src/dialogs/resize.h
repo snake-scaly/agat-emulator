@@ -39,7 +39,7 @@ int resize_init(struct RESIZE_DIALOG*r);
 int resize_attach(struct RESIZE_DIALOG*r,HWND wnd);
 int resize_detach(struct RESIZE_DIALOG*r,HWND wnd);
 int resize_free(struct RESIZE_DIALOG*r);
-int resize_sizing(struct RESIZE_DIALOG*r,HWND wnd,int side,RECT*rw);
+int resize_minmaxinfo(struct RESIZE_DIALOG*r,HWND wnd,LPMINMAXINFO mmi);
 int resize_realign(struct RESIZE_DIALOG*r,HWND wnd,int neww,int newh);
 int resize_attach_control(struct RESIZE_DIALOG*r,HWND wnd,int id);
 
