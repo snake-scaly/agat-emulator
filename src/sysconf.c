@@ -500,7 +500,7 @@ int reset_slot_config(struct SLOTCONFIG*c, int devtype, int systype)
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
 				return 0;
 			case SYSTEM_8A:
-				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\PRAVETZ8A.FNT"));
+				_tcscpy(c->cfgstr[CFG_STR_ROM], TEXT("FNTS\\PRAVETZ8A8C_BG.FNT"));
 				c->cfgint[CFG_INT_ROM_RES] = 3;
 				c->cfgint[CFG_INT_ROM_SIZE] = 0x1000;
 				return 0;
