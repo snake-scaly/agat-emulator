@@ -6,7 +6,7 @@ msgloop - main message loop
 
 #include "msgloop.h"
 
-#include "dialog.h"
+#include "dialogs/dialog.h"
 #include "list.h"
 #include "winmsg.h"
 
@@ -84,8 +84,9 @@ void msgloop_unregister_modeless_dialog(struct DIALOG_DATA *dialog)
 /* Execute a function on the message loop thread. */
 void msgloop_execute(MSGLOOP_RUNNABLE r, void *p)
 {
+	DWORD thread_id;
 	if (!r) return;
-	DWORD thread_id = loop_thread_id;
+	thread_id = loop_thread_id;
 	if (thread_id != 0) PostThreadMessage(thread_id, UM_EXECUTE, (WPARAM)r, (LPARAM)p);
 	else puts("Unable to execute on message loop thread: message loop not running");
 }

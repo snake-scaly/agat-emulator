@@ -150,6 +150,7 @@ static int dialog_command(HWND hwnd, struct PRNPROGRESSDLG *ppd, int notify, int
 struct PRNPROGRESSDLG* prnprogressdlg_create(HWND hpar, int enable_pages, struct PRNPROGRESSDLG_CB *cb, void *param)
 {
 	struct PRNPROGRESSDLG *ppd = calloc(1, sizeof(*ppd));
+	LPCTSTR resource;
 	if (!ppd) return NULL;
 	dialog_init_modeless(&ppd->dialog_data);
 	ppd->resize = enable_pages? resize : resize_nopage;
@@ -160,7 +161,7 @@ struct PRNPROGRESSDLG* prnprogressdlg_create(HWND hpar, int enable_pages, struct
 	ppd->icon_flags = ICON_FLAG_ON;
 	ppd->cb = cb;
 	ppd->param = param;
-	LPCTSTR resource = MAKEINTRESOURCE(enable_pages? IDD_PRNPROGRESS : IDD_PRNPROGRESS_NOPAGE);
+	resource = MAKEINTRESOURCE(enable_pages? IDD_PRNPROGRESS : IDD_PRNPROGRESS_NOPAGE);
 	if (dialog_show_modeless(&ppd->dialog_data, resource, hpar, SW_SHOWNA, ppd) == 0) {
 		return ppd;
 	}
