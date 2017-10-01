@@ -45,17 +45,18 @@ static void txt_close(struct EXPORT_TEXT*et);
 
 static struct PRNPROGRESSDLG_INTEROP_CB progress_cb =
 {
-	.finish = txt_close,
+	NULL, txt_close, NULL
 };
 
 static void open_out(struct EXPORT_TEXT*et)
 {
+	char name[MAX_PATH];
+
 	if (prnprogressdlg_create_sync(&et->progress_interop,
 		et->wnd, 0, &progress_cb, et)) goto fail;
 	memset(&et->progress_info, 0, sizeof(et->progress_info));
 	et->opened = 1;
 
-	char name[MAX_PATH];
 	if (!get_name(et->wnd, name)) return;
 	et->out = fopen(name, "wt");
 	if (!et->out) goto fail;

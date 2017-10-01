@@ -122,8 +122,9 @@ static int get_name(HWND wnd, char*fname)
 
 static struct PRNPROGRESSDLG_INTEROP_CB prnprogressdlg_interop_cb =
 {
-	.next = new_page,
-	.finish = tiff_close,
+	new_page,
+	tiff_close,
+	NULL,
 };
 
 static void tiff_open_out(struct EXPORT_TIFF*et)
@@ -188,20 +189,21 @@ static void tiff_close_out(struct EXPORT_TIFF*et)
 
 static void print_open_out(struct EXPORT_TIFF*et)
 {
+	PRINTDLG pd;
+	DOCINFO di;
 	if (et->opened) return;
 	if (prnprogressdlg_create_sync(&et->progress_interop,
 		et->wnd, 1, &prnprogressdlg_interop_cb, et)) goto fail;
 	memset(&et->progress_info, 0, sizeof(et->progress_info));
 	et->opened = 1;
 
-	static PRINTDLG pd;
+	ZeroMemory(&pd, sizeof(pd));
 	pd.lStructSize = sizeof(pd);
 	pd.hwndOwner=et->wnd;
 	pd.Flags|=PD_NOPAGENUMS|PD_NOSELECTION|PD_RETURNDC;
 	if (!PrintDlg(&pd)) return;
 	et->dc = pd.hDC;
 
-	DOCINFO di;
 	ZeroMemory(&di, sizeof(di));
 	di.cbSize = sizeof(di);
 	di.lpszDocName = TEXT("Agat printer output");

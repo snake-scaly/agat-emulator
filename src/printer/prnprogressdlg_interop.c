@@ -6,7 +6,7 @@
 
 #include "prnprogressdlg_interop.h"
 
-#include <prnprogressdlg.h>
+#include "../dialogs/prnprogressdlg.h"
 #include <cpu/cpuint.h>
 #include <msgloop.h>
 
@@ -65,9 +65,9 @@ static void prnprogressdlg_free_cb(struct PRNPROGRESSDLG_CALLBACK_PARAM *param)
 
 static struct PRNPROGRESSDLG_CB prnprogressdlg_interop_cb =
 {
-	.next = prnprogressdlg_next_cb,
-	.finish = prnprogressdlg_finish_cb,
-	.free = prnprogressdlg_free_cb,
+	prnprogressdlg_next_cb,
+	prnprogressdlg_finish_cb,
+	prnprogressdlg_free_cb,
 };
 
 struct PRNPROGRESSDLG_CREATE_PARAM

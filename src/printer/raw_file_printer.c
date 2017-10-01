@@ -48,16 +48,18 @@ static int flush(struct PRINTER_EMU*emu);
 
 static struct PRNPROGRESSDLG_INTEROP_CB prnprogressdlg_interop_cb =
 {
-	.finish = flush,
+	NULL, // next
+	flush, // finish
+	NULL, // free
 };
 
 static void open_out(struct RAW_FILE_PRINTER*rfp)
 {
+	char name[MAX_PATH];
 	if (prnprogressdlg_create_sync(&rfp->progress_interop,
 		rfp->wnd, 0, &prnprogressdlg_interop_cb, rfp)) goto fail;
 	memset(&rfp->progress_info, 0, sizeof(rfp->progress_info));
 
-	char name[MAX_PATH];
 	if (!get_name(rfp->wnd, name)) return;
 	rfp->out = fopen(name, "wb");
 	if (!rfp->out) goto fail;
