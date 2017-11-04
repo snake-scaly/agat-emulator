@@ -1,5 +1,5 @@
 
-#define AppVer "1.27"
+#define AppVer "1.28"
 
 
 [Setup]
@@ -34,6 +34,8 @@ en.register_hdv=Register .HDV images to:
 ru.register_hdv=Зарегистрировать расширение .HDV на:
 en.register_40t=Register .40T images to:
 ru.register_40t=Зарегистрировать расширение .40T на:
+en.register_pds=Register .PDS images to:
+ru.register_pds=Зарегистрировать расширение .PDS на:
 
 en.reg_A7=Agat-7 system
 ru.reg_A7=систему Агат-7
@@ -49,6 +51,8 @@ en.reg_A2e=Apple //e system
 ru.reg_A2e=систему Apple //e
 en.reg_atom=Acorn Atom system
 ru.reg_atom=систему Acorn Atom
+en.reg_pravetz=Pravetz system
+ru.reg_pravetz=систему Правец
 
 en.agat_dsk_info=Agat Disk Image
 ru.agat_dsk_info=Образ диска ПЭВМ Агат
@@ -61,6 +65,9 @@ ru.apple_hdv_info=Образ жёсткого диска Apple ][
 en.atom_40t_info=Acorn Atom Disk Image
 ru.atom_40t_info=Образ диска Acorn Atom
 
+en.pravetz_disk_info=Pravetz Disk Image
+ru.pravetz_disk_info=Образ диска Правец
+
 en.open_A7=Open for Agat-7
 ru.open_A7=Открыть для Агат-7
 en.open_A9=Open for Agat-9
@@ -71,6 +78,8 @@ en.open_A2e=Open for Apple //e
 ru.open_A2e=Открыть для Apple //e
 en.open_atom=Open for Acorn Atom
 ru.open_atom=Открыть для Acorn Atom
+en.open_pravetz=Open for Pravetz
+ru.open_pravetz=Открыть для Правец
 
 
 [Files]
@@ -125,6 +134,9 @@ Name: register_hdv/A2e; Description: {cm:reg_A2e}; Flags: exclusive
 
 Name: register_40t; Description: {cm:register_40t}
 Name: register_40t/atom; Description: {cm:reg_atom}; Flags: exclusive
+
+Name: register_pds; Description: {cm:register_pds}
+Name: register_pds/pravetz; Description: {cm:reg_pravetz}; Flags: exclusive
 
 Name: installdriver; Description: Установка драйвера для прямого доступа к динамику; Flags: unchecked; MinVersion: 0, 4.0; Languages: ru
 Name: installdriver; Description: Install driver to access PC Speaker; Flags: unchecked; MinVersion: 0, 4.0; Languages: en
@@ -209,6 +221,12 @@ Root: HKCR; Subkey: "Agat9Image\shell\open_apple2"; ValueType: string; ValueName
 Root: HKCR; Subkey: "Agat9Image\shell\open_apple2e"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2e}
 
 
+Root: HKCR; Subkey: "PravetzImage"; ValueType: string; ValueName: ""; ValueData: {cm:agat_dsk_info}; Flags: uninsdeletekey
+Root: HKCR; Subkey: "PravetzImage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
+Root: HKCR; Subkey: "PravetzImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3a) Pravetz 8A + Paris"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "PravetzImage\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_pravetz}
+
+
 Root: HKCR; Subkey: ".dsk"; ValueType: string; ValueName: ""; ValueData: "Apple2Image"; Flags: uninsdeletevalue; Tasks: register_dsk/A2
 Root: HKCR; Subkey: ".dsk"; ValueType: string; ValueName: ""; ValueData: "Apple2eImage"; Flags: uninsdeletevalue; Tasks: register_dsk/A2e
 Root: HKCR; Subkey: ".dsk"; ValueType: string; ValueName: ""; ValueData: "Agat7Image"; Flags: uninsdeletevalue; Tasks: register_dsk/A7
@@ -231,6 +249,8 @@ Root: HKCR; Subkey: ".do"; ValueType: string; ValueName: ""; ValueData: "Apple2e
 Root: HKCR; Subkey: ".hdv"; ValueType: string; ValueName: ""; ValueData: "AppleHDImage"; Flags: uninsdeletevalue; Tasks: register_hdv/A2e
 
 Root: HKCR; Subkey: ".40t"; ValueType: string; ValueName: ""; ValueData: "Atom40tImage"; Flags: uninsdeletevalue; Tasks: register_40t/atom
+
+Root: HKCR; Subkey: ".pds"; ValueType: string; ValueName: ""; ValueData: "PravetzImage"; Flags: uninsdeletevalue; Tasks: register_pds/pravetz
 
 [Ini]
 Filename: {app}\emulator.ini; Section: Environment; Key: Lang; String: russian; Languages: ru
