@@ -167,10 +167,10 @@ Root: HKCU; Subkey: Software\Agat; ValueType: string; ValueName: lngdir; ValueDa
 
 Root: HKCR; Subkey: "Apple2Image"; ValueType: string; ValueName: ""; ValueData: {cm:apple_dsk_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Apple2Image\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "Apple2Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
-Root: HKCR; Subkey: "Apple2Image\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -fs 1 -s3d1 ""%1"""
-Root: HKCR; Subkey: "Apple2Image\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -fs 1 -s5d1 ""%1"""
-Root: HKCR; Subkey: "Apple2Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "Apple2Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -s6d1 ""%1"""
+Root: HKCR; Subkey: "Apple2Image\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -s3d1 ""%1"""
+Root: HKCR; Subkey: "Apple2Image\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -s5d1 ""%1"""
+Root: HKCR; Subkey: "Apple2Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -s6d1 ""%1"""
 Root: HKCR; Subkey: "Apple2Image\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2}
 Root: HKCR; Subkey: "Apple2Image\shell\open_apple2e"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2e}
 Root: HKCR; Subkey: "Apple2Image\shell\open_agat7"; ValueType: string; ValueName: ""; ValueData: {cm:open_A7}
@@ -178,10 +178,10 @@ Root: HKCR; Subkey: "Apple2Image\shell\open_agat9"; ValueType: string; ValueName
 
 Root: HKCR; Subkey: "Apple2eImage"; ValueType: string; ValueName: ""; ValueData: {cm:apple_dsk_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Apple2eImage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "Apple2eImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
-Root: HKCR; Subkey: "Apple2eImage\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -fs 1 -s3d1 ""%1"""
-Root: HKCR; Subkey: "Apple2eImage\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -fs 1 -s5d1 ""%1"""
-Root: HKCR; Subkey: "Apple2eImage\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "Apple2eImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -s6d1 ""%1"""
+Root: HKCR; Subkey: "Apple2eImage\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -s3d1 ""%1"""
+Root: HKCR; Subkey: "Apple2eImage\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -s5d1 ""%1"""
+Root: HKCR; Subkey: "Apple2eImage\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -s6d1 ""%1"""
 Root: HKCR; Subkey: "Apple2eImage\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2e}
 Root: HKCR; Subkey: "Apple2eImage\shell\open_apple2"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2}
 Root: HKCR; Subkey: "Apple2eImage\shell\open_agat7"; ValueType: string; ValueName: ""; ValueData: {cm:open_A7}
@@ -189,20 +189,20 @@ Root: HKCR; Subkey: "Apple2eImage\shell\open_agat9"; ValueType: string; ValueNam
 
 Root: HKCR; Subkey: "AppleHDImage"; ValueType: string; ValueName: ""; ValueData: {cm:apple_hdv_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "AppleHDImage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,2"
-Root: HKCR; Subkey: "AppleHDImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3j) Apple Desktop"" -cd ""{app}"" -fs 1 -s7d0 ""%1"""
+Root: HKCR; Subkey: "AppleHDImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3j) Apple Desktop"" -cd ""{app}"" -s7d0 ""%1"""
 Root: HKCR; Subkey: "AppleHDImage\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2}
 
 Root: HKCR; Subkey: "Atom40tImage"; ValueType: string; ValueName: ""; ValueData: {cm:atom_40t_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Atom40tImage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "Atom40tImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(9a) Acorn Atom"" -cd ""{app}"" -fs 1 -fdd1 ""%1"""
+Root: HKCR; Subkey: "Atom40tImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(9a) Acorn Atom"" -cd ""{app}"" -fdd1 ""%1"""
 Root: HKCR; Subkey: "Atom40tImage\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_atom}
 
 Root: HKCR; Subkey: "Agat7Image"; ValueType: string; ValueName: ""; ValueData: {cm:agat_dsk_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Agat7Image\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "Agat7Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -fs 1 -s3d1 ""%1"""
-Root: HKCR; Subkey: "Agat7Image\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -fs 1 -s5d1 ""%1"""
-Root: HKCR; Subkey: "Agat7Image\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
-Root: HKCR; Subkey: "Agat7Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "Agat7Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -s3d1 ""%1"""
+Root: HKCR; Subkey: "Agat7Image\shell\open_agat9\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -s5d1 ""%1"""
+Root: HKCR; Subkey: "Agat7Image\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -s6d1 ""%1"""
+Root: HKCR; Subkey: "Agat7Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -s6d1 ""%1"""
 Root: HKCR; Subkey: "Agat7Image\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_A7}
 Root: HKCR; Subkey: "Agat7Image\shell\open_agat9"; ValueType: string; ValueName: ""; ValueData: {cm:open_A9}
 Root: HKCR; Subkey: "Agat7Image\shell\open_apple2"; ValueType: string; ValueName: ""; ValueData:  {cm:open_A2}
@@ -211,10 +211,10 @@ Root: HKCR; Subkey: "Agat7Image\shell\open_apple2e"; ValueType: string; ValueNam
 
 Root: HKCR; Subkey: "Agat9Image"; ValueType: string; ValueName: ""; ValueData: {cm:agat_dsk_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "Agat9Image\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "Agat9Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -fs 1 -s5d1 ""%1"""
-Root: HKCR; Subkey: "Agat9Image\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -fs 1 -s3d1 ""%1"""
-Root: HKCR; Subkey: "Agat9Image\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
-Root: HKCR; Subkey: "Agat9Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "Agat9Image\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(2) IKP-9"" -cd ""{app}"" -s5d1 ""%1"""
+Root: HKCR; Subkey: "Agat9Image\shell\open_agat7\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(1) IKP-7"" -cd ""{app}"" -s3d1 ""%1"""
+Root: HKCR; Subkey: "Agat9Image\shell\open_apple2\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3) Apple ][ Plus"" -cd ""{app}"" -s6d1 ""%1"""
+Root: HKCR; Subkey: "Agat9Image\shell\open_apple2e\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(8b) Apple 2e Test"" -cd ""{app}"" -s6d1 ""%1"""
 Root: HKCR; Subkey: "Agat9Image\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_A9}
 Root: HKCR; Subkey: "Agat9Image\shell\open_agat7"; ValueType: string; ValueName: ""; ValueData: {cm:open_A7}
 Root: HKCR; Subkey: "Agat9Image\shell\open_apple2"; ValueType: string; ValueName: ""; ValueData: {cm:open_A2}
@@ -223,7 +223,7 @@ Root: HKCR; Subkey: "Agat9Image\shell\open_apple2e"; ValueType: string; ValueNam
 
 Root: HKCR; Subkey: "PravetzImage"; ValueType: string; ValueName: ""; ValueData: {cm:agat_dsk_info}; Flags: uninsdeletekey
 Root: HKCR; Subkey: "PravetzImage\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\emulator.exe,1"
-Root: HKCR; Subkey: "PravetzImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3a) Pravetz 8A + Paris"" -cd ""{app}"" -fs 1 -s6d1 ""%1"""
+Root: HKCR; Subkey: "PravetzImage\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\emulator.exe"" ""(3a) Pravetz 8A + Paris"" -cd ""{app}"" -s6d1 ""%1"""
 Root: HKCR; Subkey: "PravetzImage\shell\open"; ValueType: string; ValueName: ""; ValueData: {cm:open_pravetz}
 
 

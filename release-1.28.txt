@@ -3,5 +3,6 @@ Changes in the version 1.28
 
 Fixed printing to TIFF, text, and raw files.
 Added support for .pds images traditionally used for Pravetz emulation.
+Disk images are now opened in window mode instead of fullscreen when started from a shell association.
 
 Good luck!
