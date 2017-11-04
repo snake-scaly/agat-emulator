@@ -1,0 +1,18 @@
+Changes in the version 1.18
+===========================
+
+This release of the emulator contains a lot of changes dealing with emulation of new systems:
+1. Implemented full support of the famous computer Apple I (including ACI);
+2. Apple II and Apple II Plus systems are now implemented as two different configurations with different initial settings;
+3. Implemented basic support of Apple IIe-class systems. At present emulator supports Apple IIe and Enhanced Apple IIe systems.
+Also this release contains several fixes of 65C02, floppy and memory emulation bugs.
+Added ability of the keyboard input redirection from a file (this feature is especially important for Apple I system).
+Distributive contains some programs for Apple I and tape recording of Integer Basic.
+Added several new configurations for demonstration of emulation of Apple 2e.
+All Apple-based systems are now includes new much more realistic color palette.
+
+Subversion 1.18.1
+=====================
+Some minor bugs has been fixed.
+
+Good luck!

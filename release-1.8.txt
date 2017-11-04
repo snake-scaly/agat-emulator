@@ -1,0 +1,3 @@
+Added support for various Apple's memory cards (Apple ][ Memory Expansion, RamFactor/RamCharger, Saturn)
+Added command line configuration editing tool (cfgedit)
+Added Agat-7 WordMaster disk (thanks to GaryPilot)

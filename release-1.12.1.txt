@@ -1,0 +1,2 @@
+Improved writing support for AIM disks
+Fixed detection of paddles/joystick.

@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1251" />
+<title>Контекстное меню системы</title>
+</head>
+
+<body>
+<h2>Контекстное меню системы</h2>
+<p>Для управления работой эмулятора используется контекстное меню, вызываемое щелчком правой кнопки мыши на заголовке окна системы или нажатием клавиши F10.</p>
+<p align="center"><img src="ru/context.png" alt="Контекстное меню" width="517" height="549" /></p>
+<p>Кроме стандартных системных команд меню, оно содержит команды управления эмуляцией и команды управления отдельными устройствами.</p>
+<p><strong>Команды управления эмуляцией</strong>:</p>
+<table border="1" align="center">
+  <tr>
+    <th scope="col"><div align="center">Пункт меню  </div></th>
+    <th scope="col"><div align="center">Действие</div></th>
+  </tr>
+  <tr>
+    <td scope="col"><em>Сброс</em></td>
+    <td scope="col">Программный сброс </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Полный сброс </em></td>
+    <td scope="col">Полный сброс эмулируемой системы с очисткой памяти </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Сохранить состояние </em></td>
+    <td scope="col">Сохранения текущего состояния системы </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Загрузить состояние </em></td>
+    <td scope="col">Загрузка сохранённого ранее состояния системы </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Сбросить состояние </em></td>
+    <td scope="col">Очистка сохранённого ранее состояния системы </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Ввод из текстового файла</em></td>
+    <td scope="col">Перенаправить клавиатурный ввод из указанного текстового файла</td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Копирование в буфер обмена</em></td>
+    <td scope="col">Сохранение текущего состояния экрана в системном буфере обмена</td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Запустить отладчик</em></td>
+    <td scope="col">Запустить <a href="debug_ru.html">встроенный отладчик</a></td>
+  </tr>
+</table>
+<p>При записи состояния, если присутствует ранее сохранённое состояние системы, выдаётся запрос:</p>
+<p align="center"><img src="ru/savestate.png" alt="Запрос сохранения состояния" width="478" height="151" /> </p>
+<p>При ответе &quot;<em>Да</em>&quot; сохранённое состояние заменяется текущим. </p>
+<p>При загрузке состояния системы выдаётся запрос:</p>
+<p align="center"><img src="ru/loadstate.png" alt="Запрос загрузки состояния" width="454" height="151" /> </p>
+<p>При нажатии кнопки &quot;<em>Да</em>&quot; текущее состояние системы (в том числе, содержимое памяти, регистров процессора и периферийных устройств) будет заменено сохранённым.</p>
+<p>При выборе пункта меню &quot;<em>Сбросить состояние</em>&quot; выдаётся запрос:</p>
+<p align="center"><img src="ru/clearstate.png" alt="Запрос сброса состояния" width="452" height="151" /> </p>
+<p>При ответе &quot;Да&quot; сохранённое состояние удаляется с диска.</p>
+<p>&nbsp; </p>
+<p><strong>Команды периферийных устройств</strong> :</p>
+<table border="1" align="center">
+  <tr>
+    <th scope="col">Пункт меню </th>
+    <th scope="col"><div align="center">Действие</div></th>
+  </tr>
+  <tr>
+    <td colspan="2" scope="col"><div align="center"><strong>Команды принтера </strong></div></td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Закончить печать </em></td>
+    <td scope="col"><a href="printer_ru.html">Завершение текущей сессии печати</a> </td>
+  </tr>
+  <tr>
+    <td colspan="2" scope="col"><div align="center"><strong>Команды дисковода </strong></div></td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Вставить диск </em> </td>
+    <td scope="col"><a href="shugart_ru.html">Загрузка образа диска в выбранный виртуальный привод</a> </td>
+  </tr>
+  <tr>
+    <td scope="col"><em>Извлечь диск </em></td>
+    <td scope="col"><a href="shugart_ru.html">Извлечение образа диска из выбранного виртуального привода</a> </td>
+  </tr>
+</table>
+<p>&nbsp;   </p>
+<p>См. также: <a href="work_ru.html">Работа в эмуляторе</a>, <a href="keys_ru.html">Клавиатурные сокращения</a>, <a href="index_ru.html"> Главное меню</a></p>
+</body>
+</html>

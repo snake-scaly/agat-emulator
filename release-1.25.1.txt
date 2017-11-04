@@ -1,0 +1,8 @@
+Changes in the version 1.25.1
+===========================
+
+Improved quality of sound via ACM subsystem (Windows Audio)
+Added sound of Seagate SCSI hard drive.
+Differs from version 1.25 by improved compatibility with slow computers (improves sound quality).
+
+Good luck!

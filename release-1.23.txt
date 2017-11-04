@@ -1,0 +1,7 @@
+Changes in the version 1.23
+===========================
+
+Improved support for non-standard floppy images.
+Fixed some issues.
+
+Good luck!

@@ -1,0 +1,44 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=russian.chm
+Contents file=russian.hhc
+Default topic=index_ru.html
+Display compile progress=No
+Full-text search=Yes
+Language=0x419 Русский
+Title=Справочная система эмулятора Агат
+
+
+[FILES]
+index_ru.html
+beeper_ru.html
+chsystem_ru.html
+context_ru.html
+cpu_ru.html
+devinfo_ru.html
+features_ru.html
+hardware_ru.html
+host_req_ru.html
+keys_ru.html
+layout_ru.html
+mainwnd_ru.html
+memconf_ru.html
+mockingboard_ru.html
+monitor_ru.html
+newsystem_ru.html
+nippel_ru.html
+paddles_ru.html
+printer_ru.html
+shugart_ru.html
+softcard_ru.html
+tape_ru.html
+teac_ru.html
+thunder_ru.html
+vterm_ru.html
+work_ru.html
+scsi_ru.html
+debug_ru.html
+gconf_ru.html
+
+[INFOTYPES]
+

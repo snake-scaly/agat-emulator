@@ -1,0 +1,1 @@
+Added support for combined video-modes via timer interrupts on Agats.

@@ -1,0 +1,6 @@
+Added "fast" mode to floppy disks enhancing their speed
+Added "fast" CPU mode via pressing windows application key
+Implemented basic Mockingboard I support (sound, noise, ints but no envelopes)
+Added example to run Ultima IV with mockingboards
+Implemented basic Agat-9 printer card suppport with Epson FX emulation (only plain text@win-1251 at this moment)
+Added example of KPON-1 disk to work with printer

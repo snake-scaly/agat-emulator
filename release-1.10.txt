@@ -1,0 +1,4 @@
+Added support for new AIM disk file format (for 800K floppy).
+Fixed OS Onix system (removed disk copy protection via AIM image).
+Added text editor system TOR 5.0.
+Enhanced support for custom keymaps, added russian keymap for Rapira language.

@@ -1,0 +1,40 @@
+Changes in the version 1.19.3
+==============================
+Added support for Firmware Card with "F8 mod".
+Improved emulation of keyboard for Pravetz 8A (both shift and language switching).
+Improved support for Apple I (ROM configuration, TTY speed, several ROM examples has been added).
+
+Changes in the version 1.19.2
+==============================
+Implemented "Character generator card" for Agats (still searching for soft which was using this card).
+Improved emulation of floppy drives, both Shugart and Teac.
+Implemented new sound effects for floppies.
+Improved mouse emulation for Agat-9.
+Improved GUI.
+
+Changes in the version 1.19.1
+==============================
+Added native support for Pravetz 82/8A systems.
+Improved emulation of "Martian" mouse for Agat-9.
+Improved Epson FX printer emulation.
+Added "Apple ][ Desktop" system with hdv-image.
+Added new keyboard shortcuts:
+ F6 - redirect input from text file;
+ F7 - copy current screen to clipboard.
+Fixed some minor bugs.
+
+Changes in the version 1.19
+=============================
+
+Version 1.19 contains implementation of CMS SCSI card.
+This SCSI card was compatible with all models of Apple II.
+SCSI emulation module allows to connect up to 3 virtual hard drives with specified SCSI bus ids.
+Each drive with size larger than 32MB (maximum ProDOS size) will be divided to several logical partitions.
+Only two of logical devices will be available to use from ProDOS.
+To specify which partitions will be available to ProDOS, press left Alt key during system startup as it was with original CMS card.
+This release contains example of 64MB SCSI disk with all ProDOS, Basic and hardware utilities for CMS card.
+Second logical partition of this disk was formatted as empty ProDOS volume /PART2.
+
+To create your own SCSI disk image, just specify non-existing file name in controller configuration interface, format your new device by CMS.SYSTEM utility (low-level format) and create new ProDOS volume by FILER utility.
+
+Good luck!

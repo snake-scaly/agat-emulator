@@ -1,0 +1,25 @@
+Changes in the version 1.20.1
+=============================
+
+Improved emulation of TEAC drive. Now it shows true rotation period 200 ms in speed tests.
+Added example of Fantavision for Agat-9.
+Changed behaviour of Caps Lock and Shift buttons in Apple //e and Pravetz 8A.
+Fixed keyboard emulation code for Pravetz 8A.
+
+Changes in the version 1.20
+===========================
+
+New configuration window gives advanced control over emulation of all systems:
+* Specify if it is necessary to start systems in full-screen mode or in windowed (default);
+* Specify if emulated systems should continue to run in background (without focus to window);
+* Enable or disable sound effects for floppy drives;
+* Enable or disable new internal debugger;
+* Specify disassembly mode in the debugger;
+* Select one of two possible screen update algorithms: "Synchronous update" to fully simulate video memory or "Synchronous update off" to increase performance on slow machines.
+
+Also this version of Agat Emulator contains internal debugger, compatible by commands with original System Monitor.
+To enable debugger, select appropriate checkbox in global settings window, then press F8 key during emulation (or select context menu item).
+To close debugger, enter "Q" command.
+To get short help message, enter "?" command.
+
+Good luck!

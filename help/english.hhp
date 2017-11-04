@@ -1,0 +1,24 @@
+[OPTIONS]
+Auto Index=Yes
+Auto TOC=9
+Compatibility=1.1 or later
+Compiled file=english.chm
+Contents file=english.hhc
+Default topic=index_en.html
+Display compile progress=No
+Full-text search=Yes
+Language=0x409 Английский (США)
+Title=Agat Emulator Help
+
+
+[FILES]
+index_en.html
+controlling_en.html
+features_en.html
+hardware_en.html
+keys_en.html
+main_menu_en.html
+host_req_en.html
+
+[INFOTYPES]
+

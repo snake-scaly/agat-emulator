@@ -1,0 +1,7 @@
+Changes in the version 1.25
+===========================
+
+Improved quality of sound via ACM subsystem (Windows Audio)
+Added sound of Seagate SCSI hard drive.
+
+Good luck!

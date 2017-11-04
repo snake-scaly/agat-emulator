@@ -1,0 +1,9 @@
+Changes in the version 1.27
+===========================
+
+Fixed raw printer output to a file
+Added an ability to print directly to a printer connected to the PC's parallel port
+TOR disk image is replaced with an authentic version
+Fixed an error in the extended Agat-7 font
+
+Good luck!

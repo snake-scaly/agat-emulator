@@ -1,0 +1,21 @@
+Changes in the version 1.17
+===========================
+
+Added support for command line execution with different System Configurations and Disk Images.
+Implemented ability for installer to automatically register disk image types (.DSK, .NIB, .AIM).
+
+So now it is possible to run your favourite game with a single click!
+
+If you want to choose one of three basic configurations (Agat-7, Agat-9, Apple ][), you may right-click on the image file in Windows Explorer and simply choose which system this image for.
+
+Default system assignments:
+	.DSK, .NIB - Apple ][ (for English users),
+			Agat-9 (for Russian users)
+	.AIM - Agat-9
+
+To change default system configuration settings just edit following systems in emulator:
+	"(3) Apple ][ Plus" - for Apple ][
+	"(1) IKP-7" - for Agat-7
+	"(2) IKP-9" - for Agat-9
+
+Good luck!

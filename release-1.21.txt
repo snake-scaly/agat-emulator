@@ -1,0 +1,9 @@
+Changes in the version 1.21
+===========================
+
+Added basic implementation of Acorn Atom system.
+This version implements both standard (2K RAM) and extended configurations (12K RAM) as well as custom 40K RAM configuration.
+All video modes, both mono and color are implemented;
+Two examples of ROMs are included with emulator (integer and floating point Basic).
+
+Good luck!

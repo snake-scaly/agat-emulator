@@ -1,0 +1,7 @@
+Changes in the version 1.22
+===========================
+
+Implemented floppy drive controller for Acorn Atom system.
+Added support for extension ROMs for Acorn Atom.
+
+Good luck!
