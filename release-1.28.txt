@@ -6,5 +6,6 @@ Control manually when new pages are created while printing to TIFF and Windows p
 Added support for .pds images traditionally used for Pravetz emulation.
 Disk images are now opened in window mode instead of fullscreen when started from a shell association.
 rgb-monitor-16.pal is fixed to support the "bright black" color.
+PRAVETZ8A.FNT is replaced with three distinct variations: Bulgarian font pravetz8a8c_bg.fnt, font for exporting to Soviet Union pravetz8a8c_su.fnt, and a Variant version pravetz8a8c_uz.fnt.
 
 Good luck!
