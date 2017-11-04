@@ -2,6 +2,7 @@ Changes in the version 1.28
 ===========================
 
 Fixed printing to TIFF, text, and raw files.
+Control manually when new pages are created while printing to TIFF and Windows printer.
 Added support for .pds images traditionally used for Pravetz emulation.
 Disk images are now opened in window mode instead of fullscreen when started from a shell association.
 rgb-monitor-16.pal is fixed to support the "bright black" color.
