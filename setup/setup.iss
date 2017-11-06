@@ -19,7 +19,7 @@ OutputBaseFilename=agatemulator-{#AppVer}
 
 [Languages]
 Name: ru; MessagesFile: compiler:Languages\Russian.isl; InfobeforeFile:"../release-{#AppVer}-ru.txt"
-Name: en; MessagesFile: compiler:Default.isl; InfobeforeFile:"../release-{#AppVer}.txt"
+Name: en; MessagesFile: compiler:Default.isl; InfobeforeFile:"../release-{#AppVer}-en.txt"
 
 
 [CustomMessages]
