@@ -1,5 +1,8 @@
+#ifndef AppVer
+#error "Define AppVer by compiler command line /d option"
+#endif
 
-#define AppVer "1.28"
+//#define AppVer "1.28"
 
 
 [Setup]
