@@ -1,6 +1,6 @@
 [OPTIONS]
 Compatibility=1.1 or later
-Compiled file=russian.chm
+Compiled file=..\release\help\russian.chm
 Contents file=russian.hhc
 Default topic=index_ru.html
 Display compile progress=No

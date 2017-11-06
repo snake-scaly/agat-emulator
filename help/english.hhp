@@ -2,7 +2,7 @@
 Auto Index=Yes
 Auto TOC=9
 Compatibility=1.1 or later
-Compiled file=english.chm
+Compiled file=..\release\help\english.chm
 Contents file=english.hhc
 Default topic=index_en.html
 Display compile progress=No
