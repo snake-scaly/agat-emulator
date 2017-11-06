@@ -13,7 +13,7 @@ DefaultDirName={pf}\Agat
 DefaultGroupName=Agat Emulator
 Compression=lzma
 SolidCompression=yes
-OutputDir=.
+OutputDir=..
 OutputBaseFilename=agatemulator-{#AppVer}
 
 

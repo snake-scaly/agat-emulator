@@ -1,0 +1,6 @@
+Changes in the version 1.29
+===========================
+
+Reimplemented ACM sound driver
+
+Good luck!
