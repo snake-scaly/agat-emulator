@@ -156,7 +156,7 @@ static void write_clock(struct NIPPELCLOCK_STATE*ncs)
 	tm.tm_min = cvtres(ncs->regs[2], ncs);
 	tm.tm_sec = cvtres(ncs->regs[0], ncs);
 	t1 = mktime(&tm);
-	ncs->adjust = timer - t1;
+	ncs->adjust = (int)(timer - t1);
 	printf("time adjust = %i\n", ncs->adjust);
 }
 
@@ -258,7 +258,7 @@ static byte nippelclock_io_r(word adr, struct NIPPELCLOCK_STATE*ncs) // C0X0-C0X
 	case 6:
 		return ncs->regno;
 	case 7:
-		return nc_read_data(ncs->regno, adr, ncs);
+		return nc_read_data(ncs->regno, (byte)adr, ncs);
 	}
 	return empty_read(adr, ncs);
 }
@@ -266,7 +266,6 @@ static byte nippelclock_io_r(word adr, struct NIPPELCLOCK_STATE*ncs) // C0X0-C0X
 
 int  nippelclock_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	struct NIPPELCLOCK_STATE*ncs;
 
 	puts("in nippelclock_init");

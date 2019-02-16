@@ -561,7 +561,8 @@ static void op_bvc(struct STATE_65C02 *st)
 
 static void op_bvs(struct STATE_65C02 *st)
 {
-	if (st->f&FLAG_V) {		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
+	if (st->f&FLAG_V) {
+		st->pc= add_timing_page(st, st->pc, (signed char)fetch_cmd_byte(st));
 		++st->addt;
 	} else {
 		st->pc++;
@@ -853,7 +854,7 @@ static void op_sbc(struct STATE_65C02 *st)
 
 	w=(word)st->a-b;
 	if (!(st->f&FLAG_C)) --w;
-	check_flags_log(st, w);
+	check_flags_log(st, (byte)w);
 
 	if (st->f&FLAG_D) {
 		word t = (st->a & 0x0F) - (b & 0x0F);
@@ -1446,22 +1447,22 @@ static int set_reg(struct STATE_65C02*st, int reg, long val)
 {
 	switch (reg) {
 	case REG6502_A:
-		st->a = val;
+		st->a = (byte)val;
 		break;
 	case REG6502_X:
-		st->x = val;
+		st->x = (byte)val;
 		break;
 	case REG6502_Y:
-		st->y = val;
+		st->y = (byte)val;
 		break;
 	case REG6502_S:
-		st->s = val;
+		st->s = (byte)val;
 		break;
 	case REG6502_F:
-		st->f = val;
+		st->f = (byte)val;
 		break;
 	case REG6502_PC:
-		st->pc = val;
+		st->pc = (word)val;
 		break;
 	default:
 		return -1;
@@ -1478,7 +1479,7 @@ int cmd_65c02(struct CPU_STATE*cs, int cmd, int data, long param)
 		dumpregs(st);
 		return 1;
 	case SYS_COMMAND_EXEC:
-		st->pc = param;
+		st->pc = (word)param;
 		return 0;
 	case SYS_COMMAND_HRESET:
 		st->s = rand();

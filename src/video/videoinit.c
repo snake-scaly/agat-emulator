@@ -1,5 +1,6 @@
 #include "videoint.h"
 #include "common.h"
+#include <stdio.h>
 
 static int load_font_res(int no, void*buf, int sz)
 {
@@ -289,7 +290,6 @@ int video_get_flash(struct SYS_RUN_STATE*sr)
 
 int  video_init(struct SYS_RUN_STATE*sr)
 {
-	int i;
 	ISTREAM*s;
 	struct VIDEO_STATE*vs;
 	struct SLOT_RUN_STATE*st = sr->slots + CONF_CHARSET;

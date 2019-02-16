@@ -164,7 +164,7 @@ static byte read_state(word adr, struct SATURN_STATE*scs)
 	if (adr & 4) {
 		if (scs->card_32) select_bank(1, scs);
 		else {
-			select_bank(adr, scs);
+			select_bank((byte)adr, scs);
 			return old_state;
 		}	
 	} else {
@@ -188,7 +188,6 @@ static void write_state(word adr, byte d, struct SATURN_STATE*scs)
 int  saturnmem_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
 	struct SATURN_STATE*scs;
-	ISTREAM*rom;
 
 	puts("in saturnmem_init");
 

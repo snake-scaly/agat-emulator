@@ -114,13 +114,13 @@ void fill_buf_sine(IDirectSoundBuffer*ds, int len, double a, double f)
 		int ns = sz[0] / sizeof(sample_t);
 		double v = 0;
 		sample_t*s = pt[0];
-		int nl = f * ns / (2 * M_PI);
+		int nl = (int)(f * ns / (2 * M_PI));
 		f = nl * 2 * M_PI / ns;
 		for (; ns; --ns, ++s, v += f) {
 			double ss = sin(v);
 			double s1 = pow(fabs(ss), 4.0);
 			if (ss < 0) s1 = -s1;
-			*s = a * s1;
+			*s = (sample_t)(a * s1);
 		}
 	}
 	if (DS_FAILED(IDirectSoundBuffer_Unlock(ds, pt[0], sz[0], pt[1], sz[1]),TEXT("unlocking buffer"))) {
@@ -147,7 +147,7 @@ void fill_buf_noise(IDirectSoundBuffer*ds, int len, double a, double f)
 		double v = 0;
 		sample_t*s = pt[0];
 		for (; ns; --ns, ++s, v += f) {
-			*s = a * rand() / RAND_MAX;
+			*s = (sample_t)(a * rand() / RAND_MAX);
 		}
 	}
 	if (DS_FAILED(IDirectSoundBuffer_Unlock(ds, pt[0], sz[0], pt[1], sz[1]),TEXT("unlocking buffer"))) {
@@ -366,7 +366,7 @@ static void update_gen_freq(int channel, int gen, byte d1, byte d2, struct SOUND
 	if (!div) return;
 	f1 = ss->cpu_freq_khz * 1000.0 / div;
 	Sprintf(("freq[%i,%i] = %g Hz (%04X)\n", channel, gen, f1, div));
-	IDirectSoundBuffer_SetFrequency(ss->buffers[gen*2+channel], f1*ss->freq/ss->freq0);
+	IDirectSoundBuffer_SetFrequency(ss->buffers[gen*2+channel], (DWORD)(f1*ss->freq/ss->freq0));
 }
 
 
@@ -379,7 +379,7 @@ static void update_ng_freq(int channel, byte d1, struct SOUND_STATE *ss)
 	f1 = ss->cpu_freq_khz * 1000.0 / div;
 	Sprintf(("freq_ng[%i] = %g Hz\n", channel, f1));
 	for (i = 0; i < NGENS; ++i) {
-		IDirectSoundBuffer_SetFrequency(ss->buffers[(i+NGENS)*2+channel], f1*ss->freq/ss->freq0);
+		IDirectSoundBuffer_SetFrequency(ss->buffers[(i+NGENS)*2+channel], (DWORD)(f1*ss->freq/ss->freq0));
 	}
 }
 
@@ -453,8 +453,6 @@ void update_gen_amp(int channel, int gen, byte data, struct SOUND_STATE *ss)
 void update_env_freq(int channel, byte d1, byte d2, struct SOUND_STATE *ss)
 {
 	int div = (((unsigned)d2)<<16) | (((unsigned) d1)<<8);
-	double f1;
-	int i;
 	ss->envelope_delay[channel] = div;
 	ss->envelope_time[channel] = 0;
 	if (!div) return;
@@ -643,7 +641,7 @@ static void env_callback_chan(struct SOUND_STATE*ss, int channel)
 	for (gen = 0; gen < NGENS; ++gen) {
 		if (ss->psg_regs[channel][8 + gen] & 16) {
 			if (ss->old_env[channel][gen] != vol) {
-				int lev = ((div - vol) * -10000)/div;
+				int lev = (int)(((div - vol) * -10000)/div);
 //				printf("envelope[%i]: setting level %i on generator %i\n", channel, lev, gen);
 				IDirectSoundBuffer_SetVolume(ss->buffers[channel + gen * 2], lev);
 				IDirectSoundBuffer_SetVolume(ss->buffers[channel + (gen + NGENS)*2], lev);

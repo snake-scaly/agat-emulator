@@ -1,5 +1,6 @@
 #include "videoint.h"
 #include "common.h"
+#include <stdio.h>
 
 #define VIDEOTERM_ROM_SIZE 1024
 #define VIDEOTERM_ROM_OFFSET 0x300
@@ -260,7 +261,6 @@ static byte vtermsel_io_r(word adr, struct VIDEOTERM_STATE*vts) // C0X0-C0XF
 
 int  videoterm_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	ISTREAM*rom;
 	struct VIDEOTERM_STATE*vts;
 

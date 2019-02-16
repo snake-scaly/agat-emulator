@@ -487,7 +487,6 @@ static void process_command(struct CMS_STATE*cms, byte*packet, int len)
 	int res = 0;
 	unsigned nb;
 	int phase = PHASE_STATUS;
-	int i;
 
 	if (cms->dev_selected == -1) {
 		cms_phase(cms, PHASE_IDLE);
@@ -879,7 +878,7 @@ static void cms_io_w(word adr, byte data, struct CMS_STATE*cms) // C0X0-C0XF
 		}
 	} else {
 		byte xd;
-		int i, d = data;
+		int d = data;
 //		printf("cms: REGISTER: %s (%i)\n", rnames[adr&7], adr&7);
 /*		printf("cms: %s WRITE FLAGS(%02X): {", rwnames[adr&7], data);
 		for (i = 0; i < 8; ++i, d<<=1) {
@@ -935,7 +934,6 @@ static byte cms_io_r(word adr, struct CMS_STATE*cms) // C0X0-C0XF
 		}
 //		printf("cms: read io[%04X] => %02X\n", adr, res);
 	} else { // registers
-		int i, d;
 		res = cms->regs[adr&7];
 		switch (adr&7) {
 		case REG_ICR:

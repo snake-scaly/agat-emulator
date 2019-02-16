@@ -172,7 +172,7 @@ static void fdd_cmd_write_data(struct FDD_DATA*d)
 		return;
 	}
 	if (drv->present && drv->disk) {
-		int trk, sec, nsec, lid, nb, rd;
+		int trk, sec, nsec, lid, nb;
 		extern int cpu_debug;
 		d->drives[sel].track = trk = d->params[0];
 		sec = d->params[1];

@@ -5,6 +5,7 @@
 */
 
 #include "videoint.h"
+#include <stdio.h>
 
 struct CHARGEN_STATE
 {

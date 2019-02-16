@@ -10,6 +10,7 @@
 #include "runmgr.h"
 #include "memory.h"
 #include "runmgrint.h"
+#include "systemstate.h"
 #include "videow.h"
 #include "runstate.h"
 #include "debug/debugwnd.h"
@@ -23,6 +24,7 @@
 #define MAX_VIDEO_H (32*CHAR_H)
 
 
+int select_open_text(HWND hpar, TCHAR fname[CFGSTRLEN]);
 static LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp);
 
 static ATOM at;
@@ -107,7 +109,7 @@ int load_video_palette(struct SYS_RUN_STATE*sr, RGBQUAD colors[16])
 	if (!in) return 1;
 	for (cl=0;cl<16;cl++) {
 		char buf[1024];
-		int n, r, g, b;
+		int r, g, b;
 		fgets(buf, sizeof(buf), in);
 		if (sscanf(buf, "%i %i %i", &r, &g, &b) == 3) {
 			colors[cl].rgbRed = r;
@@ -165,7 +167,7 @@ LPCTSTR get_system_name(struct SYS_RUN_STATE *sr)
 static DWORD CALLBACK cr_proc(LPVOID par)
 {
 	struct SYS_RUN_STATE*sr = par;
-	MSG msg;
+	/*MSG msg;*/
 #ifdef UNDER_CE
 	DWORD s=WS_VISIBLE|WS_POPUP;
 	DWORD sex=WS_EX_TOPMOST;
@@ -374,7 +376,7 @@ void set_fullscreen(struct SYS_RUN_STATE*sr, int fs)
 
 static void calc_fullscr_params(struct SYS_RUN_STATE*sr, LPRECT d)
 {
-	RECT r, rb;
+	RECT r;
 	int wl, hl, ww, wh;
 	GetClientRect(sr->video_w, &r);
 	ww = r.right-r.left;
@@ -403,10 +405,10 @@ static void scr_to_full(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
 	calc_fullscr_params(sr, &rw);
 	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
 	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
-	d->left = rw.left + s->left * k1;
-	d->top = rw.top + s->top * k2;
-	d->right = rw.left + (s->right + 1) * k1 - 1;
-	d->bottom = rw.top + (s->bottom + 1) * k2 - 1;
+	d->left = rw.left + (LONG)(s->left * k1);
+	d->top = rw.top + (LONG)(s->top * k2);
+	d->right = rw.left + (LONG)((s->right + 1) * k1) - 1;
+	d->bottom = rw.top + (LONG)((s->bottom + 1) * k2) - 1;
 }
 
 static void full_to_scr(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
@@ -416,10 +418,10 @@ static void full_to_scr(struct SYS_RUN_STATE*sr, const LPRECT s, LPRECT d)
 	calc_fullscr_params(sr, &rw);
 	k1 = (rw.right - rw.left) / (double)sr->v_size.cx;
 	k2 = (rw.bottom - rw.top) / (double)sr->v_size.cy;
-	d->left = (s->left - rw.left) / k1;
-	d->top = (s->top - rw.top) / k2;
-	d->right = (s->right - rw.left + 1) / k1 - 1;
-	d->bottom = (s->bottom - rw.top + 1) / k2 - 1;
+	d->left = (LONG)((s->left - rw.left) / k1);
+	d->top = (LONG)((s->top - rw.top) / k2);
+	d->right = (LONG)((s->right - rw.left + 1) / k1) - 1;
+	d->bottom = (LONG)((s->bottom - rw.top + 1) / k2) - 1;
 }
 
 

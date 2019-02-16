@@ -32,7 +32,7 @@ void vid_invalidate_addr(struct SYS_RUN_STATE*sr, dword adr)
 //		printf("i = %i; n_ranges = %i\n", i, rb->n_ranges);
 		for (j = rb->n_ranges - 1; j >= 0; --j) {
 //			printf("j = %i; base_addr = %x; mem_size = %x\n", j, rb->base_addr[j], rb->mem_size[j]);
-			if (sadr>=rb->base_addr[j]&&sadr<rb->base_addr[j]+rb->mem_size[j]) {
+			if (sadr>=(dword)rb->base_addr[j]&&sadr<(dword)(rb->base_addr[j]+rb->mem_size[j])) {
 				RECT r;
 				if (vs->video_mode == VIDEO_MODE_AGAT && rb->vmode != vs->rb_cur.vmode) {
 					rb->dirty = 1;

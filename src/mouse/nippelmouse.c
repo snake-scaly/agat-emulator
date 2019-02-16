@@ -58,7 +58,6 @@ static int mouse_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 static int mouse_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct MOUSE_STATE*mcs = st->data;
-	HMENU menu;
 	switch (cmd) {
 	case SYS_COMMAND_RESET:
 		return 0;
@@ -94,7 +93,7 @@ static void mouse_io_w(word adr, byte data, struct MOUSE_STATE*mcs) // C0X0-C0XF
 
 static byte mouse_io_r(word adr, struct MOUSE_STATE*mcs) // C0X0-C0XF
 {
-	byte d;
+	byte d = 0;
 	switch (adr & 0x0F) {
 	case 0x08:
 	case 0x0C:

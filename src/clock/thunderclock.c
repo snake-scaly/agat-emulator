@@ -11,6 +11,7 @@
 #include "sysconf.h"
 #include "runmgr.h"
 #include "runmgrint.h"
+#include "common.h"
 
 
 #include <stdio.h>
@@ -174,7 +175,7 @@ static void write_clock(struct THUNDERCLOCK_STATE*tcs)
 	tm.tm_min = tcs->wdata[3] * 10 + tcs->wdata[2];
 	tm.tm_sec = tcs->wdata[1] * 10 + tcs->wdata[0];
 	t1 = mktime(&tm);
-	tcs->adjust = timer - t1;
+	tcs->adjust = (int)(timer - t1);
 	printf("time adjust = %i\n", tcs->adjust);
 }
 
@@ -251,7 +252,7 @@ static void tc_write_cmd(word adr, byte data, struct THUNDERCLOCK_STATE*tcs)
 	}
 	if (x & 2 && data & 2) { // set clock
 		if (tcs->wr) {
-			int b, s, r;
+			int b, s;
 			b = tcs->ind >> 2;
 			s = tcs->ind & 3;
 			if (tcs->creg & 1) {
@@ -331,7 +332,6 @@ static byte thunderclock_io_r(word adr, struct THUNDERCLOCK_STATE*tcs) // C0X0-C
 
 int  thunderclock_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	ISTREAM*rom;
 	struct THUNDERCLOCK_STATE*tcs;
 

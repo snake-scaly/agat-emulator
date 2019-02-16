@@ -6,6 +6,7 @@
 
 #include <windows.h>
 #include <mmsystem.h>
+#include <stdio.h>
 #include "common.h"
 #include "types.h"
 #include "memory.h"
@@ -55,7 +56,6 @@ static void joy_reset_none(struct JOYDATA*j)
 
 static int  joy_status_joy(struct JOYDATA*j, int no, unsigned dt)
 {
-	int clk;
 	if (!j->joy_present) return 0x7F;
 //	printf("dt=%i; X=%i; Y=%i\n",reset_time,lastinf.wXpos,lastinf.wYpos);
 	switch (no) {
@@ -96,8 +96,8 @@ static int  joy_status_mouse(struct JOYDATA*j, int no, unsigned dt)
 	if (y < 0) y = 0;
 //	printf("dt=%i; X=%i; Y=%i\n",dt,(j->sr->xmousepos>>8)*MAX_TIME,(j->sr->ymousepos>>8)*MAX_TIME);
 	switch (no) {
-	case 0:	return (dt<(x>>8)*MAX_TIME/255)?0xFF:0x7F; break;
-	case 1:	return (dt<(y>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 0:	return (dt<((unsigned)x>>8)*MAX_TIME/255)?0xFF:0x7F; break;
+	case 1:	return (dt<((unsigned)y>>8)*MAX_TIME/255)?0xFF:0x7F; break;
 	}
 	return 0x7F;
 }

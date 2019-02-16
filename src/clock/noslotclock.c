@@ -212,7 +212,7 @@ static void write_clock(struct NOSLOTCLOCK_STATE*ncs)
 	tm.tm_min = cvtres(ncs->regs[2], ncs);
 	tm.tm_sec = cvtres(ncs->regs[1], ncs);
 	t1 = mktime(&tm);
-	ncs->adjust = timer - t1;
+	ncs->adjust = (int)(timer - t1);
 	printf("time adjust = %i\n", ncs->adjust);
 }
 
@@ -220,7 +220,6 @@ static void write_clock(struct NOSLOTCLOCK_STATE*ncs)
 
 int  noslotclock_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	struct NOSLOTCLOCK_STATE*ncs;
 
 	puts("in noslotclock_init");

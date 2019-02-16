@@ -391,22 +391,22 @@ static int set_reg(M6502*st, int reg, long val)
 {
 	switch (reg) {
 	case REG6502_A:
-		st->A = val;
+		st->A = (byte)val;
 		break;
 	case REG6502_X:
-		st->X = val;
+		st->X = (byte)val;
 		break;
 	case REG6502_Y:
-		st->Y = val;
+		st->Y = (byte)val;
 		break;
 	case REG6502_S:
-		st->S = val;
+		st->S = (byte)val;
 		break;
 	case REG6502_F:
-		st->P = val;
+		st->P = (byte)val;
 		break;
 	case REG6502_PC:
-		st->PC.W = val;
+		st->PC.W = (word)val;
 		break;
 	default:
 		return -1;
@@ -422,7 +422,7 @@ int cmd_M6502(struct CPU_STATE*cs, int cmd, int data, long param)
 		dumpregs(cs);
 		return 1;
 	case SYS_COMMAND_EXEC:
-		st->PC.W = param;
+		st->PC.W = (word)param;
 		return 0;
 	case SYS_COMMAND_HRESET:
 		st->S = rand();

@@ -6,6 +6,8 @@
 #include "systemstate.h"
 #include "runmgrint.h"
 
+void update_save_state(LPCTSTR name);
+
 int clear_system_state_file(struct SYS_RUN_STATE*sr)
 {
 	int r;

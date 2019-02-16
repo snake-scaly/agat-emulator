@@ -1,4 +1,5 @@
 #include "videoint.h"
+#include <stdio.h>
 
 int video_set_mono(struct VIDEO_STATE*vs, int a, int x)
 {

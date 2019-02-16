@@ -234,7 +234,7 @@ void paint_t32_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int  tc, bc=vs->pal.c1_palette[0]; // text and back colors
 	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	r->left=x*CHAR_W;
 	r->top=y*CHAR_H;
 	r->right=r->left+CHAR_W;
@@ -336,7 +336,7 @@ void paint_t64_addr(struct VIDEO_STATE*vs, dword addr, RECT*r, int tc, int bc)
 	byte ch=mem[addr];
 	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	r->left=x*CHAR_W2;
 	r->top=y*CHAR_H;
 	r->right=r->left+CHAR_W2;
@@ -417,7 +417,7 @@ void paint_mcgr_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 //	printf("%x: (%i,%i): %x\n",addr,x,y, b);
 	ptr=(byte*)bmp_bits+(x>>1)+(y*bmp_pitch);
 	for (n=4;n;n--,b<<=2,ptr++) {
-		byte cl, c1, c2;
+		byte cl;
 #ifdef DOUBLE_X
 		cl=pixels[b>>6];
 		cl=cl|(cl<<4);
@@ -521,7 +521,7 @@ void apaint_t80_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*fnt = vs->vinf.font + ch * 16;
 	int mask;
 	int fl0 = 0;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	int ys = vs->vinf.cur_size[0] & 0x0F, ye = vs->vinf.cur_size[1] & 0x0F;
 //	printf("addr = %x; x = %i; y = %i\n", addr, x, y);
 	r->left=x*cx;
@@ -574,7 +574,7 @@ void apaint_t40_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	const byte*fnt;
 	int mask;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	if (vs->sr->cursystype == SYSTEM_9 && ch<0xA0) {
 		ch+=0x20;
 		ch&=0x3F;
@@ -631,7 +631,7 @@ void aepaint_t80_char(struct VIDEO_STATE*vs, int x, int y, byte ch, byte*ptr, in
 	int  tc=vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	const byte*fnt=vs->cur_font>=0?vs->font[vs->cur_font][ch]:empty_char;
 	int mask;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	if (!vs->cur_font) {
 		switch(atr) {
 		case 1: if (!vs->pal.flash_mode) break; //flash
@@ -891,7 +891,6 @@ void apaint_hgr_addr_color(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int y = (nb + bl * 8) * 8 + np;
 	int x7 = (bofs % 40);
 	int x = x7 * 7;
-	int i;
 	const byte*mem = ramptr(vs->sr);
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	const int clr1[2]={0,15};
@@ -1053,7 +1052,7 @@ void aepaint_dhgr_addr_mono(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	const byte*mem = ramptr(vs->sr);
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*HGR_H+x*HGR_W/2));
 	int clr[2]={vs->pal.c2_palette[0],vs->pal.c2_palette[1]};
-	byte b0=mem[addr|0x10000]&0x7F, b1=mem[addr&0xFFFF]&0x7F, h, lc;
+	byte b0=mem[addr|0x10000]&0x7F, b1=mem[addr&0xFFFF]&0x7F;
 	word w = b0 | (b1<<7);
 //	printf("%x -> (%i, %i), np = %i, nb = %i\n",addr, x, y, np, nb);
 	if (vs->ainf.combined&&y>=160) {
@@ -1165,11 +1164,11 @@ void aapaint_text0_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int y=(addr>>5)&15;
 	byte*ptr=(byte*)bmp_bits+((y*bmp_pitch*CHAR_H*12/8+x*CHAR_W2));
 	const byte*mem = ramptr(vs->sr);
-	byte ch = mem_read(addr, vs->sr);
+	byte ch = mem_read((word)addr, vs->sr);
 	int  tc = vs->pal.c2_palette[1], bc=vs->pal.c2_palette[0]; // text and back colors
 	const byte*fnt=vs->font[0][0]+ch*12;
 	int mask;
-	int xi, yi, xn, yn;
+	int xn, yn;
 	r->left=x*CHAR_W;
 	r->top=y*CHAR_H*12/8;
 	r->right=r->left+CHAR_W;
@@ -1212,7 +1211,7 @@ void aapaint_cgraph1_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=32, sy=3;
 	int clr[4]={2,3,4,1};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1293,7 +1292,7 @@ void aapaint_mgraph1_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=3;
 	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1356,7 +1355,7 @@ void aapaint_cgraph2_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=3;
 	int clr[4]={2,3,4,1};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1419,7 +1418,7 @@ void aapaint_mgraph2_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=2;
 	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1476,7 +1475,7 @@ void aapaint_cgraph3_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=2;
 	int clr[4]={2,3,4,1};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1533,7 +1532,7 @@ void aapaint_mgraph3_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=1;
 	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1584,7 +1583,7 @@ void aapaint_cgraph4_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=16, sy=1;
 	int clr[4]={2,3,4,1};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;
@@ -1635,7 +1634,7 @@ void aapaint_mgraph4_addr(struct VIDEO_STATE*vs, dword addr, RECT*r)
 	int sx=8, sy=1;
 	int clr[2]={vs->pal.c2_palette[0], vs->pal.c2_palette[1]};
 	int i;
-	byte b=mem_read(addr, vs->sr);
+	byte b=mem_read((word)addr, vs->sr);
 	byte *ptr;
 #ifdef DOUBLE_X
 	x<<=1;

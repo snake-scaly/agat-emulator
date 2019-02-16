@@ -82,7 +82,6 @@ static int printer_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct PRINTER_STATE*pcs = st->data;
-	HMENU menu;
 	switch (cmd) {
 	case SYS_COMMAND_RESET:
 		set_rom_mode(pcs, pcs->rom_mode & ~1);
@@ -136,7 +135,6 @@ static int odec(int ofs)
 static int oenc(int ofs)
 {
 	int s = 1;
-	int i;
 	if (ofs < 0) { s = -1; ofs = -ofs; }
 	return otable[ofs] * s;
 }
@@ -286,7 +284,6 @@ static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 
 int  mouse9_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
-	int i;
 	ISTREAM*rom;
 	struct PRINTER_STATE*pcs;
 	int mode = cf->cfgint[CFG_INT_PRINT_MODE];

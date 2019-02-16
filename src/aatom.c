@@ -4,6 +4,7 @@
 */
 
 #include "video/videoint.h"
+#include <stdio.h>
 
 /*#include "runmgr.h"
 #include "runmgrint.h"
@@ -441,8 +442,6 @@ int  extromaa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLO
 {
 	struct EXTROM_DATA*data;
 	ISTREAM*rom;
-	const char_t*name;
-	char_t buf[32];
 
 	puts("in extromaa_init");
 	data = calloc(1, sizeof(*data));
@@ -489,9 +488,6 @@ static int load_extram(struct SLOT_RUN_STATE*st, ISTREAM*in)
 int  extramaa_init(struct SYS_RUN_STATE*sr, struct SLOT_RUN_STATE*st, struct SLOTCONFIG*cf)
 {
 	struct EXTROM_DATA*data;
-	ISTREAM*rom;
-	const char_t*name;
-	char_t buf[32];
 
 	puts("in extramaa_init");
 	data = calloc(1, sizeof(*data));

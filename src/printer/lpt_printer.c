@@ -4,13 +4,17 @@
 	Author: Sergey "SnakE" Gromov
 */
 
+#define _CRT_NONSTDC_NO_WARNINGS /* to use open, close, write, etc. */
+
 #include "printer_cable.h"
 #include "lpt_printer.h"
 #include "printer_emu.h"
 #include "common.h"
 #include "runmgr.h"
 #include <errno.h>
+#include <io.h>
 #include <memory.h>
+#include <stdio.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 

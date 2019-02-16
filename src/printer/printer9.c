@@ -140,7 +140,6 @@ static void printer_io_w(word adr, byte data, struct PRINTER_STATE*pcs) // C0X0-
 
 static byte printer_io_r(word adr, struct PRINTER_STATE*pcs) // C0X0-C0XF
 {
-	byte r;
 	adr &= 0x03;
 //	system_command(pcs->st->sr, SYS_COMMAND_DUMPCPUREGS, 0, 0);
 	switch (adr) {

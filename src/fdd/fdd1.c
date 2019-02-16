@@ -810,7 +810,7 @@ static void sound_phase()
 static void fdd_load_track(struct FDD_DATA*data)
 {
 	struct FDD_DRIVE_DATA *drv = data->drives+data->drv;
-	int i, j, d, dl;
+	int i, j, d;
 	byte a2[2];
 	byte buf[257];
 

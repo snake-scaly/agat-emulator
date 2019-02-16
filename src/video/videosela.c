@@ -1,4 +1,5 @@
 #include "videoint.h"
+#include <stdio.h>
 
 static int get_apple_mode_id(struct APPLE_INFO*ai)
 {

@@ -96,7 +96,6 @@ static int mouse_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 static int mouse_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 {
 	struct MOUSE_STATE*mcs = st->data;
-	HMENU menu;
 	switch (cmd) {
 	case SYS_COMMAND_RESET:
 		return 0;

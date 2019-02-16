@@ -12,6 +12,7 @@
 #endif
 
 static __declspec(thread) struct CPU_STATE*current_cpu = NULL;
+static int cpu_wakeup(struct CPU_STATE*cs, int flags);
 
 /* Get CPU running in the current thread. */
 struct CPU_STATE*get_cpu()
@@ -106,10 +107,10 @@ static int cpu_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param)
 	case SYS_COMMAND_GETREGS6502:
 		r = cpu_cmd(cs, cmd, data, param);
 		if (r < 0) return r;
-		((struct REGS_6502*)param)->TSC = cs->tsc_6502;
+		((struct REGS_6502*)param)->TSC = (dword)cs->tsc_6502;
 		return r;
 	case SYS_COMMAND_GETREG:
-		if (data == REG6502_TSC) { *(dword*)param = cs->tsc_6502; r = 1; }
+		if (data == REG6502_TSC) { *(dword*)param = (dword)cs->tsc_6502; r = 1; }
 		else r = cpu_cmd(cs, cmd, data, param);
 		return r;
 	case SYS_COMMAND_WAKEUP:
@@ -440,8 +441,8 @@ static DWORD CALLBACK cpu_thread(struct CPU_STATE*cs)
 		decrement_timers(cs, r);
 		if (n_ticks>=cs->lim_fetches||cs->need_cpusleep) {
 			unsigned t=get_n_msec();
-			unsigned rt=n_ticks/cs->freq_6502;
-			if (rt-t+t0>cs->min_msleep) {
+			unsigned rt=(unsigned)(n_ticks/cs->freq_6502);
+			if (rt-t+t0>(unsigned)cs->min_msleep) {
 				if (rt>t-t0 && !cs->fast_mode && ! cs->fast_boost) {
 					WaitForSingleObject(cs->sleep, rt-t+t0);
 // 					msleep(rt-t+t0);
@@ -462,14 +463,14 @@ int cpu_get_tsc(struct SYS_RUN_STATE*sr)
 {
 	struct CPU_STATE*cs;
 	cs = sr->slots[CONF_CPU].data;
-	return cs->tsc_6502;
+	return (int)cs->tsc_6502;
 }
 
 int cpu_get_freq(struct SYS_RUN_STATE*sr)
 {
 	struct CPU_STATE*cs;
 	cs = sr->slots[CONF_CPU].data;
-	return cs->freq_6502;
+	return (int)cs->freq_6502;
 }
 
 int cpu_get_fast(struct SYS_RUN_STATE*sr)

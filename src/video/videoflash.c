@@ -4,7 +4,6 @@ extern void flash_system_1(struct SYS_RUN_STATE*sr);
 
 void video_flash_text(struct VIDEO_STATE*vs)
 {
-	int x, y;
 	int i, d = 0;
 	struct RASTER_BLOCK*rb;
 	vs->pal.flash_mode=!vs->pal.flash_mode;
