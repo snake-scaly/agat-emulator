@@ -1,0 +1,6 @@
+Changes in the version 1.29.2
+=============================
+
+Fixed a crash after closing an emulator window.
+
+Good luck!
