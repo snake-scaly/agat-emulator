@@ -39,6 +39,7 @@ static int printer_term(struct SLOT_RUN_STATE*st)
 	struct PRINTER_STATE*pcs = st->data;
 	if (pcs->pcab) pcs->pcab->ops->free(pcs->pcab);
 	free(st->data);
+	st->data = NULL;
 	return 0;
 }
 
@@ -61,7 +62,7 @@ static int printer_command(struct SLOT_RUN_STATE*st, int cmd, int data, long par
 {
 	struct PRINTER_STATE*pcs = st->data;
 
-	if (pcs->pcab) pcs->pcab->ops->slot_command(pcs->pcab, cmd, param);
+	if (pcs && pcs->pcab) pcs->pcab->ops->slot_command(pcs->pcab, cmd, param);
 
 	return 0;
 }
