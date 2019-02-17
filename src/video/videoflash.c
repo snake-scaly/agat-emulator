@@ -15,6 +15,7 @@ void video_flash_text(struct VIDEO_STATE*vs)
 	if (vs->video_mode==VIDEO_MODE_APPLE_1) flash_system_1(vs->sr);
 	if (d && (!vs->rb_enabled || vs->video_mode==VIDEO_MODE_APPLE)) 
 		video_repaint_screen(vs);
+	ng_video_mark_scanlines_dirty(vs, 0, vs->sr->ng_render_surface.height);
 }
 
 

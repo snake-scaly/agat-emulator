@@ -1,5 +1,10 @@
+#ifndef RUNMGRINT_H
+#define RUNMGRINT_H
+
 #include "memory.h"
 #include "keyb.h"
+#include "streams.h"
+#include "sysconf.h"
 
 
 #define MEM_1K_SIZE		0x400
@@ -17,6 +22,35 @@ struct SYS_CONTROL_INFO
 	int (*load_system)(struct SYS_RUN_STATE*sr, ISTREAM*in);
 	int (*xio_control)(struct SYS_RUN_STATE*sr, int req); 	// req=1 - request if it is possible to acquire ROM, 
 								// req=0 - restore ROM at C800.CFFF
+};
+
+enum RENDER_SURFACE_TYPE
+{
+	SURFACE_RGBA_512_256, /* Surface type for Agat renderers */
+	SURFACE_RGBA_560_192, /* Surface type for Apple renderers */
+	SURFACE_BOOL_560_8,   /* Surface type for temporary Apple buffer */
+};
+
+/*
+Target surface for rendering graphics.
+
+Fields:
+
+pixels - byte array of pixels according to the surface type.
+This memory is owned by the surface
+width - surface width in pixels
+height - surface height in pixels
+stride - distance, in bytes, between two consequtive lines
+of the surface
+type - one of the RENDER_SURFACE_TYPE constants
+*/
+struct RENDER_SURFACE
+{
+	byte*pixels;
+	int width;
+	int height;
+	int stride;
+	enum RENDER_SURFACE_TYPE type;
 };
 
 struct SYS_RUN_STATE
@@ -50,6 +84,12 @@ struct SYS_RUN_STATE
 	HDC mem_dc;
 	int bmp_pitch;
 	LPVOID bmp_bits;
+
+	HWND ng_window;
+	BITMAPINFOHEADER ng_bmp_hdr;
+	struct RENDER_SURFACE ng_render_surface;
+	RGBQUAD ng_palette[16];
+
 	int mousechanged; // bit0 - btn1, bit1 - btn2, bit2 - btn3, bit 7 - pos
 	int xmousepos, ymousepos; // restricted position
 	int xmouse, ymouse; // unrestricted position
@@ -95,3 +135,5 @@ byte keyb_reg_read(word adr, struct SYS_RUN_STATE*sr);	// C063
 byte keyb_apple_state(struct SYS_RUN_STATE*sr, int lr); // left or right
 byte keyb_is_pressed(struct SYS_RUN_STATE*sr, int vk);
 void keyb_clear(struct SYS_RUN_STATE*sr);	// C010-C01F
+
+#endif /* RUNMGRINT_H */

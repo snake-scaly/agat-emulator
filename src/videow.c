@@ -11,6 +11,7 @@
 #include "memory.h"
 #include "runmgrint.h"
 #include "systemstate.h"
+#include "video/videoint.h"
 #include "videow.h"
 #include "runstate.h"
 #include "debug/debugwnd.h"
@@ -19,6 +20,7 @@
 #include <stdio.h>
 
 #define VIDEO_CLASS TEXT("agat_video")
+#define NEW_VIDEO_CLASS TEXT("NewGfxWindowClass")
 
 #define MAX_VIDEO_W (40*CHAR_W)
 #define MAX_VIDEO_H (32*CHAR_H)
@@ -26,6 +28,7 @@
 
 int select_open_text(HWND hpar, TCHAR fname[CFGSTRLEN]);
 static LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp);
+static LRESULT CALLBACK ng_wnd_proc2(HWND w,UINT msg,WPARAM wp,LPARAM lp);
 
 static ATOM at;
 
@@ -67,12 +70,45 @@ void update_alt_state(struct SYS_RUN_STATE*sr)
 	else sr->mousebtn&=~0x20;
 }
 
+static void ng_adjust_video_rect_for_client(struct SYS_RUN_STATE*sr, const RECT*client, RECT*rect)
+{
+	LONG left = 0, top = 0, width = client->right, height = client->bottom;
+
+	/* Attempt 4:3 aspect, double width */
+	width = sr->ng_render_surface.width * 2;
+	height = width * 3 / 4;
+
+	if (client->right < width || client->bottom < height) {
+		/* Display exact pixels. */
+		width = sr->ng_render_surface.width;
+		height = sr->ng_render_surface.height * 2;
+	}
+
+	left = (client->right - width) / 2;
+	top = (client->bottom - height) / 2;
+
+	/* Round up the right and bottom sides of the rect to avoid pixel artifacts. */
+	rect->left = rect->left * width / sr->ng_render_surface.width + left;
+	rect->right = (rect->right * width + (sr->ng_render_surface.width - 1)) / sr->ng_render_surface.width + left;
+	rect->top = rect->top * height / sr->ng_render_surface.height + top;
+	rect->bottom = (rect->bottom * height + (sr->ng_render_surface.height - 1)) / sr->ng_render_surface.height + top;
+}
+
+/* Convert rect from render surface coordinates to window client coordinates. */
+void ng_adjust_video_rect(struct SYS_RUN_STATE*sr, RECT*rect)
+{
+	RECT client;
+	GetClientRect(sr->ng_window, &client);
+	ng_adjust_video_rect_for_client(sr, &client, rect);
+}
+
 int register_video_window(struct SYS_RUN_STATE*sr)
 {
 	WNDCLASS cl;
 	HDC dc;
 	TCHAR cbuf[32];
 	static int cno = 1;
+
 	ZeroMemory(&cl,sizeof(cl));
 	cl.hbrBackground=NULL;
 	cl.lpfnWndProc=wnd_proc;
@@ -85,6 +121,12 @@ int register_video_window(struct SYS_RUN_STATE*sr)
 	if (!cl.hIcon) cl.hIcon = LoadIcon(GetModuleHandle(NULL),MAKEINTRESOURCE(IDI_MAIN));
 	sr->video_at=RegisterClass(&cl);
 	if (!sr->video_at) return -1;
+
+	ZeroMemory(&cl, sizeof(cl));
+	cl.lpfnWndProc = ng_wnd_proc2;
+	cl.lpszClassName = NEW_VIDEO_CLASS;
+	if (!RegisterClass(&cl)) return -1;
+
 	return 0;
 }
 
@@ -92,6 +134,7 @@ void unregister_video_window(struct SYS_RUN_STATE*sr)
 {
 	UnregisterClass((LPCTSTR)sr->video_at, GetModuleHandle(NULL));
 	if (sr->video_icon) DestroyIcon(sr->video_icon);
+	UnregisterClass(NEW_VIDEO_CLASS, GetModuleHandle(NULL));
 }
 
 
@@ -121,12 +164,85 @@ int load_video_palette(struct SYS_RUN_STATE*sr, RGBQUAD colors[16])
 	return 0;
 }
 
+static void ng_update_window_size(struct SYS_RUN_STATE*sr, int scale)
+{
+	struct VIDEO_STATE*vs = get_video_state(sr);
+	RECT r, c;
+	WINDOWPLACEMENT pl;
+
+	/* Find out the minimum client size. */
+	r.left = r.top = 0;
+	r.right = sr->ng_render_surface.width;
+	r.bottom = sr->ng_render_surface.height;
+
+	c.left = c.top = 0;
+	c.right = sr->ng_render_surface.width * scale;
+	c.bottom = LONG_MAX;
+
+	ng_adjust_video_rect_for_client(sr, &c, &r);
+
+	c.bottom = r.bottom - r.top;
+
+	/* c contains minimum client size. Adjust the emu window if the current client is insufficient. */
+	GetClientRect(sr->ng_window, &r);
+	if (r.right >= c.right && r.bottom >= c.bottom) return;
+
+	if (r.right < c.right) r.right = c.right;
+	if (r.bottom < c.bottom) r.bottom = c.bottom;
+	AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
+
+	pl.length = sizeof(pl);
+	GetWindowPlacement(sr->ng_window, &pl);
+	pl.rcNormalPosition.right = pl.rcNormalPosition.left + r.right - r.left;
+	pl.rcNormalPosition.bottom = pl.rcNormalPosition.top + r.bottom - r.top;
+	SetWindowPlacement(sr->ng_window, &pl);
+}
+
+void ng_update_render_surface(struct SYS_RUN_STATE*sr)
+{
+	struct VIDEO_STATE*vs = get_video_state(sr);
+	RECT r;
+	int scale = 1;
+
+	/* Remember whether we used "small" or "large" emulator window. Use "small" by default. */
+	if (sr->ng_render_surface.width != 0) {
+		r.left = r.top = 0;
+		r.right = sr->ng_render_surface.width;
+		r.bottom = sr->ng_render_surface.height;
+		ng_adjust_video_rect(sr, &r);
+		scale = (r.right - r.left) / sr->ng_render_surface.width;
+	}
+
+	free(sr->ng_render_surface.pixels);
+	if (!vs || vs->video_mode == VIDEO_MODE_AGAT) {
+		sr->ng_render_surface.type = SURFACE_RGBA_512_256;
+		sr->ng_render_surface.width = 512;
+		sr->ng_render_surface.height = 256;
+	} else {
+		sr->ng_render_surface.type = SURFACE_RGBA_560_192;
+		sr->ng_render_surface.width = 560;
+		sr->ng_render_surface.height = 192;
+	}
+	sr->ng_render_surface.stride = sr->ng_render_surface.width * 4;
+	sr->ng_render_surface.pixels = malloc(sr->ng_render_surface.stride * sr->ng_render_surface.height);
+
+	sr->ng_bmp_hdr.biWidth = sr->ng_render_surface.width;
+	sr->ng_bmp_hdr.biHeight = -sr->ng_render_surface.height;
+
+	/* Attempt to set the new window size. */
+	ng_update_window_size(sr, scale);
+
+	/* Repaint everything because the surface size could have changed. */
+	InvalidateRect(sr->ng_window, NULL, FALSE);
+}
+
 int create_video_buffer(struct SYS_RUN_STATE*sr)
 {
 	struct {
 		BITMAPINFOHEADER h;
 		RGBQUAD colors[16];
 	} bi;
+
 	ZeroMemory(&bi,sizeof(bi));
 	bi.h.biSize=sizeof(bi.h);
 	bi.h.biWidth=MAX_VIDEO_W;
@@ -145,6 +261,15 @@ int create_video_buffer(struct SYS_RUN_STATE*sr)
 	sr->fullscreen = 0;
 	GdiFlush();
 	sr->old_bmp = SelectObject(sr->mem_dc, sr->mem_bmp);
+
+	sr->ng_bmp_hdr.biSize = sizeof(sr->ng_bmp_hdr);
+	sr->ng_bmp_hdr.biPlanes = 1;
+	sr->ng_bmp_hdr.biBitCount = 32;
+	sr->ng_bmp_hdr.biCompression = BI_RGB;
+	ng_update_render_surface(sr);
+
+	memcpy(sr->ng_palette, bi.colors, sizeof(bi.colors));
+
 	return 0;
 }
 
@@ -155,6 +280,9 @@ int free_video_buffer(struct SYS_RUN_STATE*sr)
 	SelectObject(sr->mem_dc, sr->old_bmp);
 	DeleteObject(sr->mem_bmp);
 	DeleteDC(sr->mem_dc);
+
+	free(sr->ng_render_surface.pixels);
+
 	return 0;
 }
 
@@ -177,6 +305,7 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 #endif
 
 	RECT r={0,0,sr->v_size.cx,sr->v_size.cy};
+	RECT c;
 	sr->pause_inactive = !(sr->gconfig->flags & EMUL_FLAGS_BACKGROUND_ACTIVE);
 	sr->sync_update = (sr->gconfig->flags & EMUL_FLAGS_SYNC_UPDATE) != 0;
 	AdjustWindowRectEx(&r,s,FALSE,0);
@@ -188,6 +317,21 @@ static DWORD CALLBACK cr_proc(LPVOID par)
 		puts("createwindow error");
 		return -1;
 	}
+
+	r.left = r.top = 0;
+	r.right = sr->ng_render_surface.width;
+	r.bottom = sr->ng_render_surface.height;
+	c.left = c.top = 0;
+	/* Very tall fake client area of exactly the right width ensures that the small window size is chosen. */
+	c.right = r.right;
+	c.bottom = LONG_MAX;
+	ng_adjust_video_rect_for_client(sr, &c, &r);
+	c.bottom = r.bottom - r.top;
+	AdjustWindowRect(&c, WS_OVERLAPPEDWINDOW, FALSE);
+	sr->ng_window = CreateWindow(NEW_VIDEO_CLASS, "Prototype Graphics", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, c.right - c.left, c.bottom - c.top, 0, 0, 0, sr);
+	if (!sr->ng_window) return -1;
+
 /*	while (GetMessage(&msg,NULL,0,0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -281,6 +425,7 @@ int term_video_window(struct SYS_RUN_STATE*sr)
 		sr->input_size = sr->input_pos = 0;
 	}
 	DestroyWindow(sr->video_w);
+	DestroyWindow(sr->ng_window);
 //	WaitForSingleObject(sr->h, INFINITE);
 //	CloseHandle(sr->h);
 	free_video_buffer(sr);
@@ -1082,6 +1227,107 @@ LRESULT CALLBACK wnd_proc(HWND w,UINT msg,WPARAM wp,LPARAM lp)
 	}
 def:
 	return DefWindowProc(w,msg,wp,lp);
+}
+
+/* Fill space between outer and inner rects with the given brush. */
+static void ng_fill_frame(HDC dc, const RECT*outer, const RECT*inner, HBRUSH bb)
+{
+	RECT r;
+
+	if (inner->top > outer->top) {
+		r = *outer;
+		r.bottom = inner->top;
+		FillRect(dc, &r, bb);
+	}
+	if (inner->bottom < outer->bottom) {
+		r = *outer;
+		r.top = inner->bottom;
+		FillRect(dc, &r, bb);
+	}
+
+	r.top = inner->top;
+	r.bottom = inner->bottom;
+
+	if (inner->left > outer->left) {
+		r.left = outer->left;
+		r.right = inner->left;
+		FillRect(dc, &r, bb);
+	}
+	if (inner->right < outer->right) {
+		r.left = inner->right;
+		r.right = outer->right;
+		FillRect(dc, &r, bb);
+	}
+}
+
+LRESULT CALLBACK ng_wnd_proc2(HWND w, UINT msg, WPARAM wp, LPARAM lp)
+{
+	struct SYS_RUN_STATE*sr = (struct SYS_RUN_STATE*)GetWindowLongPtr(w, GWL_USERDATA);
+	switch (msg) {
+	case WM_CREATE:
+		{
+			LPCREATESTRUCT cs = (LPCREATESTRUCT)lp;
+			sr = (struct SYS_RUN_STATE*)cs->lpCreateParams;
+			SetWindowLongPtr(w, GWL_USERDATA, (LONG)sr);
+		}
+		return 0;
+	case WM_ERASEBKGND:
+		return 1; /* never erase background; let WM_PAINT handle that */
+	case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC dc;
+			HBRUSH bb;
+			RECT client, picture;
+
+			dc = BeginPaint(w, &ps);
+
+			/* Determine picture position. */
+			picture.left = picture.top = 0;
+			picture.right = sr->ng_render_surface.width;
+			picture.bottom = sr->ng_render_surface.height;
+			ng_adjust_video_rect(sr, &picture);
+
+			/* Stretch the surface according to the adjusted rect. */
+			StretchDIBits(dc,
+				picture.left, picture.top, picture.right - picture.left, picture.bottom - picture.top,
+				0, 0, sr->ng_render_surface.width, sr->ng_render_surface.height,
+				sr->ng_render_surface.pixels, (BITMAPINFO*)&sr->ng_bmp_hdr,
+				DIB_RGB_COLORS, SRCCOPY);
+
+			/* Clear borders with black. Clearing everything with black then blitting
+			   the picture on top would be simpler but would cause flickering. */
+			GetClientRect(w, &client);
+			bb = GetStockObject(BLACK_BRUSH);
+			ng_fill_frame(dc, &client, &picture, bb);
+
+			EndPaint(w, &ps);
+		}
+		return 0;
+	case WM_SIZE:
+		InvalidateRect(w, NULL, FALSE);
+		return 0;
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+		/* Forward keys to the main video window. */
+		PostMessage(sr->video_w, msg, wp, lp);
+		return 0;
+	case WM_MOUSEMOVE:
+		/* Forward mouse to the main video window. */
+		{
+			WORD x = LOWORD(lp);
+			WORD y = HIWORD(lp);
+			RECT r1, r2;
+			GetClientRect(w, &r1);
+			GetClientRect(sr->video_w, &r2);
+			x = (WORD)(x * r2.right / r1.right);
+			y = (WORD)(y * r2.bottom / r1.bottom);
+			PostMessage(sr->video_w, msg, wp, MAKELPARAM(x, y));
+		}
+		return 0;
+	default:
+		return DefWindowProc(w, msg, wp, lp);
+	}
 }
 
 int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r)

@@ -9,6 +9,8 @@
 #include "runmgr.h"
 #include "runmgrint.h"
 #include "videow.h"
+#include "video_renderer.h"
+#include "video_apple_tv.h"
 
 #define CHAR_W2 (CHAR_W>>1)
 #define HGR_W (CHAR_W/8)
@@ -25,6 +27,7 @@
 
 
 #define MAX_RASTER_BLOCKS 256
+#define MAX_SCANLINES 256
 
 
 #define N_RB_7 16
@@ -84,6 +87,19 @@ struct VTERM_INFO
 	const byte*font;
 };
 
+struct VIDEO_RENDERER_BOUNDARY
+{
+	const struct VIDEO_RENDERER*renderer;
+	int page;
+	int scanline;
+};
+
+struct COMBINED_VIDEO_RENDERERS
+{
+	struct VIDEO_RENDERER_BOUNDARY renderers[MAX_RASTER_BLOCKS];
+	int size;
+};
+
 #define MAX_N_FONTS 2
 
 #define MEM_ACCESS_LIMIT	300  // cycles
@@ -111,6 +127,13 @@ struct VIDEO_STATE
 	struct APPLE_INFO ainf;
 	struct PAL_INFO pal;
 	struct VTERM_INFO vinf;
+	struct APPLE_TV ng_apple_tv;
+
+	unsigned long long ng_frame_start_tick;
+	float ng_ticks_per_scanline;
+	byte ng_dirty_scanlines[(MAX_SCANLINES + 7) / 8];
+	struct COMBINED_VIDEO_RENDERERS ng_curr_renderers;
+	struct COMBINED_VIDEO_RENDERERS ng_next_renderers;
 };
 
 enum {
@@ -120,7 +143,6 @@ enum {
 	VIDEO_MODE_APPLE_1,
 	VIDEO_MODE_ACORN,
 };
-
 
 __inline struct VIDEO_STATE*get_video_state(struct SYS_RUN_STATE*sr)
 {
@@ -132,6 +154,7 @@ void video_mem_access(struct SYS_RUN_STATE*sr);
 void video_flash_text(struct VIDEO_STATE*vs);
 
 int video_init_rb(struct VIDEO_STATE*vs);
+void ng_video_setup_interrupts(struct VIDEO_STATE*vs);
 
 void video_set_mode(struct VIDEO_STATE*vs, int md);
 void video_update_mode(struct VIDEO_STATE*vs);
@@ -143,6 +166,7 @@ void videosel_7(struct VIDEO_STATE*vs, int mode);
 void videosel_9(struct VIDEO_STATE*vs, int mode);
 int  videosel(struct VIDEO_STATE*vs, int mode);
 void videosel_aa(struct VIDEO_STATE*vs, int mode);
+void ng_videosel2(struct VIDEO_STATE*vs, int mode);
 
 void update_video_ap(struct VIDEO_STATE*vs);
 void vsel_ap(struct VIDEO_STATE*vs, word adr);
@@ -165,5 +189,8 @@ void (*paint_addr[])(struct VIDEO_STATE*vs, dword addr, RECT*r);
 
 void apaint_t40_addr_mix(struct VIDEO_STATE*vs, dword addr, RECT*r);
 
+void ng_video_mark_scanlines_dirty(struct VIDEO_STATE*vs, int first, int last);
+int ng_video_is_scanline_dirty(struct VIDEO_STATE*vs, int scanline);
+void ng_video_clear_dirty_scanlines(struct VIDEO_STATE*vs);
 
 #endif //VIDEOINT_H

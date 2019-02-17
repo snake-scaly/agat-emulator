@@ -18,7 +18,6 @@ static void video_set_size(struct VIDEO_STATE*vs, int w, int h)
 	set_video_size(vs->sr, w, h);
 }
 
-
 void video_update_mode(struct VIDEO_STATE*vs)
 {
 	video_init_rb(vs);
@@ -44,11 +43,12 @@ void video_update_mode(struct VIDEO_STATE*vs)
 	}
 }
 
-
 void video_set_mode(struct VIDEO_STATE*vs, int md)
 {
 	if (vs->video_mode == md) return;
 	vs->video_mode = md;
 	video_update_mode(vs);
+	ng_update_render_surface(vs->sr);
+	ng_video_setup_interrupts(vs);
 }
 

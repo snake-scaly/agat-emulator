@@ -1,5 +1,6 @@
 #include "videoint.h"
 #include "common.h"
+#include "video_apple_tv.h"
 #include <stdio.h>
 
 static int load_font_res(int no, void*buf, int sz)
@@ -38,6 +39,11 @@ static int video_save(struct SLOT_RUN_STATE*st, OSTREAM*out)
 		WRITE_FIELD(out, vs->ainf.dhgr);
 	}
 
+	WRITE_FIELD(out, vs->ng_frame_start_tick);
+	WRITE_FIELD(out, vs->ng_dirty_scanlines);
+	WRITE_FIELD(out, vs->ng_curr_renderers);
+	WRITE_FIELD(out, vs->ng_next_renderers);
+
 	return 0;
 }
 
@@ -65,6 +71,11 @@ static int video_load(struct SLOT_RUN_STATE*st, ISTREAM*in)
 		READ_FIELD(in, vs->ainf.text80);
 		READ_FIELD(in, vs->ainf.dhgr);
 	}
+
+	READ_FIELD(in, vs->ng_frame_start_tick);
+	READ_FIELD(in, vs->ng_dirty_scanlines);
+	READ_FIELD(in, vs->ng_curr_renderers);
+	READ_FIELD(in, vs->ng_next_renderers);
 
 	video_update_mode(vs);
 	video_repaint_screen(vs);
@@ -94,8 +105,8 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 		video_set_mono(vs, 1, 1);
 		return 0;
 	case SYS_COMMAND_CPUTIMER:
-		if ((param|1) == (DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET))|1)) {
-			video_timer(vs, param & 1);
+		if ((param & ~63) == DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET))) {
+			video_timer(vs, param & 63);
 			return 1;
 		}
 		break;
@@ -107,21 +118,26 @@ static int video_command(struct SLOT_RUN_STATE*st, int cmd, int data, long param
 static void videosel_w(word adr, byte data, struct VIDEO_STATE*vs) // C700-C7FF
 {
 	videosel(vs, adr&0xFF);
+	ng_videosel2(vs, adr);
 }
 
 static byte videosel_r(word adr, struct VIDEO_STATE*vs) // C700-C7FF
 {
-	return videosel(vs, adr&0xFF);
+	int r = videosel(vs, adr&0xFF);
+	ng_videosel2(vs, adr);
+	return r;
 }
 
 static void vsel_ap_w(word adr, byte data, struct VIDEO_STATE*vs) // C050-C05F
 {
 	vsel_ap(vs, adr);
+	ng_videosel2(vs, adr);
 }
 
 static byte vsel_ap_r(word adr, struct VIDEO_STATE*vs) // C050-C05F
 {
 	vsel_ap(vs, adr);
+	ng_videosel2(vs, adr);
 	if (adr == 0xC058) return rand();
 	return empty_read(adr, NULL);
 }
@@ -218,7 +234,7 @@ int set_rb_count(struct VIDEO_STATE*vs, int n, int nint)
 		rb->prev_base[1] = -1;
 	}
 	if (nint) {
-		int d = 1000000 / vs->video_freq;
+		int d = cpu_get_freq(vs->sr) * 1000 / vs->video_freq;
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, d, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)));
 		system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, d / nint, DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) | 1);
 	} else { // kill timers
@@ -233,10 +249,12 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	switch (vs->sr->cursystype) {
 	case SYSTEM_7:
 		vs->video_freq = 50;
+		vs->ng_ticks_per_scanline = 64;
 		set_rb_count(vs, vs->rb_enabled?N_RB_7:1, N_RBINT_7);
 		break;
 	case SYSTEM_9:
 		vs->video_freq = 50;
+		vs->ng_ticks_per_scanline = 64;
 		switch (vs->video_mode) {
 		case VIDEO_MODE_AGAT:
 			set_rb_count(vs, vs->rb_enabled?N_RB_9:1, N_RBINT_9);
@@ -246,18 +264,37 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	case SYSTEM_A:
 	case SYSTEM_P:
 		vs->video_freq = 60;
+		vs->ng_ticks_per_scanline = 63.5f;
 		set_rb_count(vs, 1, 0);
 		break;
 	case SYSTEM_AA:
 		vs->video_freq = 60;
+		vs->ng_ticks_per_scanline = 63.5f;
 		set_rb_count(vs, vs->rb_enabled?16:1, 20);
 		break;
 	case SYSTEM_E:
 		vs->video_freq = 60;
+		vs->ng_ticks_per_scanline = 63.5f;
 		set_rb_count(vs, 1, 4);
 		break;
 	}
 	return 0;
+}
+
+void ng_video_setup_interrupts(struct VIDEO_STATE*vs)
+{
+	int ticks_per_frame = cpu_get_freq(vs->sr) * 1000 / vs->video_freq;
+	long param = DEF_CPU_TIMER_ID((vs->sr->slots + CONF_CHARSET)) + 2;
+	system_command(vs->sr, SYS_COMMAND_SET_CPUTIMER, ticks_per_frame, param);
+}
+
+void ng_video_init_renderer(struct VIDEO_STATE*vs)
+{
+	vs->ng_curr_renderers.renderers[0].renderer = ng_get_renderer(vs, 0xC002, &vs->ng_curr_renderers.renderers[0].page);
+	vs->ng_curr_renderers.renderers[0].scanline = 0;
+	vs->ng_curr_renderers.size = 1;
+	vs->ng_next_renderers = vs->ng_curr_renderers;
+	ng_video_setup_interrupts(vs);
 }
 
 const byte*video_get_font(struct SYS_RUN_STATE*sr)
@@ -307,6 +344,9 @@ int  video_init(struct SYS_RUN_STATE*sr)
 	vs->ainf.hgr = 1;
 	vs->pal.prev_pal = -1;
 	vs->rb_enabled = 1;
+	vs->ng_frame_start_tick = cpu_get_tsc(sr);
+
+	apple_tv_init(&vs->ng_apple_tv);
 
 	fill_rw_proc(st->service_procs, N_SERVICE_PROCS, empty_read_addr, empty_write, vs);
 
@@ -332,6 +372,7 @@ int  video_init(struct SYS_RUN_STATE*sr)
 
 	video_set_pal(&vs->pal, 0);
 	video_init_rb(vs);
+	ng_video_init_renderer(vs);
 	switch (sr->cursystype) {
 	case SYSTEM_7:
 		video_set_mode(vs, VIDEO_MODE_AGAT);
@@ -411,6 +452,7 @@ int video_select_80col(struct SYS_RUN_STATE*sr, int set)
 	vs->ainf.text80 = set;
 	update_video_ap(vs);
 	video_update_mode(vs);
+	ng_videosel2(vs, 0); /*FIXME*/
 	return 0;
 }
 

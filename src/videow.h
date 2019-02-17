@@ -20,6 +20,7 @@
 
 int init_video_window(struct SYS_RUN_STATE*sr);
 void set_video_size(struct SYS_RUN_STATE*sr, int w, int h);
+void ng_update_render_surface(struct SYS_RUN_STATE*sr);
 int term_video_window(struct SYS_RUN_STATE*sr);
 int invalidate_video_window(struct SYS_RUN_STATE*sr, RECT *r);
 
@@ -36,6 +37,7 @@ int is_keyb_english(struct SYS_RUN_STATE*sr);
 int is_shift_pressed(struct SYS_RUN_STATE*sr);
 int is_ctrl_pressed(struct SYS_RUN_STATE*sr);
 int is_alt_pressed(struct SYS_RUN_STATE*sr);
+void ng_adjust_video_rect(struct SYS_RUN_STATE*sr, RECT*rect);
 
 
 #ifndef FLASH_INTERVAL

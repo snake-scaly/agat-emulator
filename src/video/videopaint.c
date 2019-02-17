@@ -39,4 +39,5 @@ void video_repaint_screen(struct VIDEO_STATE*vs)
 		video_update_rb(vs, i);
 	}
 	invalidate_video_window(vs->sr, NULL);
+	ng_video_mark_scanlines_dirty(vs, 0, vs->sr->ng_render_surface.height);
 }
