@@ -6,11 +6,11 @@
 
 
 [Setup]
-AppName=Agat Emulator
-AppId=agatemul
+AppName=Agat Emulator Experimental
+AppId=agatemulexp
 AppVerName=Agat Emulator – {#AppVer}
-DefaultDirName={pf}\Agat
-DefaultGroupName=Agat Emulator
+DefaultDirName={pf}\AgatExp
+DefaultGroupName=Agat Emulator Experimental
 Compression=lzma
 SolidCompression=yes
 OutputDir=..
