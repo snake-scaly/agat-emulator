@@ -1,0 +1,22 @@
+Changes in the version 1.29.2-exp1
+==================================
+
+This version contains an experimental rendering engine. New features include:
+
+- Proper 7x8 pixel characters in text modes
+- Fonts are used exactly as taken from system ROMs
+- Real-time NTSC TV simulation in native Apple modes
+
+Known issues:
+
+- New graphics is displayed in a separate window, in addition to the original
+  graphics implementation.
+- 80-column Apple text modes will also display in NTSC simulation mode which
+  looks really bad--as it would on an actual NTSC TV-set. There is currently no
+  way to switch to pixel-precise rendering on demand.
+- Combined graphics modes and partial page animations don't work for Apple2e,
+  as seen on the Test Drive title screen.
+- Not all fonts are replaced with ROM versions. Some systems will display text
+  inverted and flipped.
+
+Good luck!
