@@ -36,13 +36,9 @@ static void ng_video_switch_mode_at_scanline(struct VIDEO_STATE*vs, const struct
 /* Add a video renderer change at the current scanline. */
 static void ng_video_switch_mode(struct VIDEO_STATE*vs, const struct VIDEO_RENDERER*renderer, int page)
 {
-	if (vs->video_mode == VIDEO_MODE_AGAT) {
-		int tick = (int)(cpu_get_tsc(vs->sr) - vs->ng_frame_start_tick);
-		int scanline = tick / vs->ng_ticks_per_scanline;
-		ng_video_switch_mode_at_scanline(vs, renderer, page, scanline);
-	} else {
-		ng_video_switch_mode_at_scanline(vs, renderer, page, 0);
-	}
+	int tick = (int)(cpu_get_tsc(vs->sr) - vs->ng_frame_start_tick);
+	int scanline = tick / vs->ng_ticks_per_scanline;
+	ng_video_switch_mode_at_scanline(vs, renderer, page, scanline);
 }
 
 /* Apply video renderers gathered during the current frame and prepare for the next frame. */

@@ -64,7 +64,11 @@ const struct VIDEO_RENDERER*ng_apple_get_current_text_renderer(struct VIDEO_STAT
 static const struct VIDEO_RENDERER*apple_get_renderer(struct VIDEO_STATE*vs, int*page)
 {
 	if (vs->ainf.text_mode) return ng_apple_get_current_text_renderer(vs, page);
-	*page = vs->ainf.page;
+
+	// 80-column mode (AKA double resolution) inhibitis page switching
+	if (baseram_read_ext_state(0xC018, vs->sr)) *page = 0;
+	else *page = vs->ainf.page;
+
 	if (vs->ainf.dhgr) return &vmode_apple_dhgr;
 	if (vs->ainf.hgr) {
 		if (vs->sr->cursystype == SYSTEM_9) return &vmode_apple_hgr_nofill;
