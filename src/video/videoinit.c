@@ -264,17 +264,17 @@ int video_init_rb(struct VIDEO_STATE*vs)
 	case SYSTEM_A:
 	case SYSTEM_P:
 		vs->video_freq = 60;
-		vs->ng_ticks_per_scanline = 63.5f;
+		vs->ng_ticks_per_scanline = 65;
 		set_rb_count(vs, 1, 0);
 		break;
 	case SYSTEM_AA:
 		vs->video_freq = 60;
-		vs->ng_ticks_per_scanline = 63.5f;
+		vs->ng_ticks_per_scanline = 65;
 		set_rb_count(vs, vs->rb_enabled?16:1, 20);
 		break;
 	case SYSTEM_E:
 		vs->video_freq = 60;
-		vs->ng_ticks_per_scanline = 63.5f;
+		vs->ng_ticks_per_scanline = 65;
 		set_rb_count(vs, 1, 4);
 		break;
 	}

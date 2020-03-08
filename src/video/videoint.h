@@ -130,7 +130,7 @@ struct VIDEO_STATE
 	struct APPLE_TV ng_apple_tv;
 
 	unsigned long long ng_frame_start_tick;
-	float ng_ticks_per_scanline;
+	int ng_ticks_per_scanline;
 	byte ng_dirty_scanlines[(MAX_SCANLINES + 7) / 8];
 	struct COMBINED_VIDEO_RENDERERS ng_curr_renderers;
 	struct COMBINED_VIDEO_RENDERERS ng_next_renderers;

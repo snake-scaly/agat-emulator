@@ -38,7 +38,7 @@ static void ng_video_switch_mode(struct VIDEO_STATE*vs, const struct VIDEO_RENDE
 {
 	if (vs->video_mode == VIDEO_MODE_AGAT) {
 		int tick = (int)(cpu_get_tsc(vs->sr) - vs->ng_frame_start_tick);
-		int scanline = (int)(tick / vs->ng_ticks_per_scanline);
+		int scanline = tick / vs->ng_ticks_per_scanline;
 		ng_video_switch_mode_at_scanline(vs, renderer, page, scanline);
 	} else {
 		ng_video_switch_mode_at_scanline(vs, renderer, page, 0);
