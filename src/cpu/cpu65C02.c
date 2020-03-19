@@ -1301,12 +1301,14 @@ static int exec_65c02(struct CPU_STATE*cs)
 		st->ints_req&=~INT_NMI;
 		st->f &= ~FLAG_D;
 //		puts("nmi");
+		return 7;
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
 		st->f |= FLAG_I | FLAG_1;
 		st->f &= ~FLAG_D;
 		puts("reset");
+		return 6;
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
@@ -1315,6 +1317,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 		st->ints_req&=~INT_IRQ;
 		st->f &= ~FLAG_D;
 //		puts("irq");
+		return 7;
 	}
 	if (cpu_debug) {
 		printf("PC: %04X; A: %02X; X: %02X; Y: %02X; F: %02X [%8s]\n", st->pc, st->a, st->x, st->y, st->f, get_flags(st->f));
