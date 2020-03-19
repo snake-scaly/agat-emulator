@@ -1269,6 +1269,7 @@ static int exec_6502(struct CPU_STATE*cs)
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
+		st->f|=FLAG_I;
 		st->pc=mem_read_word(st, ADDR_NMI);
 		st->ints_req&=~INT_NMI;
 //		puts("nmi");
