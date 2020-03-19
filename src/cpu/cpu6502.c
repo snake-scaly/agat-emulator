@@ -1182,7 +1182,7 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(dcp,indx,8),              //C3
   MAKE_COMMAND(cpy,zp,3),         //C4
   MAKE_COMMAND(cmp,zp,3),         //C5
-  MAKE_COMMAND(dec,zp,3),         //C6
+  MAKE_COMMAND(dec,zp,5),         //C6
   MAKE_COMMAND_ILL(dcp,zp,5),              //C7
   MAKE_COMMAND(iny,impl,2),       //C8
   MAKE_COMMAND(cmp,imm,2),        //C9
@@ -1190,7 +1190,7 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(axs,imm,2),              //CB
   MAKE_COMMAND(cpy,abs,4),        //CC
   MAKE_COMMAND(cmp,abs,4),        //CD
-  MAKE_COMMAND(dec,abs,4),        //CE
+  MAKE_COMMAND(dec,abs,6),        //CE
   MAKE_COMMAND_ILL(dcp,abs,6),              //CF
 
   MAKE_COMMAND(bne,rel,2),        //D0
