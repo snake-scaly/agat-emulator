@@ -1182,7 +1182,7 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(dcp,indx,8),              //C3
   MAKE_COMMAND(cpy,zp,3),         //C4
   MAKE_COMMAND(cmp,zp,3),         //C5
-  MAKE_COMMAND(dec,zp,3),         //C6
+  MAKE_COMMAND(dec,zp,5),         //C6
   MAKE_COMMAND_ILL(dcp,zp,5),              //C7
   MAKE_COMMAND(iny,impl,2),       //C8
   MAKE_COMMAND(cmp,imm,2),        //C9
@@ -1190,7 +1190,7 @@ static struct CMD_6502 cmds[256]=
   MAKE_COMMAND_ILL(axs,imm,2),              //CB
   MAKE_COMMAND(cpy,abs,4),        //CC
   MAKE_COMMAND(cmp,abs,4),        //CD
-  MAKE_COMMAND(dec,abs,4),        //CE
+  MAKE_COMMAND(dec,abs,6),        //CE
   MAKE_COMMAND_ILL(dcp,abs,6),              //CF
 
   MAKE_COMMAND(bne,rel,2),        //D0
@@ -1269,14 +1269,17 @@ static int exec_6502(struct CPU_STATE*cs)
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
+		st->f|=FLAG_I;
 		st->pc=mem_read_word(st, ADDR_NMI);
 		st->ints_req&=~INT_NMI;
 //		puts("nmi");
+		return 7;
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
 		st->f=FLAG_Z | FLAG_I | FLAG_1;
 //		puts("reset");
+		return 6;
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
@@ -1284,6 +1287,7 @@ static int exec_6502(struct CPU_STATE*cs)
 		st->pc=mem_read_word(st, ADDR_IRQ);
 //		st->ints_req&=~INT_IRQ;
 //		puts("irq");
+		return 7;
 	}
 
 	b=fetch_cmd_byte(st);

@@ -1198,7 +1198,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_ILL(),             //C3
   MAKE_COMMAND(cpy,zp,3),         //C4
   MAKE_COMMAND(cmp,zp,3),         //C5
-  MAKE_COMMAND(dec,zp,3),         //C6
+  MAKE_COMMAND(dec,zp,5),         //C6
   MAKE_COMMAND_NEW(smb4,zp,2),    //C7
   MAKE_COMMAND(iny,impl,2),       //C8
   MAKE_COMMAND(cmp,imm,2),        //C9
@@ -1206,7 +1206,7 @@ static struct CMD_65C02 cmds[256]=
   MAKE_COMMAND_NEW(wai,impl,2),   //CB
   MAKE_COMMAND(cpy,abs,4),        //CC
   MAKE_COMMAND(cmp,abs,4),        //CD
-  MAKE_COMMAND(dec,abs,4),        //CE
+  MAKE_COMMAND(dec,abs,6),        //CE
   MAKE_COMMAND_NEW(bbs4,rel,2),   //CF
 
   MAKE_COMMAND(bne,rel,2),        //D0
@@ -1296,16 +1296,19 @@ static int exec_65c02(struct CPU_STATE*cs)
 	if (st->ints_req&INT_NMI) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
+		st->f|=FLAG_I;
 		st->pc=mem_read_word(st, ADDR_NMI);
 		st->ints_req&=~INT_NMI;
 		st->f &= ~FLAG_D;
 //		puts("nmi");
+		return 7;
 	} else 	if (st->ints_req&INT_RESET) {
 		st->pc=mem_read_word(st, ADDR_RES);
 		st->ints_req&=~INT_RESET;
 		st->f |= FLAG_I | FLAG_1;
 		st->f &= ~FLAG_D;
 		puts("reset");
+		return 6;
 	} else if ((st->ints_req&INT_IRQ)&&!(st->f&FLAG_I)) {
 		push_stack_w(st, (word)(st->pc));
 		push_stack(st, st->f & ~FLAG_B);
@@ -1314,6 +1317,7 @@ static int exec_65c02(struct CPU_STATE*cs)
 		st->ints_req&=~INT_IRQ;
 		st->f &= ~FLAG_D;
 //		puts("irq");
+		return 7;
 	}
 	if (cpu_debug) {
 		printf("PC: %04X; A: %02X; X: %02X; Y: %02X; F: %02X [%8s]\n", st->pc, st->a, st->x, st->y, st->f, get_flags(st->f));

@@ -736,7 +736,7 @@ void sysmon_g(struct DEBUG_INFO*inf)
 
 void sysmon_dump(struct DEBUG_INFO*inf, int aarg)
 {
-	word adr = inf->sst.addr[1];
+	dword adr = inf->sst.addr[1];
 	if ((aarg & 4) || !(adr&7)) console_printf(inf->con, "\n%04X-", adr);
 	for(;;) {
 		console_printf(inf->con, " %02X", mem_read(adr, inf->sr));
