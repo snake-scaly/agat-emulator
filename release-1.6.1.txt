@@ -1,2 +1,0 @@
-Fixed bug with Shugart sector MFM decoding
-Added support for stereophonic mockingboards

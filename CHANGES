@@ -1,0 +1,240 @@
+Changes in the version 1.29.2
+=============================
+
+Fixed a crash after closing an emulator window.
+
+Changes in the version 1.29.1
+===========================
+
+Fixed distribution bugs occured during transition from version 1.28 to 1.29
+
+Changes in the version 1.29
+===========================
+
+Reimplemented ACM sound driver
+
+Changes in the version 1.28
+===========================
+
+Fixed printing to TIFF, text, and raw files.
+Control manually when new pages are created while printing to TIFF and Windows printer.
+Added support for .pds images traditionally used for Pravetz emulation.
+Disk images are now opened in window mode instead of fullscreen when started from a shell association.
+rgb-monitor-16.pal is fixed to support the "bright black" color.
+PRAVETZ8A.FNT is replaced with three distinct variations: Bulgarian font pravetz8a8c_bg.fnt, font for exporting to Soviet Union pravetz8a8c_su.fnt, and a Variant version pravetz8a8c_uz.fnt.
+
+Changes in the version 1.27
+===========================
+
+Fixed raw printer output to a file
+Added an ability to print directly to a printer connected to the PC's parallel port
+TOR disk image is replaced with an authentic version
+Fixed an error in the extended Agat-7 font
+
+Changes in the version 1.26.1
+===========================
+
+Improved compatibility with some programs for Agat-7 with 140K-drive.
+
+Changes in the version 1.26
+===========================
+
+Improved sound quality for Mockingboard
+Improved simulation of Pravetz 8A
+Added support for Liberty Drive (Apple //e, Pravetz 8A)
+Added support for Dallas No-Slot Clock (Apple //e, Pravetz 8A)
+Added two new sample floppy images
+
+Changes in the version 1.25.1
+===========================
+
+Improved quality of sound via ACM subsystem (Windows Audio)
+Added sound of Seagate SCSI hard drive.
+Differs from version 1.25 by improved compatibility with slow computers (improves sound quality).
+
+Changes in the version 1.25
+===========================
+
+Improved quality of sound via ACM subsystem (Windows Audio)
+Added sound of Seagate SCSI hard drive.
+
+Changes in the version 1.24
+===========================
+
+Fixed some minor bugs.
+Improved simulation of Shugart (ES-5088) drive (including rotation speed measurement).
+Now Shugard disks, in both .nib and .dsk formats, may be copied/formatted correctly in IKP / Sprite (format nibs only) OS.
+Added new sample system "Teletext".
+Added two new tools: genimage and fdd1extr.
+
+Changes in the version 1.23
+===========================
+
+Improved support for non-standard floppy images.
+Fixed some issues.
+
+Changes in the version 1.22
+===========================
+
+Implemented floppy drive controller for Acorn Atom system.
+Added support for extension ROMs for Acorn Atom.
+
+Changes in the version 1.21
+===========================
+
+Added basic implementation of Acorn Atom system.
+This version implements both standard (2K RAM) and extended configurations (12K RAM) as well as custom 40K RAM configuration.
+All video modes, both mono and color are implemented;
+Two examples of ROMs are included with emulator (integer and floating point Basic).
+
+Changes in the version 1.20.2
+=============================
+
+* Implemented keyboard language switcher settings allowing to specify internal key combination Ctrl+Shift to switch layouts (rus/eng).
+  This may be useful for Linux/Wine users because Wine doesn't supports keyboard locales.
+* Setup script has been considerably improved allowing to specify default system type for each of supported disk image extensions.
+
+Changes in the version 1.20.1
+=============================
+
+Improved emulation of TEAC drive. Now it shows true rotation period 200 ms in speed tests.
+Added example of Fantavision for Agat-9.
+Changed behaviour of Caps Lock and Shift buttons in Apple //e and Pravetz 8A.
+Fixed keyboard emulation code for Pravetz 8A.
+
+Changes in the version 1.20
+===========================
+
+New configuration window gives advanced control over emulation of all systems:
+* Specify if it is necessary to start systems in full-screen mode or in windowed (default);
+* Specify if emulated systems should continue to run in background (without focus to window);
+* Enable or disable sound effects for floppy drives;
+* Enable or disable new internal debugger;
+* Specify disassembly mode in the debugger;
+* Select one of two possible screen update algorithms: "Synchronous update" to fully simulate video memory or "Synchronous update off" to increase performance on slow machines.
+
+Also this version of Agat Emulator contains internal debugger, compatible by commands with original System Monitor.
+To enable debugger, select appropriate checkbox in global settings window, then press F8 key during emulation (or select context menu item).
+To close debugger, enter "Q" command.
+To get short help message, enter "?" command.
+
+Changes in the version 1.19.3
+==============================
+Added support for Firmware Card with "F8 mod".
+Improved emulation of keyboard for Pravetz 8A (both shift and language switching).
+Improved support for Apple I (ROM configuration, TTY speed, several ROM examples has been added).
+
+Changes in the version 1.19.2
+==============================
+Implemented "Character generator card" for Agats (still searching for soft which was using this card).
+Improved emulation of floppy drives, both Shugart and Teac.
+Implemented new sound effects for floppies.
+Improved mouse emulation for Agat-9.
+Improved GUI.
+
+Changes in the version 1.19.1
+==============================
+Added native support for Pravetz 82/8A systems.
+Improved emulation of "Martian" mouse for Agat-9.
+Improved Epson FX printer emulation.
+Added "Apple ][ Desktop" system with hdv-image.
+Added new keyboard shortcuts:
+ F6 - redirect input from text file;
+ F7 - copy current screen to clipboard.
+Fixed some minor bugs.
+
+Changes in the version 1.19
+=============================
+
+Version 1.19 contains implementation of CMS SCSI card.
+This SCSI card was compatible with all models of Apple II.
+SCSI emulation module allows to connect up to 3 virtual hard drives with specified SCSI bus ids.
+Each drive with size larger than 32MB (maximum ProDOS size) will be divided to several logical partitions.
+Only two of logical devices will be available to use from ProDOS.
+To specify which partitions will be available to ProDOS, press left Alt key during system startup as it was with original CMS card.
+This release contains example of 64MB SCSI disk with all ProDOS, Basic and hardware utilities for CMS card.
+Second logical partition of this disk was formatted as empty ProDOS volume /PART2.
+
+To create your own SCSI disk image, just specify non-existing file name in controller configuration interface, format your new device by CMS.SYSTEM utility (low-level format) and create new ProDOS volume by FILER utility.
+
+Changes in the version 1.18.1
+===========================
+Some minor bugs has been fixed.
+
+Changes in the version 1.18
+===========================
+
+This release of the emulator contains a lot of changes dealing with emulation of new systems:
+1. Implemented full support of the famous computer Apple I (including ACI);
+2. Apple II and Apple II Plus systems are now implemented as two different configurations with different initial settings;
+3. Implemented basic support of Apple IIe-class systems. At present emulator supports Apple IIe and Enhanced Apple IIe systems.
+Also this release contains several fixes of 65C02, floppy and memory emulation bugs.
+Added ability of the keyboard input redirection from a file (this feature is especially important for Apple I system).
+Distributive contains some programs for Apple I and tape recording of Integer Basic.
+Added several new configurations for demonstration of emulation of Apple 2e.
+All Apple-based systems are now includes new much more realistic color palette.
+
+Changes in the version 1.17
+===========================
+
+Added support for command line execution with different System Configurations and Disk Images.
+Implemented ability for installer to automatically register disk image types (.DSK, .NIB, .AIM).
+
+So now it is possible to run your favourite game with a single click!
+
+If you want to choose one of three basic configurations (Agat-7, Agat-9, Apple ][), you may right-click on the image file in Windows Explorer and simply choose which system this image for.
+
+Default system assignments:
+	.DSK, .NIB - Apple ][ (for English users),
+			Agat-9 (for Russian users)
+	.AIM - Agat-9
+
+To change default system configuration settings just edit following systems in emulator:
+	"(3) Apple ][ Plus" - for Apple ][
+	"(1) IKP-7" - for Agat-7
+	"(2) IKP-9" - for Agat-9
+
+Sound quality has been improved for both DirectSound and ACM sound drivers.
+AIM image bug has been fixed.
+Decimal mode arithmetic bug has been fixed.
+Video output code has beed improved.
+Floppy index bug in AIM files has been fixed.
+Added Apple Mouse support (with MousePaint for demonstration)
+Added Pravetz-82 support (including game example)
+Added new icons for all demo modules;
+Added new demonstration disk for Nippel Clock.
+Fixed some disk emulation issues for protected AIM disks;
+Added basic support for mouse controller based on parallel card for Agat-9;
+Added MouseGraph 4.4 image into installation.
+Improved writing support for AIM disks
+Fixed detection of paddles/joystick.
+Added writing support for AIM disks
+Improved sound performance
+Fixed sound deadlocks on Vista.
+Fixed printer issue with Subgraph OS.
+Changed main window behaviour.
+Added support for new AIM disk file format (for 800K floppy).
+Fixed OS Onix system (removed disk copy protection via AIM image).
+Added text editor system TOR 5.0.
+Enhanced support for custom keymaps, added russian keymap for Rapira language.
+Fixed configuration of Sprite OS
+Added support for custom keymaps and screen palettes.
+Slightly changed configuration format.
+Added support for various Apple's memory cards (Apple ][ Memory Expansion, RamFactor/RamCharger, Saturn)
+Added command line configuration editing tool (cfgedit)
+Added Agat-7 WordMaster disk (thanks to GaryPilot)
+Added support for combined video-modes via timer interrupts on Agats.
+Fixed bug with Shugart sector MFM decoding
+Added support for stereophonic mockingboards
+Added Agat-9 Nippel Clock Card support.
+Enhanced emulation of Epson FX-85 printer with capability to save output to text file, Tiff graphics or to Windows printer.
+Enabled all possible slots (Slots #0, #1, #7 for Apple, slot #1 for Agat-9).
+Added Apple Parallel Printer Interface Card support.
+Added documentation in russian and english.
+Added fullscreen mode
+Added "fast" mode to floppy disks enhancing their speed
+Added "fast" CPU mode via pressing windows application key
+Implemented basic Mockingboard I support (sound, noise, ints but no envelopes)
+Added example to run Ultima IV with mockingboards
+Implemented basic Agat-9 printer card suppport with Epson FX emulation (only plain text@win-1251 at this moment)
+Added example of KPON-1 disk to work with printer

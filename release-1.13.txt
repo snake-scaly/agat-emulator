@@ -1,3 +1,0 @@
-Fixed some disk emulation issues for protected AIM disks;
-Added basic support for mouse controller based on parallel card for Agat-9;
-Added MouseGraph 4.4 image into installation.

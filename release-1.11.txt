@@ -1,3 +1,0 @@
-Fixed sound deadlocks on Vista.
-Fixed printer issue with Subgraph OS.
-Changed main window behaviour.

@@ -1,3 +1,0 @@
-Decimal mode arithmetic bug has been fixed.
-Video output code has beed improved.
-Floppy index bug in AIM files has been fixed.

@@ -1,5 +1,5 @@
 #ifndef AppVer
-#error "Define AppVer by compiler command line /d option"
+#error "Define AppVer by compiler command line -d option"
 #endif
 
 //#define AppVer "1.28"
@@ -18,8 +18,8 @@ OutputBaseFilename=agatemulator-{#AppVer}
 
 
 [Languages]
-Name: ru; MessagesFile: compiler:Languages\Russian.isl; InfobeforeFile:"../release-{#AppVer}-ru.txt"
-Name: en; MessagesFile: compiler:Default.isl; InfobeforeFile:"../release-{#AppVer}-en.txt"
+Name: ru; MessagesFile: compiler:Languages\Russian.isl; InfobeforeFile:"../CHANGES_ru"
+Name: en; MessagesFile: compiler:Default.isl; InfobeforeFile:"../CHANGES"
 
 
 [CustomMessages]

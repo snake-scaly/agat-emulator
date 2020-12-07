@@ -1,6 +1,0 @@
-Changes in the version 1.26.1
-===========================
-
-Improved compatibility with some programs for Agat-7 with 140K-drive.
-
-Good luck!

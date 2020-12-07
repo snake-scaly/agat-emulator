@@ -1,2 +1,0 @@
-Added writing support for AIM disks
-Improved sound performance
