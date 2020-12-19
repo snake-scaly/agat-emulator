@@ -1,0 +1,2 @@
+#define STANDALONE 1
+#include "russian.rh"
