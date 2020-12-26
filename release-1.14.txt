@@ -1,2 +1,0 @@
-Added Apple Mouse support (with MousePaint for demonstration)
-Added Pravetz-82 support (including game example)

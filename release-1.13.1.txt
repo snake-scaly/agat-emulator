@@ -1,2 +1,0 @@
-Added new icons for all demo modules;
-Added new demonstration disk for Nippel Clock.

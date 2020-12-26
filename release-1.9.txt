@@ -1,2 +1,0 @@
-Added support for custom keymaps and screen palettes.
-Slightly changed configuration format.

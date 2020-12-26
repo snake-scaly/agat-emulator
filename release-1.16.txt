@@ -1,2 +1,0 @@
-Sound quality has been improved for both DirectSound and ACM sound drivers.
-AIM image bug has been fixed.

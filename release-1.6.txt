@@ -1,6 +1,0 @@
-Added Agat-9 Nippel Clock Card support.
-Enhanced emulation of Epson FX-85 printer with capability to save output to text file, Tiff graphics or to Windows printer.
-Enabled all possible slots (Slots #0, #1, #7 for Apple, slot #1 for Agat-9).
-Added Apple Parallel Printer Interface Card support.
-Added documentation in russian and english.
-Added fullscreen mode
