@@ -42,7 +42,13 @@ add_custom_command(TARGET interface POST_BUILD
     ${COMPRESS_COMMAND}
 )
 
-install(DIRECTORY ../release ../setup DESTINATION . PATTERN .git EXCLUDE PATTERN help EXCLUDE)
+install(
+    DIRECTORY ../release ../setup
+    DESTINATION .
+    PATTERN .git EXCLUDE
+    PATTERN help EXCLUDE
+    PATTERN emulator.ini EXCLUDE)
+
 install(PROGRAMS ${EMULATOR} DESTINATION release)
 
 # libraries
