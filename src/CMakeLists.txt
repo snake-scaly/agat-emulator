@@ -4,7 +4,7 @@ endif(NOT WIN32)
 
 
 set(SYSLIBS comctl32 user32 gdi32 comdlg32 shlwapi htmlhelp advapi32)
-set(LIBS video cpu sound tape joystick fdd softcard clock printer ramcard mouse scsi)
+set(LIBS video cpu sound tape joystick fdd softcard clock printer ramcard mouse scsi newgfx)
 
 add_definitions(-DKEY_SCANCODES -DDOUBLE_X -DDOUBLE_Y -D_CRT_SECURE_NO_DEPRECATE -D_WIN32_WINNT=0x500)
 include_directories(. dialogs)
@@ -59,6 +59,7 @@ add_subdirectory(joystick)
 add_subdirectory(lang)
 add_subdirectory(logging)
 add_subdirectory(mouse)
+add_subdirectory(newgfx)
 add_subdirectory(printer)
 add_subdirectory(ramcard)
 add_subdirectory(scsi)

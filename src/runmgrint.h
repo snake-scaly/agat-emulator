@@ -1,6 +1,8 @@
 #include "memory.h"
 #include "keyb.h"
 
+#include "newgfx/ng_window.h"
+
 
 #define MEM_1K_SIZE		0x400
 
@@ -81,6 +83,8 @@ struct SYS_RUN_STATE
 	int key_rept;
 	int in_debug;
 	int keymask;
+
+	NG_WINDOW* ng_window;
 };
 
 void io6_write(word adr, byte data, struct MEM_PROC*io6_sel); // c060-c06f

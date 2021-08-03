@@ -12,6 +12,8 @@
 
 #include "resource.h"
 
+#include "newgfx/ng_window.h"
+
 //#define RUNMGR_DEBUG
 
 #ifdef RUNMGR_DEBUG
@@ -242,6 +244,12 @@ struct SYS_RUN_STATE *init_system_state(struct SYSCONFIG*c, HWND hmain, LPCTSTR 
 	}
 	_RMSG("video title set");
 
+	sr->ng_window = ng_window_create();
+	if (!sr->ng_window) {
+		_RMSG("ng_window_create failed");
+		goto fail;
+	}
+
 	for (i = 0; i < NCONFTYPES; i++ ) {
 		_RMSG("calling init_slot_state");
 		r = init_slot_state(sr, sr->slots + i, c->slots + i);
@@ -277,6 +285,7 @@ fail:
 		free_slot_state(sr->slots + j);
 	}
 	term_video_window(sr);
+	ng_window_free(sr->ng_window);
 fail1:
 	if (sr->sys.free_system) sr->sys.free_system(sr);
 fail2:
@@ -306,6 +315,7 @@ int free_system_state(struct SYS_RUN_STATE*sr)
 
 	_RMSG("starting video window termination");
 	term_video_window(sr);
+	ng_window_free(sr->ng_window);
 	_RMSG("end of video window termination");
 
 	_RMSG("freeing slots configurations");
